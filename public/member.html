@@ -61,6 +61,7 @@ label.fl{display:block;font-size:13px;font-weight:700;margin:14px 0 6px}
 .lg label{display:block;font-size:13px;font-weight:700;margin:16px 0 6px;color:#DDE2EC}
 .lg a{color:var(--gold)}
 .ph-none{background:radial-gradient(120% 80% at 50% 25%,#2A3254 0%,#0E1220 70%)!important}
+.pwin{width:100%;height:50px;border:1px solid var(--line);border-radius:12px;padding:0 14px;font:inherit;font-size:16px;background:#FBFAF8}
 #toast{position:absolute;left:50%;bottom:96px;transform:translate(-50%,12px);background:rgba(26,34,56,.94);color:#fff;font-size:13px;padding:10px 16px;border-radius:999px;opacity:0;transition:all .25s var(--ease);z-index:30;white-space:nowrap;pointer-events:none}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 /* seat grid */
@@ -182,7 +183,7 @@ function back(){ S.screen=S.history.pop()||'home'; render(); }
 const TABS=[['home','홈',I.home],['hall','메모리얼',I.hall],['record','기록',I.plus],['plaza','광장',I.star],['keep','우리 아이',I.pet]];
 const TAB_OF={enter:'hall',home:'home',hall:'hall',seat:'hall',visit:'hall',plaza:'plaza',keep:'keep'};
 function tabbar(){const cur=TAB_OF[S.screen];return `<nav class="tabbar" aria-label="하단 메뉴">${TABS.map(([k,l,ic])=>`<button data-testid="tab-${k}" ${cur===k?'aria-current="page"':''} onclick="tab('${k}')">${ic}<span>${l}</span></button>`).join('')}</nav>`}
-function tab(k){ if(k==='record'){ openRecord(); return; } S.history=[]; if(k==='hall'&&TAB_OF[S.screen]!=='hall'){ go('enter',false); return; } go(k,false); }
+function tab(k){ if(k==='record'){ openRecord(); return; } if(k==='plaza'&&MODE==='real') loadPlaza(); S.history=[]; if(k==='hall'&&TAB_OF[S.screen]!=='hall'){ go('enter',false); return; } go(k,false); }
 function status(){return `<div aria-hidden="true" style="height:calc(14px + env(safe-area-inset-top,0px));flex:none"></div>`}
 // ---------- 아이 정보 ----------
 const DEMO={id:'demo',name:'보리',kind:'강아지',breed:'말티즈',nickname:'보보',birth:'2012-04-03',passed:'2026-09-21',petStatus:'먼저 떠났어요',weight:'3.2',likes:'산책 · 창가 낮잠',tags:['겁 많고 다정함','닭가슴살 마니아','현관에서 기다림'],photo:IMG.portrait,hall:'sun',hallName:'햇살관',seats:[15],seatLabel:'C-3'};
@@ -192,7 +193,7 @@ const J=(w,a,b)=>w+(hasB(w)?a:b);
 const N=()=>esc(P.name), ga=()=>J(N(),'이','가'), ya=()=>J(N(),'아','야'), ye=()=>J(N(),'이에요','예요');
 const dot=d=>d?d.replace(/-/g,'.'):'';
 const MYSEAT=()=>(P.seats&&P.seats[0])||0;
-function seatText(){ if(P.seatLabel) return `${P.hallName} ${P.seatLabel}`; const n=MYSEAT(); return n?`${P.hallName} ${String(n).padStart(4,'0')}번`:(P.hallName||'자리 미정'); }
+function seatText(){ if(P.seatLabel) return `${P.hallName} ${P.seatLabel}`; const n=MYSEAT(); return n?`${P.hallName} ${Angel.ZONES[Angel.zoneOf(n)]} ${String(n).padStart(4,'0')}번`:(P.hallName||'자리 미정'); }
 function daysText(){ if(!P.birth) return ''; const end=P.passed?new Date(P.passed):new Date(); const n=Math.floor((end-new Date(P.birth))/864e5)+1; if(n<1) return ''; return P.passed?`함께한 ${n.toLocaleString('ko-KR')}일`:`함께한 지 ${n.toLocaleString('ko-KR')}일째`; }
 function birthday(){ if(!P.birth) return ''; const [y,m,d]=P.birth.split('-').map(Number); return `${m}월 ${d}일`; }
 function subline(){ return [esc(P.breed||(P.kind&&P.kind!=='-'?P.kind:'')), P.nickname?`별명 ${esc(P.nickname)}`:'', (P.birth||P.passed)?`${dot(P.birth)||'?'} ~ ${dot(P.passed)}`.trim():''].filter(Boolean).join(' · '); }
@@ -225,16 +226,30 @@ async function login(){
   try{ await api('/api/login',{method:'POST',body:JSON.stringify({phone,password})}); await boot(); }
   catch(e){ err.textContent=e.message; b.disabled=false; b.textContent='들어가기'; }
 }
+async function changePw(){ const cur=$('#pw-cur').value, nx=$('#pw-new').value, err=$('#pw-err');
+  if(!cur){err.textContent='지금 비밀번호를 넣어 주세요.';return} if(nx.length<6){err.textContent='새 비밀번호는 6자 이상으로 정해 주세요.';return}
+  try{ await api('/api/me/password',{method:'PUT',body:JSON.stringify({current:cur,next:nx})}); closeSheet(); toast('비밀번호를 바꿨어요'); }catch(e){ err.textContent=e.message; } }
 async function logout(){ try{await api('/api/logout',{method:'POST',body:'{}'})}catch{} location.href='/member'; }
 function startDemo(){ MODE='demo'; P=DEMO; S.history=[]; S.screen='entry'; render(); refreshAll(); loadGuestbook(); }
+function switchPet(id){ const p=ME.pets.find(x=>x.id===id); if(p&&p.id!==P.id){ startReal(p); S.screen='home'; render(); } }
+function nextYearly(md){ const now=new Date(); now.setHours(0,0,0,0); let d=new Date(now.getFullYear(),+md.slice(0,2)-1,+md.slice(3,5)); if(d<now) d=new Date(now.getFullYear()+1,+md.slice(0,2)-1,+md.slice(3,5)); return d; }
+function upcoming(){ const out=[], now=new Date(); now.setHours(0,0,0,0); const fmt=d=>`${d.getMonth()+1}월 ${d.getDate()}일`, add=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+  if(P.birth){ const d=nextYearly(P.birth.slice(5)); out.push({label:`${N()} 생일`,d}); }
+  if(P.passed){ const pd=new Date(P.passed+'T00:00:00');
+    [[48,'49재'],[99,'100일']].forEach(([n,l])=>{const d=add(pd,n); if(d>=now) out.push({label:l,d});});
+    const k=nextYearly(P.passed.slice(5)); const yrs=k.getFullYear()-pd.getFullYear(); if(yrs>=1) out.push({label:yrs===1?'첫 기일':`${yrs}번째 기일`,d:k}); }
+  return out.map(u=>({...u,date:fmt(u.d),days:Math.round((u.d-now)/864e5)})).filter(u=>u.days<=365).sort((a,b)=>a.days-b.days).slice(0,3); }
+async function shareMemorial(){ const url=location.origin+'/m/'+P.id, title=`${P.name}의 메모리얼`;
+  try{ if(navigator.share){ await navigator.share({title,text:'꽃 한 송이, 한 마디를 남겨 주세요.',url}); return; } await navigator.clipboard.writeText(url); toast('링크를 복사했어요. 가족에게 보내 주세요'); }
+  catch(e){ if(e&&e.name==='AbortError') return; prompt('이 링크를 복사해 보내 주세요',url); } }
 function startReal(p){
   MODE='real'; P=p;
-  Object.assign(S,{screen:'entry',history:[],hall:p.hall||'sun',seat:null,reserved:[],flowers:0,candle:false,todayVisitors:[],guest:[],feed:[],reaction:`${ga()} 반겨요`,heir:'',downloaded:false});
+  Object.assign(S,{screen:'entry',history:[],hall:p.hall||'sun',seat:null,reserved:[],flowers:(p.flowers&&p.flowers.today)||0,candle:!!p.candle,todayVisitors:[],guest:[],feed:[],reaction:`${ga()} 반겨요`,heir:'',downloaded:false});
   render(); refreshAll(); loadGuestbook(); loadFeed();
 }
 function loadGuestbook(){ api('/api/guestbook?pet='+encodeURIComponent(MODE==='real'?P.id:'보리')).then(list=>{ if(MODE==='real'||list.length){ S.guest=list.map(g=>({who:g.who,when:relTime(g.at),text:g.text,at:g.at})); if(MODE==='real') S.todayVisitors=[...new Set(list.filter(g=>new Date(g.at).toDateString()===new Date().toDateString()).map(g=>g.who))]; if(['visit','keep','room'].includes(S.screen)) render(); } }).catch(()=>{}); }
 function loadFeed(){ api(`/api/me/pets/${P.id}/feed`).then(list=>{ S.feed=list.map(f=>({who:f.who,av:null,img:f.photo||null,text:f.text,when:relTime(f.at),likes:0})); if(S.screen==='home') render(); }).catch(()=>{}); }
-function refreshAll(){ Promise.all(Object.keys(HALLS).map(refreshSeats)).then(()=>{ if(['hall','seat','enter'].includes(S.screen)) render(); }); }
+function refreshAll(){ return Promise.all(Object.keys(HALLS).map(refreshSeats)).then(()=>{ if(['hall','seat','enter'].includes(S.screen)) render(); }); }
 function openEdit(){
   const st=P.petStatus==='먼저 떠났어요';
   openSheet(`<h3 id="sheetTitle">${N()} 정보 고치기</h3><p>입장 화면과 메모리얼 곳곳에 보이는 정보예요.</p>
@@ -287,6 +302,9 @@ R.home=()=>`<section class="screen" data-testid="screen-home">
     <button class="row" data-testid="home-profile" onclick="go('entry')" style="margin-bottom:14px">
       ${avatar(52)}
       <span style="flex:1"><b style="font-size:16px" class="serif">${N()}</b><br><span style="font-size:13px;color:var(--sub)">${seatText()} · 오늘 꽃 <span data-testid="home-flowers">${S.flowers}</span>송이</span></span>${I.chev}</button>
+    ${MODE==='real'&&ME&&ME.pets.length>1?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 14px" role="group" aria-label="아이 바꾸기">${ME.pets.map(x=>`<button onclick="switchPet('${x.id}')" aria-pressed="${x.id===P.id}" style="height:40px;padding:0 14px;border-radius:999px;font-size:13px;font-weight:700;border:1.5px solid ${x.id===P.id?'var(--navy)':'var(--line)'};background:${x.id===P.id?'var(--navy)':'#fff'};color:${x.id===P.id?'#fff':'var(--ink)'}">${esc(x.name)}</button>`).join('')}</div>`:''}
+    ${upcoming().length?`<div style="background:#fff;border-radius:18px;padding:14px 16px;margin-bottom:14px" data-testid="upcoming"><b style="font-size:15px">다가오는 날</b>${upcoming().map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 0;font-size:14px"><span>${u.label} <span style="color:var(--sub);font-size:12px">${u.date}</span></span><b style="color:${u.days===0?'#C2475A':'var(--navy)'};font-size:13px">${u.days===0?'오늘':`${u.days}일 남음`}</b></div>`).join('')}</div>`:''}
+    ${MODE==='real'?`<button class="row" style="margin-bottom:14px" data-testid="share-family" onclick="shareMemorial()">${I.people}<span style="flex:1"><b style="font-size:15px">가족에게 메모리얼 보내기</b><br><span style="font-size:12px;color:var(--sub)">링크를 받은 사람은 꽃과 한 마디를 남길 수 있어요</span></span>${I.chev}</button>`:''}
     <div data-testid="feed">${S.feed.length?'':`<div style="background:#fff;border-radius:18px;padding:28px 20px;text-align:center" data-testid="feed-empty"><b style="font-size:16px">아직 기록이 없어요</b><p style="font-size:14px;color:var(--sub);margin:6px 0 16px;line-height:1.6">${N()}의 사진이나 떠오르는 한 줄을 남겨 주세요.<br>가족 피드에 올라가요.</p><button class="cta navy" style="height:48px" onclick="openRecord()">첫 기록 남기기</button></div>`}${S.feed.map((f,i)=>`<article class="feedcard" data-testid="feed-item">
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px">${f.av?`<span class="av" style="background-image:url(${IMG[f.av]})"></span>`:`<span class="av" style="background:var(--cream);display:grid;place-items:center;font-size:13px;font-weight:700;color:#8A6D2C">${esc(f.who[0])}</span>`}<b style="font-size:14px">${esc(f.who)}</b><span style="font-size:12px;color:var(--sub);margin-left:auto">${esc(f.when)}</span></div>
       ${f.img?`<div style="aspect-ratio:1;background:url('${IMG[f.img]||f.img}') center/cover"></div>`:''}
@@ -302,50 +320,48 @@ R.hall=()=>`<section class="screen" data-testid="screen-hall" style="background:
   <div style="position:relative;z-index:2;padding:4px 16px;color:#fff"><h1 class="serif" style="font-size:30px">기억의 집</h1><p style="font-size:12px;color:#DDE2EC;margin-top:4px">메모리얼마다 1004자리 · 증설 없음</p></div>
   <div style="flex:1"></div>
   <div style="position:relative;z-index:2;padding:0 16px 14px;display:flex;flex-direction:column;gap:8px">
-    ${Object.entries(HALLS).map(([k,h])=>`<button class="glass" data-testid="hall-${k}" onclick="S.hall='${k}';S.seat=null;go('seat')" style="border-radius:16px;padding:14px 16px;display:flex;align-items:center;text-align:left;color:#fff;min-height:64px">
+    ${Object.entries(HALLS).map(([k,h])=>`<button class="glass" data-testid="hall-${k}" onclick="S.hall='${k}';S.seat=null;go('seat');if(!SRV['${k}'])refreshSeats('${k}').then(render)" style="border-radius:16px;padding:14px 16px;display:flex;align-items:center;text-align:left;color:#fff;min-height:64px">
       <span style="flex:1"><b class="serif" style="font-size:18px">${h.name}</b>${k===P.hall&&MYSEAT()?` <span class="chip" style="height:22px;background:var(--gold);color:var(--night);font-size:11px;font-weight:700">${ga()} 있어요</span>`:''}<br><span style="font-size:12px;color:#D5DAE5">${h.desc} · 1004자리</span></span>
       <b style="font-size:14px;color:${k===P.hall?'var(--gold)':'#fff'}" data-testid="left-${k}">남은 ${remaining(k)}자리</b></button>`).join('')}
     <button class="cta white" data-testid="hall-visit" onclick="go('visit')" style="margin-top:4px">${I.door}${N()}에게 가기</button>
   </div>${tabbar()}</section>`;
 
-R.seat=()=>{const h=HALLS[S.hall];const sel=S.seat;return `<section class="screen" data-testid="screen-seat">
+const PRICE={halo:180,wing:140,robe:120};
+const lab=n=>`${Angel.ZONES[Angel.zoneOf(n)]} ${String(n).padStart(4,'0')}번`;
+function mySeats(h){ const own=(MODE!=='login'&&P.hall===h)?(P.seats||[]):[]; return [...own,...S.reserved.filter(x=>x.hall===h).map(x=>x.seat)]; }
+R.seat=()=>{const h=HALLS[S.hall];const sel=S.seat||[];const taken=SRV[S.hall]?[...SRV[S.hall]]:[];const zs=Angel.zoneStats(taken);return `<section class="screen" data-testid="screen-seat">
   ${status()}
   <div class="topbar"><button class="iconbtn" aria-label="뒤로" data-testid="back" onclick="back()">${I.back}</button><span class="title serif">메모리얼 자리 고르기</span></div>
   <div class="scroll" style="padding:0 16px 16px">
-    <div style="background:var(--cream);border-radius:14px;padding:12px 14px;margin-bottom:12px"><b style="font-size:14px" data-testid="seat-hallname">${h.name} · 창가 줄</b><div style="font-size:12px;color:#8A6D2C;margin-top:2px">${h.name} 1004자리 한정 · 증설 없음 · <span data-testid="seat-left">남은 ${remaining(S.hall)}자리</span></div></div>
-    <div role="tablist" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">${['spring','star','sun'].map(k=>`<button role="tab" aria-selected="${S.hall===k}" data-testid="seattab-${k}" onclick="S.hall='${k}';S.seat=null;render()" style="height:40px;border-radius:12px;font-size:13px;font-weight:700;background:${S.hall===k?'var(--night)':'#EDEBE6'};color:${S.hall===k?'#fff':'var(--ink)'}">${HALLS[k].name}</button>`).join('')}</div>
-    <div style="background:#EEEDEA;border-radius:16px;padding:12px">
-      ${[0,1,2,3,4].map(r=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:${r<4?6:0}px"><span style="width:12px;font-size:11px;color:var(--sub)">${5-r}</span><div style="flex:1;display:grid;grid-template-columns:repeat(6,1fr);gap:6px">${[0,1,2,3,4,5].map(c=>{const s=seatAt(S.hall,r,c);const isSel=sel&&sel.includes(s.code);const dis=s.st==='taken'||s.st==='mine';return `<button class="seat ${s.st==='window'?'free window':s.st} ${isSel?'sel':''}" data-testid="seat-${s.code}" data-st="${s.st}" aria-label="${h.name} ${s.code} ${s.st==='taken'?'예약됨':s.st==='mine'?'내 자리':'예약 가능'}" ${dis?'aria-disabled="true"':''} onclick="pick(${r},${c})"></button>`}).join('')}</div></div>`).join('')}
+    <div style="background:var(--cream);border-radius:14px;padding:12px 14px;margin-bottom:12px"><b style="font-size:14px" data-testid="seat-hallname">${h.name}</b><div style="font-size:12px;color:#8A6D2C;margin-top:2px">1004자리 한정 · 증설 없음 · <span data-testid="seat-left">남은 ${remaining(S.hall)}자리</span></div></div>
+    <div role="tablist" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">${['sun','star','spring'].map(k=>`<button role="tab" aria-selected="${S.hall===k}" data-testid="seattab-${k}" onclick="S.hall='${k}';S.seat=null;render()" style="height:44px;border-radius:12px;font-size:13px;font-weight:700;background:${S.hall===k?'var(--night)':'#EDEBE6'};color:${S.hall===k?'#fff':'var(--ink)'}">${HALLS[k].name}</button>`).join('')}</div>
+    <div style="background:radial-gradient(120% 80% at 50% 10%,#1E2440,#0E1220 65%);border-radius:20px;padding:12px 0;position:relative">
+      <canvas id="seatAngel" data-testid="seat-angel" aria-label="${h.name}의 1004개 별. 빈 별을 눌러 자리를 골라요" style="width:min(300px,86%);display:block;margin:0 auto"></canvas>
+      ${taken.length?'':'<div style="position:absolute;inset:0;display:grid;place-items:center;color:#AEB5C6;font-size:13px">자리를 불러오는 중…</div>'}
     </div>
-    <div style="display:flex;gap:12px;font-size:11px;color:var(--sub);margin:10px 2px 12px;flex-wrap:wrap"><span>■ <span style="color:var(--navy)">선택</span></span><span>■ 예약됨</span><span>□ 가능</span><span style="color:#B48A2C">□ 창가 줄</span><span style="color:#7D8BAA">■ 내 자리</span></div>
-    <div style="background:#fff;border-radius:16px;padding:14px 16px" data-testid="seat-detail">${sel?`<div style="display:flex;justify-content:space-between;align-items:baseline"><b class="serif" style="font-size:16px" data-testid="seat-selected">${h.name} ${sel.join(', ')}</b><b style="color:var(--navy);font-size:13px">영구 · 예시 ${(120*sel.length)}만원</b></div><p style="font-size:13px;color:var(--sub);line-height:1.6;margin-top:6px">한 번 모신 자리는 영원히 ${N()}의 자리예요. 사정이 생기면 다른 보호자에게 양도할 수 있어요.</p>`:`<p style="font-size:13px;color:var(--sub)" data-testid="seat-empty">비어 있는 자리를 눌러 골라 주세요.</p>`}</div>
-    ${S.reserved.length||(MODE==='real'&&MYSEAT())?`<button class="row" style="margin-top:10px" data-testid="transfer-open" onclick="openTransfer()">${I.people}<span style="flex:1"><b style="font-size:14px">내 자리 양도하기</b><br><span style="font-size:12px;color:var(--sub)">조건은 두 보호자가 직접 정해요</span></span>${I.chev}</button>`:''}
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px" role="group" aria-label="자리 구역">${['halo','wing','robe'].map(z=>`<button data-testid="zone-${z}" onclick="pickZone('${z}')" style="border-radius:14px;padding:10px 6px;background:#fff;border:1.5px solid ${sel.length&&Angel.zoneOf(sel[sel.length-1])===z?'var(--navy)':'var(--line)'};min-height:58px"><b style="font-size:14px;display:block">${Angel.ZONES[z]}</b><span style="font-size:12px;color:var(--sub)">남은 ${zs[z].left}자리</span></button>`).join('')}</div>
+    <div style="display:flex;gap:12px;font-size:11px;color:var(--sub);margin:10px 2px 12px;flex-wrap:wrap"><span><span style="color:#fff;background:#1E2440;padding:0 4px;border-radius:3px">▲</span> 빛나는 조각 = 고른 자리</span><span>윤곽만 있는 조각 = 빈 자리</span><span>빛에 가까울수록 좋은 자리</span></div>
+    <div style="background:#fff;border-radius:16px;padding:14px 16px" data-testid="seat-detail">${sel.length?`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b class="serif" style="font-size:16px" data-testid="seat-selected">${h.name} ${sel.map(lab).join(', ')}</b><b style="color:var(--navy);font-size:13px;white-space:nowrap">영구 · 예시 ${sel.reduce((t,n)=>t+PRICE[Angel.zoneOf(n)],0)}만원</b></div><p style="font-size:13px;color:var(--sub);line-height:1.6;margin-top:6px">한 번 모신 자리는 영원히 ${N()}의 자리예요. 사정이 생기면 다른 보호자에게 양도할 수 있어요.</p>`:`<p style="font-size:13px;color:var(--sub)" data-testid="seat-empty">천사의 빈 별을 누르거나 구역을 골라 주세요.</p>`}</div>
+    ${mySeats(S.hall).length||(MODE==='real'&&MYSEAT())||(MODE==='demo')?`<button class="row" style="margin-top:10px" data-testid="transfer-open" onclick="openTransfer()">${I.people}<span style="flex:1"><b style="font-size:14px">내 자리 양도하기</b><br><span style="font-size:12px;color:var(--sub)">매매는 없어요 · 조건은 두 보호자가 직접 정해요</span></span>${I.chev}</button>`:''}
   </div>
-  <div style="display:flex;gap:8px;padding:10px 16px;background:var(--bg)"><button class="cta soft" style="flex:1" data-testid="seat-pair" aria-pressed="${S.pair}" onclick="S.pair=!S.pair;S.seat=null;render();toast(S.pair?'나란히 2자리를 고를 수 있어요':'한 자리만 고를게요')">${S.pair?'✓ ':''}나란히 2자리</button><button class="cta navy" style="flex:1.4" data-testid="seat-reserve" ${sel?'':'disabled'} onclick="confirmReserve()">이 자리 예약하기</button></div>
+  <div style="display:flex;gap:8px;padding:10px 16px;background:var(--bg)"><button class="cta soft" style="flex:1" data-testid="seat-pair" aria-pressed="${S.pair}" onclick="S.pair=!S.pair;if(!S.pair&&S.seat&&S.seat.length>1)S.seat=[S.seat[0]];render();toast(S.pair?'2자리까지 함께 고를 수 있어요':'한 자리만 고를게요')">${S.pair?'✓ ':''}2자리 함께</button><button class="cta navy" style="flex:1.4" data-testid="seat-reserve" ${sel.length?'':'disabled'} onclick="confirmReserve()">이 자리 예약하기</button></div>
   ${tabbar()}</section>`};
-function pick(r,c){
-  const s=seatAt(S.hall,r,c);
-  if(s.st==='taken'){toast('이미 예약된 자리예요');return}
-  if(s.st==='mine'){toast('이미 내 자리예요');return}
-  if(S.pair){
-    if(c===5){toast('오른쪽 옆자리가 없어요. 다른 자리를 골라 주세요');return}
-    const n=seatAt(S.hall,r,c+1);
-    if(n.st==='taken'||n.st==='mine'){toast('옆자리가 이미 예약됐어요');return}
-    S.seat=[s.code,n.code];
-  } else S.seat=[s.code];
-  render();
-}
-function confirmReserve(){ if(!S.seat) return; const h=HALLS[S.hall];
-  if(remaining(S.hall)<S.seat.length){toast('남은 자리가 부족해요');return}
-  openSheet(`<h3 id="sheetTitle" class="serif">${h.name} ${S.seat.join(', ')}</h3><p>영구 보존 · 예시 ${120*S.seat.length}만원<br>예약하면 이 자리는 증설 없이 ${N()}의 자리로 남아요. 결제는 실제 서비스에서 연결돼요.</p><div style="display:flex;gap:8px;margin-top:18px"><button class="cta soft" onclick="closeSheet()">다시 고르기</button><button class="cta navy" data-testid="reserve-confirm" onclick="doReserve()">예약 확정하기</button></div>`,'reserve')}
-function doReserve(){ const hall=S.hall, codes=S.seat.slice(); const nums=codes.map(seatNo);
-  for(const c of codes) S.reserved.push({hall,code:c}); HALLS[hall].left-=codes.length; const n=codes.length; S.seat=null; closeSheet(); render(); toast(`${n}자리를 예약했어요`);
-  api('/api/reserve',{method:'POST',body:JSON.stringify(MODE==='real'?{hall,seats:nums,seatLabel:codes.join(', '),petId:P.id,source:'member'}:{hall,seats:nums,seatLabel:codes.join(', '),source:'demo'})})
-   .then(d=>{HALLS[hall].left=d.hall.left;nums.forEach(x=>(SRV[hall]||(SRV[hall]=new Set)).add(x));render()})
-   .catch(e=>{S.reserved=S.reserved.filter(x=>!(x.hall===hall&&codes.includes(x.code)));HALLS[hall].left+=codes.length;render();toast(e.message);refreshSeats(hall)}) }
-function openTransfer(){const mine=[...(MODE==='real'&&MYSEAT()?[seatText()]:[]),...S.reserved.map(x=>`${HALLS[x.hall].name} ${x.code}`)];
-  openSheet(`<h3 id="sheetTitle">자리 양도하기</h3><p>매매 메뉴는 없어요. 받을 보호자에게 요청을 보내고, 조건은 두 분이 직접 정해요. 받는 분이 본인인증 후 수락하면 명의가 바뀌어요.</p><label class="fl" for="tseat">양도할 자리</label><select id="tseat" style="width:100%;height:46px;border:1px solid var(--line);border-radius:12px;padding:0 12px;font:inherit">${mine.map(m=>`<option>${m}</option>`).join('')}</select><label class="fl" for="tto">받을 보호자 휴대폰 번호</label><input id="tto" type="text" inputmode="tel" placeholder="010-0000-0000" data-testid="transfer-phone"><div data-testid="transfer-err" style="color:#B2453A;font-size:13px;margin-top:6px;min-height:18px"></div><button class="cta navy" style="margin-top:8px" data-testid="transfer-send" onclick="sendTransfer()">양도 요청 보내기</button>`,'transfer')}
-function sendTransfer(){const v=$('#tto').value.replace(/\D/g,'');if(!/^01\d{8,9}$/.test(v)){$('[data-testid=transfer-err]').textContent='휴대폰 번호 10~11자리를 확인해 주세요.';return}const seatLabel=$('#tseat').value;closeSheet();api('/api/transfer',{method:'POST',body:JSON.stringify({seatLabel,fromName:MODE==='real'?'':'김지현',toPhone:v})}).then(()=>toast('양도 요청을 보냈어요. 상대가 수락하면 알려드려요')).catch(e=>toast(e.message))}
+function selectSeat(n){ const cur=S.seat||[]; if(cur.includes(n)){S.seat=cur.filter(x=>x!==n);} else if(S.pair){ S.seat=[...cur,n].slice(-2); } else S.seat=[n]; render(); }
+function pickZone(z){ const taken=SRV[S.hall]?[...SRV[S.hall]]:[]; const free=Angel.freeSeats(taken,z).filter(n=>!(S.seat||[]).includes(n)); if(!free.length){toast('이 구역은 모두 채워졌어요');return} selectSeat(free[0]); }
+function mountSeatAngel(){ const cv=$('#seatAngel'); if(!cv||!SRV[S.hall]) return;
+  angelView=Angel.mount(cv,{taken:[...SRV[S.hall]],mine:mySeats(S.hall),picked:S.seat||[],photos:PHOTOS,onTap:(n,i)=>{ if(mySeats(S.hall).includes(n)){toast('이미 내 자리예요');return} if(i.taken){toast('이미 누군가의 아이가 있는 자리예요');return} selectSeat(n); }}); }
+function confirmReserve(){ const sel=S.seat||[]; if(!sel.length) return; const h=HALLS[S.hall];
+  if(remaining(S.hall)<sel.length){toast('남은 자리가 부족해요');return}
+  openSheet(`<h3 id="sheetTitle" class="serif">${h.name} ${sel.map(lab).join(', ')}</h3><p>영구 보존 · 예시 ${sel.reduce((t,n)=>t+PRICE[Angel.zoneOf(n)],0)}만원<br>예약하면 이 자리는 증설 없이 ${N()}의 자리로 남아요. 결제는 실제 서비스에서 연결돼요.</p><div style="display:flex;gap:8px;margin-top:18px"><button class="cta soft" onclick="closeSheet()">다시 고르기</button><button class="cta navy" data-testid="reserve-confirm" onclick="doReserve()">예약 확정하기</button></div>`,'reserve')}
+function doReserve(){ const hall=S.hall, nums=(S.seat||[]).slice(); if(!nums.length) return;
+  for(const n of nums) S.reserved.push({hall,seat:n}); HALLS[hall].left-=nums.length; (SRV[hall]||(SRV[hall]=new Set)); nums.forEach(x=>SRV[hall].add(x)); S.seat=null; closeSheet(); render(); toast(`${nums.length}자리를 예약했어요`);
+  api('/api/reserve',{method:'POST',body:JSON.stringify(MODE==='real'?{hall,seats:nums,petId:P.id,source:'member'}:{hall,seats:nums,source:'demo'})})
+   .then(d=>{HALLS[hall].left=d.hall.left; if(MODE==='real'&&d.pet) P={...P,seats:d.pet.seats,hall:d.pet.hall,hallName:d.pet.hallName}; S.reserved=S.reserved.filter(x=>!(x.hall===hall&&nums.includes(x.seat)&&MODE==='real')); render()})
+   .catch(e=>{S.reserved=S.reserved.filter(x=>!(x.hall===hall&&nums.includes(x.seat)));HALLS[hall].left+=nums.length;render();toast(e.message);refreshSeats(hall).then(render)}) }
+function openTransfer(){const mine=[...(MODE==='demo'?[seatText()]:(P.seats||[]).map(n=>`${P.hallName} ${lab(n)}`)),...S.reserved.map(x=>`${HALLS[x.hall].name} ${lab(x.seat)}`)];
+  if(!mine.length){toast('양도할 자리가 없어요');return}
+  openSheet(`<h3 id="sheetTitle">자리 양도하기</h3><p>매매 메뉴는 없어요. 받을 보호자의 번호로 요청을 보내고, 조건은 두 분이 직접 정해요. 운영팀이 두 분을 확인한 뒤 명의를 바꿔 드려요.</p><label class="fl" for="tseat">양도할 자리</label><select id="tseat" style="width:100%;height:46px;border:1px solid var(--line);border-radius:12px;padding:0 12px;font:inherit">${mine.map(m=>`<option>${m}</option>`).join('')}</select><label class="fl" for="tto">받을 보호자 휴대폰 번호</label><input id="tto" type="text" inputmode="tel" placeholder="010-0000-0000" data-testid="transfer-phone"><div data-testid="transfer-err" style="color:#B2453A;font-size:13px;margin-top:6px;min-height:18px"></div><button class="cta navy" style="margin-top:8px" data-testid="transfer-send" onclick="sendTransfer()">양도 요청 보내기</button>`,'transfer')}
+function sendTransfer(){const v=$('#tto').value.replace(/\D/g,'');if(!/^01\d{8,9}$/.test(v)){$('[data-testid=transfer-err]').textContent='휴대폰 번호 10~11자리를 확인해 주세요.';return}const seatLabel=$('#tseat').value;closeSheet();api('/api/transfer',{method:'POST',body:JSON.stringify({seatLabel,fromName:MODE==='real'?'':'김지현',toPhone:v,petId:MODE==='real'?P.id:undefined})}).then(()=>toast('양도 요청을 보냈어요. 운영팀이 확인해 처리해요')).catch(e=>toast(e.message))}
 
 R.visit=()=>`<section class="screen" data-testid="screen-visit" style="background:#0E1220">
   <div class="bgimg" style="background-image:url(${MODE==='real'?IMG.hall:IMG.niche})"></div><div class="shade-t"></div><div class="shade-b" style="height:58%"></div>
@@ -357,12 +373,13 @@ R.visit=()=>`<section class="screen" data-testid="screen-visit" style="backgroun
     <div class="glass-dark" style="border-radius:16px;padding:12px 14px;max-height:150px;overflow:auto" data-testid="guestbook">${S.guest.length?'':`<div style="font-size:13px;color:#C9CFDC">아직 남긴 말이 없어요. ${N()}에게 첫 한 마디를 남겨 주세요.</div>`}${S.guest.map(g=>`<div data-testid="guest-item" style="margin-bottom:6px"><div style="font-size:12px;color:var(--gold)">${esc(g.who)} · ${esc(g.when)}</div><div style="font-size:14px;line-height:1.55">${esc(g.text)}</div></div>`).join('')}</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
       <button data-testid="visit-flower" onclick="putFlower()" style="height:66px;border-radius:14px;background:#fff;color:var(--night);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:13px;font-weight:700">${I.flower}꽃 놓기</button>
-      <button data-testid="visit-candle" aria-pressed="${S.candle}" onclick="S.candle=!S.candle;render();toast(S.candle?'촛불을 켰어요. 오늘 밤까지 밝혀둘게요':'촛불을 껐어요')" class="${S.candle?'':'glass-dark'}" style="height:66px;border-radius:14px;${S.candle?'background:var(--gold);color:var(--night);':'color:#fff;'}display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:13px;font-weight:700">${I.candle}${S.candle?'촛불 켜짐':'촛불 켜기'}</button>
+      <button data-testid="visit-candle" aria-pressed="${S.candle}" onclick="toggleCandle()" class="${S.candle?'':'glass-dark'}" style="height:66px;border-radius:14px;${S.candle?'background:var(--gold);color:var(--night);':'color:#fff;'}display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:13px;font-weight:700">${I.candle}${S.candle?'촛불 켜짐':'촛불 켜기'}</button>
       <button class="glass-dark" data-testid="visit-guest" onclick="openGuest()" style="height:66px;border-radius:14px;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:13px;font-weight:700">${I.pen}방명록</button>
     </div>
     <button class="cta glass-dark" style="color:#fff" data-testid="visit-room" onclick="go('room')">${I.door}기억의 방으로 들어가기</button>
   </div>${tabbar()}</section>`;
-function putFlower(){S.flowers++;petals();render();toast(`${P.name}에게 꽃을 놓았어요`)}
+function putFlower(){S.flowers++;petals();render();toast(`${P.name}에게 꽃을 놓았어요`); if(MODE==='real') api(`/api/pets/${P.id}/flower`,{method:'POST',body:'{}'}).then(d=>{S.flowers=d.flowers.today; if(['visit','home'].includes(S.screen)) render();}).catch(()=>{});}
+function toggleCandle(){S.candle=!S.candle;render();toast(S.candle?'촛불을 켰어요. 오늘 밤까지 밝혀둘게요':'촛불을 껐어요'); if(MODE==='real') api(`/api/pets/${P.id}/candle`,{method:'POST',body:JSON.stringify({on:S.candle})}).catch(()=>{});}
 function openGuest(){openSheet(`<h3 id="sheetTitle">${N()}에게 한 마디</h3><p>가족과 ${J(N(),'을','를')} 아는 사람만 볼 수 있어요.</p><label class="fl" for="gtext">남길 말</label><textarea id="gtext" rows="4" maxlength="200" data-testid="guest-text" placeholder="${ya()}, "></textarea><div data-testid="guest-err" style="color:#B2453A;font-size:13px;margin-top:6px;min-height:18px"></div><button class="cta navy" style="margin-top:8px" data-testid="guest-save" onclick="saveGuest()">방명록 남기기</button>`,'guest')}
 function saveGuest(){const v=$('#gtext').value.trim();if(!v){$('[data-testid=guest-err]').textContent='남길 말을 한 글자 이상 적어 주세요.';return}S.guest.unshift({who:'나',when:'방금',text:v});api('/api/guestbook',{method:'POST',body:JSON.stringify({pet:MODE==='real'?P.id:'보리',who:MODE==='real'?(ME&&ME.account.owner)||'나':'나',text:v})}).catch(e=>toast(e.message));if(!S.todayVisitors.includes('나'))S.todayVisitors.unshift('나');closeSheet();render();toast('방명록을 남겼어요')}
 
@@ -393,7 +410,7 @@ R.room=()=>`<section class="screen" data-testid="screen-room" style="background:
   <div class="glass-dark" style="position:relative;z-index:2;margin:0 12px 24px;border-radius:22px;padding:14px 8px;display:grid;grid-template-columns:repeat(4,1fr)">
     ${[['call','이름 부르기',I.mic],['treat','간식 주기',I.treat],['pet','쓰다듬기',I.hand],['flower','꽃 놓기',I.flower]].map(([k,l,ic])=>`<button data-testid="act-${k}" onclick="act('${k}')" style="display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff;font-size:12px;font-weight:500;min-height:64px"><span style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.16);display:grid;place-items:center">${ic}</span>${l}</button>`).join('')}
   </div></section>`;
-function act(k){S.reaction=REACT(k);if(k==='flower'){S.flowers++;petals()}render()}
+function act(k){S.reaction=REACT(k);if(k==='flower'){putFlower();return}render()}
 function openHot(k){const h=hots()[k];
   if(k==='box'){const L=MODE==='real'?S.guest.map(g=>[esc(g.who),g.at?new Date(g.at).toLocaleDateString('ko-KR'):esc(g.when),esc(g.text)]):[['엄마','2026.09.22','보리야, 집이 너무 조용해. 현관 불은 계속 켜둘게.'],['지수','2026.10.01','오늘 네 산책길 혼자 걸었어. 은행잎이 네 털 색이랑 똑같더라.']];
   openSheet(`<h3 id="sheetTitle">추억 상자 · 편지 ${L.length}</h3>${L.length?'':`<p>아직 편지가 없어요. 방명록에 남긴 말이 이곳에 모여요.</p>`}${L.map(([w,d,t])=>`<div data-testid="letter" style="background:var(--cream);border-radius:14px;padding:14px;margin-top:10px"><div style="font-size:12px;color:#8A6D2C">${w}의 편지 · ${d}</div><div class="serif" style="font-size:15px;line-height:1.7;margin-top:4px">${t}</div></div>`).join('')}<button class="cta soft" style="margin-top:16px" onclick="closeSheet()">상자 닫기</button>`,'hot-box');return}
@@ -410,11 +427,14 @@ R.keep=()=>`<section class="screen" data-testid="screen-keep">
       ['heir',I.people,'가족 승계',S.heir?`보호자가 떠난 뒤 ${esc(S.heir)}가 이어서 관리`:'이어서 관리할 가족을 정해 두세요',S.heir?'지정됨':'정하기'],
       ['download',I.down,'전체 내려받기','사진·영상·편지를 한 번에',S.downloaded?'완료':'받기'],
       ['terms',I.lock,'보존 약속','서비스가 멈춰도 기억은 다른 곳으로 옮겨 지켜요','약관 보기'],
-    ...(MODE==='real'?[['edit',I.pen,'아이 정보 고치기','사진, 생일, 몸무게, 좋아한 것','고치기'],['logout',I.lock,'로그아웃',ME?`${esc(ME.account.owner)} · ${esc(ME.account.phone)}`:'','나가기']]:[]),
+    ...(MODE==='real'?[['share',I.people,'가족에게 메모리얼 보내기','링크로 꽃과 한 마디를 받을 수 있어요','보내기'],['view',I.star,'방문자에게 보이는 화면','가족이 링크로 여는 메모리얼','열기'],['edit',I.pen,'아이 정보 고치기','사진, 생일, 몸무게, 좋아한 것','고치기'],['password',I.lock,'비밀번호 바꾸기','임시 비밀번호를 받았다면 꼭 바꿔 주세요','바꾸기'],['logout',I.lock,'로그아웃',ME?`${esc(ME.account.owner)} · ${esc(ME.account.phone)}`:'','나가기']]:[]),
     ].map(([k,ic,t,d,a])=>`<button class="row" data-testid="keep-${k}" onclick="keep('${k}')" style="margin-bottom:10px">${ic}<span style="flex:1"><b style="font-size:15px">${t}</b><br><span style="font-size:12px;color:var(--sub)" data-testid="keep-${k}-desc">${d}</span></span><b style="font-size:13px;color:${a==='꺼짐'?'#B2453A':'var(--navy)'}" data-testid="keep-${k}-state">${a}</b></button>`).join('')}
   </div>${tabbar()}</section>`;
 function keep(k){
   if(k==='edit'){openEdit();return}
+  if(k==='share'){shareMemorial();return}
+  if(k==='password'){openSheet(`<h3 id="sheetTitle">비밀번호 바꾸기</h3><p>다른 기기에 로그인된 것은 모두 로그아웃돼요.</p><label class="fl" for="pw-cur">지금 비밀번호</label><input type="password" id="pw-cur" autocomplete="current-password" class="pwin"><label class="fl" for="pw-new">새 비밀번호 <span style="font-weight:400;color:var(--sub);font-size:12px">6자 이상</span></label><input type="password" id="pw-new" autocomplete="new-password" class="pwin"><div id="pw-err" role="alert" style="color:#B2453A;font-size:13px;margin-top:8px;min-height:18px"></div><button class="cta navy" style="margin-top:6px" onclick="changePw()">비밀번호 바꾸기</button>`,'password');return}
+  if(k==='view'){window.open('/m/'+P.id,'_blank','noopener');return}
   if(k==='logout'){logout();return}
   if(k==='heir'&&MODE==='real'){openSheet(`<h3 id="sheetTitle">가족 승계</h3><p>보호자가 떠난 뒤 이어서 관리할 가족을 정해요. 실제 서비스에서는 그 가족의 본인인증을 한 번 더 받아요.</p><label class="fl" for="heir-in">가족 이름</label><input type="text" id="heir-in" maxlength="20" value="${esc(S.heir)}"><button class="cta navy" style="margin-top:14px" onclick="const v=$('#heir-in').value.trim();if(v)setHeir(v)">지정하기</button>`,'heir');return}
   if(k==='backup') openSheet(`<h3 id="sheetTitle">3중 백업</h3><p>원본은 서울, 부산, 해외 한 곳에 따로 보관돼요. 영원히 기억하는 곳이라 백업은 끌 수 없어요.</p><div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg);border-radius:14px;padding:14px;margin-top:14px"><b>백업 상태</b><b style="color:var(--ok)" data-testid="backup-state">항상 켜짐</b></div><button class="cta soft" style="margin-top:16px" onclick="closeSheet()">확인</button>`,'backup');
@@ -426,14 +446,15 @@ function keep(k){
 }
 function setHeir(n){S.heir=n;closeSheet();render();toast(`${n}님을 승계 가족으로 지정했어요`)}
 
-R.plaza=()=>`<section class="screen" data-testid="screen-plaza">
+R.plaza=()=>{const list=MODE==='real'?(S.plazaReal||null):S.plaza;return `<section class="screen" data-testid="screen-plaza">
   ${status()}
   <div class="topbar"><span class="title serif">별빛 광장</span></div>
   <p style="padding:0 16px 12px;font-size:13px;color:var(--sub)">오늘 누군가 찾아온 아이들이에요. 숫자도 순위도 없어요.</p>
   <div class="scroll" style="padding:0 16px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start">
-    ${S.plaza.map((p,i)=>`<article class="feedcard" style="margin:0" data-testid="plaza-item"><div style="aspect-ratio:1;background:url(${IMG[p.img]}) center/cover"></div><div style="padding:10px 12px"><b class="serif">${p.name}</b><div style="font-size:11px;color:var(--sub)">${p.kind} · ${p.hall}</div><div style="font-size:11px;color:#8A6D2C;margin-top:4px">${p.note}</div><button data-testid="plaza-flower" onclick="plazaFlower(${i})" ${S.plazaFlowered[i]?'disabled':''} style="margin-top:8px;width:100%;height:44px;border-radius:12px;font-size:12px;font-weight:700;background:${S.plazaFlowered[i]?'var(--cream)':'#EDEBE6'}">${S.plazaFlowered[i]?'꽃을 놓았어요':'위로의 꽃 놓기'}</button></div></article>`).join('')}
-  </div>${tabbar()}</section>`;
-function plazaFlower(i){S.plazaFlowered[i]=true;render();toast(`${S.plaza[i].name}에게 꽃을 놓았어요`)}
+    ${list===null?'<p style="grid-column:1/-1;color:var(--sub);font-size:14px;padding:20px 0;text-align:center">불러오는 중…</p>':list.length?list.map((p,i)=>`<article class="feedcard" style="margin:0" data-testid="plaza-item">${p.id?`<a href="/m/${p.id}" aria-label="${esc(p.name)}의 메모리얼 열기" style="display:block;aspect-ratio:1;background:url('${p.photo}') center/cover"></a>`:`<div style="aspect-ratio:1;background:url(${IMG[p.img]}) center/cover"></div>`}<div style="padding:10px 12px"><b class="serif">${esc(p.name)}</b><div style="font-size:11px;color:var(--sub)">${esc(p.kind||'')}${p.kind?' · ':''}${esc(p.hallName||p.hall||'')}</div><div style="font-size:11px;color:#8A6D2C;margin-top:4px">${esc(p.note)}</div><button data-testid="plaza-flower" onclick="plazaFlower(${i})" ${S.plazaFlowered[(p.id||i)]?'disabled':''} style="margin-top:8px;width:100%;height:44px;border-radius:12px;font-size:12px;font-weight:700;background:${S.plazaFlowered[(p.id||i)]?'var(--cream)':'#EDEBE6'}">${S.plazaFlowered[(p.id||i)]?'꽃을 놓았어요':'위로의 꽃 놓기'}</button></div></article>`).join(''):`<div style="grid-column:1/-1;background:#fff;border-radius:18px;padding:28px 20px;text-align:center"><b>아직 광장에 나온 아이가 없어요</b><p style="font-size:14px;color:var(--sub);margin-top:6px;line-height:1.6">대표 사진을 넣고 '별빛 광장에 보이기'를 켜면<br>${N()}도 이곳에서 위로의 꽃을 받을 수 있어요.</p></div>`}
+  </div>${tabbar()}</section>`};
+function plazaFlower(i){ const list=MODE==='real'?S.plazaReal:S.plaza; const p=list[i]; S.plazaFlowered[p.id||i]=true; render(); toast(`${p.name}에게 꽃을 놓았어요`); if(p.id) api(`/api/pets/${p.id}/flower`,{method:'POST',body:'{}'}).catch(()=>{}); }
+function loadPlaza(){ api('/api/plaza').then(l=>{ S.plazaReal=l; if(S.screen==='plaza') render(); }).catch(()=>{ S.plazaReal=[]; if(S.screen==='plaza') render(); }); }
 
 function openRecord(){ if(MODE==='real'){ openRealRecord(); return; } openSheet(`<h3 id="sheetTitle">${N()} 기록하기</h3><p>사진과 한 줄이면 충분해요. 가족 피드에 올라가요.</p><label class="fl">사진</label><div style="display:flex;gap:8px">${['p2','p5','p7'].map((k,i)=>`<button data-testid="rec-photo-${i}" aria-pressed="false" onclick="this.parentNode.querySelectorAll('button').forEach(b=>{b.setAttribute('aria-pressed','false');b.style.outline=''});this.setAttribute('aria-pressed','true');this.style.outline='3px solid var(--navy)';window._recImg='${k}'" style="width:72px;height:72px;border-radius:12px;background:url(${IMG[k]}) center/cover"></button>`).join('')}</div><label class="fl" for="rtext">한 줄 기록</label><textarea id="rtext" rows="3" data-testid="rec-text" maxlength="300" placeholder="오늘 떠오른 ${N()}의 모습"></textarea><div data-testid="rec-err" style="color:#B2453A;font-size:13px;margin-top:6px;min-height:18px"></div><button class="cta navy" style="margin-top:8px" data-testid="rec-save" onclick="saveRecord()">피드에 올리기</button>`,'record');window._recImg=null}
 function openRealRecord(){ window._recData=null; openSheet(`<h3 id="sheetTitle">${N()} 기록하기</h3><p>사진과 한 줄이면 충분해요. 가족 피드에 올라가요.</p>
@@ -450,7 +471,7 @@ async function saveRealRecord(){ const v=$('#rtext').value.trim(); if(!v&&!windo
 function saveRecord(){const v=$('#rtext').value.trim();if(!v&&!window._recImg){$('[data-testid=rec-err]').textContent='사진을 고르거나 한 줄을 적어 주세요.';return}S.feed.unshift({who:'나',av:'me',img:window._recImg,text:v||'',when:'방금',likes:0});closeSheet();S.history=[];S.screen='home';render();toast('기록을 올렸어요')}
 
 let angelView=null;
-function render(){ if(angelView){angelView.destroy();angelView=null} $('#view').innerHTML=R[S.screen](); $('#phone').dataset.screen=S.screen; if(S.screen==='enter') mountEnterAngel(); }
+function render(){ if(angelView){angelView.destroy();angelView=null} $('#view').innerHTML=R[S.screen](); $('#phone').dataset.screen=S.screen; if(S.screen==='enter') mountEnterAngel(); if(S.screen==='seat') mountSeatAngel(); }
 const SRV={};
 const PHOTOS=['portrait','p1','p2','p3','p4','p5','p7'].map(k=>'/img/'+k+'.jpg');
 async function api(path,opt){ const r=await fetch(path,{...opt,headers:{'content-type':'application/json'}}); const d=await r.json().catch(()=>({})); if(!r.ok) throw new Error(d.error||'잠시 후 다시 시도해 주세요'); return d; }

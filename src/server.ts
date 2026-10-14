@@ -126,14 +126,27 @@ function applyPetFields(p: Pet, b: any): string | null {
   }
   if (p.birth && p.passed && p.passed < p.birth) return "떠난 날이 생일보다 앞설 수 없어요";
   if (b.weight !== undefined && p.weight && !/^\d{1,3}(\.\d{1,2})?$/.test(p.weight)) return "몸무게는 숫자로 적어 주세요 (예: 3.2)";
+  if (typeof b.showInPlaza === "boolean") p.showInPlaza = b.showInPlaza;
   if (Array.isArray(b.tags)) p.tags = b.tags.map((t: unknown) => clean(t, 16)).filter(Boolean).slice(0, 3);
   if (p.petStatus !== "먼저 떠났어요") p.passed = "";
   return null;
 }
+const kstDay = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+const kstDayEnd = () => Date.parse(kstDay() + "T23:59:59+09:00");
+function touch(p: Pet) { p.lastActive = new Date().toISOString(); }
+function flowersOf(p: Pet) { return { today: p.flowerDay === kstDay() ? p.flowersToday || 0 : 0, total: p.flowersTotal || 0 }; }
+// 공개 메모리얼에 보이는 정보 (연락처·계정 정보 없음)
+const publicPet = (p: Pet) => ({
+  id: p.id, name: p.name, kind: p.kind, breed: p.breed, nickname: p.nickname, birth: p.birth, passed: p.passed, petStatus: p.petStatus,
+  likes: p.likes, tags: p.tags, weight: p.weight, photo: p.photoV ? `/photo/${p.id}.jpg?v=${p.photoV}` : "",
+  hall: p.hall, hallName: HALLS.find((h) => h.id === p.hall)?.name || "", seats: p.seats,
+  flowers: flowersOf(p), candle: (p.candleUntil || 0) > Date.now(),
+});
 const petView = (p: Pet) => ({
   ...p,
   photo: p.photoV ? `/photo/${p.id}.jpg?v=${p.photoV}` : "",
   hallName: HALLS.find((h) => h.id === p.hall)?.name || "",
+  showInPlaza: p.showInPlaza !== false, flowers: flowersOf(p), candle: (p.candleUntil || 0) > Date.now(),
 });
 function decodeJpeg(dataUrl: unknown): Uint8Array | string {
   const m = /^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl || ""));
@@ -145,7 +158,22 @@ function decodeJpeg(dataUrl: unknown): Uint8Array | string {
 }
 
 // ---------- pages & static ----------
-const PAGES: Record<string, string> = { "/": "guest.html", "/start": "index.html", "/guest": "guest.html", "/member": "member.html", "/admin": "admin.html" };
+const PAGES: Record<string, string> = { "/": "guest.html", "/start": "index.html", "/guest": "guest.html", "/member": "member.html", "/admin": "admin.html", "/privacy": "privacy.html" };
+const escHtml = (v: string) => v.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+// 공개 메모리얼 /m/:id — 링크 미리보기(카카오톡 등)를 위해 아이 이름·사진을 메타 태그로 넣어 준다
+async function serveMemorial(req: Request, id: string): Promise<Response> {
+  await load();
+  const pet = state!.pets.find((p) => p.id === id);
+  const file = Bun.file(join(PUBLIC_DIR, "memorial.html"));
+  let html = await file.text();
+  const origin = new URL(req.url).origin.replace(/^http:/, req.headers.get("x-forwarded-proto") === "https" ? "https:" : "http:");
+  const title = pet ? `${pet.name}의 메모리얼 · 기억의 집` : "기억의 집";
+  const desc = pet ? "1004의 별이 모여 하나의 빛이 됩니다. 꽃 한 송이, 한 마디를 남겨 주세요." : "메모리얼을 찾을 수 없어요";
+  const img = pet?.photoV ? `${origin}/photo/${pet.id}.jpg?v=${pet.photoV}` : `${origin}/img/portrait.jpg`;
+  const og = `<title>${escHtml(title)}</title><meta property="og:title" content="${escHtml(title)}"><meta property="og:description" content="${escHtml(desc)}"><meta property="og:image" content="${escHtml(img)}"><meta property="og:type" content="website"><meta name="description" content="${escHtml(desc)}">`;
+  html = html.replace("<!--OG-->", og);
+  return new Response(html, { status: pet ? 200 : 404, headers: { ...SECURITY_HEADERS, "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
+}
 const SECURITY_HEADERS = { "x-content-type-options": "nosniff", "referrer-policy": "strict-origin-when-cross-origin" };
 
 async function serveStatic(path: string): Promise<Response | null> {
@@ -210,7 +238,8 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
           if (!(await Bun.password.verify(password, existing.pwHash))) return bad("이미 가입된 번호예요. 그때 정한 비밀번호를 넣어 주세요", 409);
           account = existing;
         } else {
-          account = { id: nextId("A"), at: new Date().toISOString(), owner, phone, pwHash: await Bun.password.hash(password) };
+          if (b.agree !== true) return bad("개인정보 수집·이용에 동의해 주세요");
+          account = { id: nextId("A"), at: new Date().toISOString(), owner, phone, pwHash: await Bun.password.hash(password), agreedAt: new Date().toISOString() };
           s.accounts.push(account);
         }
         setCookie = startSession(req, account.id);
@@ -218,7 +247,7 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
       pet = {
         id: nextId("P"), accountId: account.id, at: new Date().toISOString(), name, kind: clean(b.kind, 20) || "-", breed: "",
         petStatus: clean(b.petStatus, 20) || "-", nickname: "", birth: "", passed: "", weight: "", likes: "", tags: [],
-        photoV: 0, hall: h.id, seats: [],
+        photoV: 0, hall: h.id, seats: [], showInPlaza: true, lastActive: new Date().toISOString(),
       };
       s.pets.push(pet);
     }
@@ -256,6 +285,17 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
     const mine = s.pets.filter((p) => p.accountId === a.id);
     if (req.method === "GET" && path === "/api/me") {
       return json({ account: { owner: a.owner, phone: a.phone.slice(0, 3) + "-****-" + a.phone.slice(-4) }, pets: mine.map(petView) });
+    }
+    if (req.method === "PUT" && path === "/api/me/password") {
+      const b = await body(req);
+      if (!(await Bun.password.verify(String(b.current ?? ""), a.pwHash))) return bad("지금 비밀번호가 맞지 않아요");
+      const next = String(b.next ?? "");
+      if (next.length < 6 || next.length > 64) return bad("새 비밀번호는 6자 이상으로 정해 주세요");
+      a.pwHash = await Bun.password.hash(next);
+      const keep = cookieOf(req, SESSION_COOKIE);
+      for (const [t, ss] of Object.entries(s.sessions)) if (ss.accountId === a.id && t !== keep) delete s.sessions[t];
+      await save();
+      return json({ ok: true });
     }
     m = path.match(/^\/api\/me\/pets\/([\w-]+)(\/photo|\/feed)?$/);
     const pet = m && mine.find((p) => p.id === m![1]);
@@ -296,12 +336,51 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
     return bad("찾을 수 없어요", 404);
   }
 
+  // ---- 공개 메모리얼 (가족·지인이 링크로 방문) ----
+  m = path.match(/^\/api\/pets\/([\w-]+)(\/flower|\/candle)?$/);
+  if (m) {
+    const pet = s.pets.find((p) => p.id === m![1]);
+    if (!pet) return bad("메모리얼을 찾을 수 없어요", 404);
+    if (req.method === "GET" && !m[2]) return json(publicPet(pet));
+    if (req.method === "POST" && m[2] === "/flower") {
+      if (pet.flowerDay !== kstDay()) { pet.flowerDay = kstDay(); pet.flowersToday = 0; }
+      pet.flowersToday = (pet.flowersToday || 0) + 1;
+      pet.flowersTotal = (pet.flowersTotal || 0) + 1;
+      touch(pet);
+      await save();
+      return json({ flowers: flowersOf(pet) });
+    }
+    if (req.method === "POST" && m[2] === "/candle") {
+      const b = await body(req);
+      pet.candleUntil = b.on === false ? 0 : kstDayEnd();
+      touch(pet);
+      await save();
+      return json({ candle: (pet.candleUntil || 0) > Date.now() });
+    }
+  }
+  if (req.method === "GET" && path === "/api/plaza") {
+    const notes = (p: Pet) => {
+      const today = kstDay();
+      if (p.flowerDay === today && (p.flowersToday || 0) > 0) return "오늘 꽃이 놓였어요";
+      if (s.guestbook.some((g) => g.pet === p.id && !g.hidden && g.at.slice(0, 10) === today)) return "가족이 편지를 남겼어요";
+      if ((p.candleUntil || 0) > Date.now()) return "촛불이 켜져 있어요";
+      return "별이 되어 빛나고 있어요";
+    };
+    const list = s.pets
+      .filter((p) => p.photoV && p.showInPlaza !== false)
+      .sort((a, b) => (b.lastActive || b.at).localeCompare(a.lastActive || a.at))
+      .slice(0, 12)
+      .map((p) => ({ id: p.id, name: p.name, kind: p.breed || p.kind, hallName: HALLS.find((h) => h.id === p.hall)?.name || "", photo: `/photo/${p.id}.jpg?v=${p.photoV}`, note: notes(p) }));
+    return json(list);
+  }
+
   if (req.method === "POST" && path === "/api/transfer") {
     const b = await body(req);
     const toPhone = digits(b.toPhone);
     if (!isPhone(toPhone)) return bad("휴대폰 번호 10~11자리를 확인해 주세요");
     const a = accountOf(req);
-    const t: Transfer = { id: nextId("T"), at: new Date().toISOString(), seatLabel: clean(b.seatLabel, 30) || "-", fromName: a?.owner || clean(b.fromName, 20) || "-", toPhone, status: "pending" };
+    const ownPet = a ? s.pets.find((p) => p.accountId === a.id && p.id === b.petId) : undefined;
+    const t: Transfer = { id: nextId("T"), at: new Date().toISOString(), seatLabel: clean(b.seatLabel, 30) || "-", fromName: a?.owner || clean(b.fromName, 20) || "-", toPhone, status: "pending", accountId: a?.id, petId: ownPet?.id };
     s.transfers.unshift(t);
     await save();
     return json({ transfer: { id: t.id, status: t.status } });
@@ -317,6 +396,8 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
     if (!text) return bad("남길 말을 한 글자 이상 적어 주세요");
     const g: Guest = { id: nextId("G"), at: new Date().toISOString(), pet: clean(b.pet, 20) || "보리", who: clean(b.who, 20) || "나", text, hidden: false, reports: 0 };
     s.guestbook.unshift(g);
+    const gp = s.pets.find((p) => p.id === g.pet);
+    if (gp) touch(gp);
     await save();
     return json({ entry: { id: g.id, at: g.at, pet: g.pet, who: g.who, text: g.text } });
   }
@@ -333,12 +414,24 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
         reservations: s.reservations, transfers: s.transfers,
         guestbook: s.guestbook.map((g) => ({ ...g, pet: g.pet.startsWith("P-") ? petName(g.pet) : g.pet })),
         pets: s.pets.map(petView), accounts: s.accounts.length,
+        members: s.accounts.map((a) => ({ id: a.id, at: a.at, owner: a.owner, phone: a.phone, agreedAt: a.agreedAt || "", pets: s.pets.filter((p) => p.accountId === a.id).map((p) => ({ id: p.id, name: p.name, hallName: HALLS.find((h) => h.id === p.hall)?.name || "", seats: p.seats })) })),
       });
     }
     if (req.method === "POST" && path === "/api/admin/reset") {
       state = seedState();
       await save();
       return json({ ok: true });
+    }
+    m = path.match(/^\/api\/admin\/accounts\/([\w-]+)\/password$/);
+    if (req.method === "POST" && m) {
+      const a = s.accounts.find((x) => x.id === m![1]);
+      if (!a) return bad("없는 회원이에요", 404);
+      const chars = "abcdefghjkmnpqrstuvwxyz23456789";
+      const temp = Array.from(randomBytes(8), (x) => chars[x % chars.length]).join("");
+      a.pwHash = await Bun.password.hash(temp);
+      for (const [t, ss] of Object.entries(s.sessions)) if (ss.accountId === a.id) delete s.sessions[t];
+      await save();
+      return json({ temp });
     }
     m = path.match(/^\/api\/admin\/transfers\/([\w-]+)$/);
     if (req.method === "POST" && m) {
@@ -396,6 +489,8 @@ const server = Bun.serve({
         return bad("잠시 후 다시 시도해 주세요", 500);
       }
     }
+    const mem = path.match(/^\/m\/([\w-]+)$/);
+    if (mem && req.method === "GET") return serveMemorial(req, mem[1]);
     const photo = path.match(/^\/photo\/([\w-]+)\.jpg$/);
     if (photo && req.method === "GET") {
       const bytes = await storage.readBytes(`photos/${photo[1]}.jpg`);

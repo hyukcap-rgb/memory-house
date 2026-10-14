@@ -50,7 +50,7 @@ describe("예약·계정·아이 정보", () => {
 
   test("비회원 예약 → 계정 생성·로그인 쿠키, 같은 자리 재예약 불가", async () => {
     const { seat, left } = await freeSeat("star");
-    const body = { hall: "star", seats: [seat], pet: "하늘", kind: "강아지", petStatus: "먼저 떠났어요", owner: "테스트", phone: "010-1234-5678", password: "secret12", source: "guest" };
+    const body = { hall: "star", seats: [seat], pet: "하늘", kind: "강아지", petStatus: "먼저 떠났어요", owner: "테스트", phone: "010-1234-5678", password: "secret12", agree: true, source: "guest" };
     const res = await post("/api/reserve", body);
     expect(res.status).toBe(200);
     cookie = (res.headers.get("set-cookie") || "").split(";")[0];
@@ -65,7 +65,8 @@ describe("예약·계정·아이 정보", () => {
     const { seat } = await freeSeat("spring");
     const base = { hall: "spring", seats: [seat], pet: "a", owner: "b", phone: "01055556666" };
     expect((await post("/api/reserve", base)).status).toBe(400);
-    expect((await post("/api/reserve", { ...base, password: "123" })).status).toBe(400);
+    expect((await post("/api/reserve", { ...base, password: "123", agree: true })).status).toBe(400);
+    expect((await post("/api/reserve", { ...base, password: "secret12" })).status).toBe(400); // 동의 없음
     expect((await post("/api/reserve", { ...base, phone: "01012345678", password: "wrongpass" })).status).toBe(409);
   });
 
@@ -108,6 +109,32 @@ describe("예약·계정·아이 정보", () => {
     expect((await fetch(BASE + "/api/me", { headers: { cookie: c2 } })).status).toBe(200);
   });
 
+  test("공개 메모리얼: 정보 공개 범위, 꽃·촛불, 광장", async () => {
+    const pub = await (await fetch(`${BASE}/api/pets/${petId}`)).json();
+    expect(pub.name).toBe("하늘");
+    expect(pub.phone).toBeUndefined();
+    expect(pub.accountId).toBeUndefined();
+    const f1 = await (await post(`/api/pets/${petId}/flower`, {})).json();
+    const f2 = await (await post(`/api/pets/${petId}/flower`, {})).json();
+    expect(f2.flowers.today).toBe(f1.flowers.today + 1);
+    expect((await (await post(`/api/pets/${petId}/candle`, { on: true })).json()).candle).toBe(true);
+    const plaza = await (await fetch(BASE + "/api/plaza")).json();
+    expect(plaza.some((p: any) => p.id === petId)).toBe(true); // 사진 있음 + 기본 공개
+    expect((await fetch(`${BASE}/m/${petId}`)).status).toBe(200);
+    expect(await (await fetch(`${BASE}/m/${petId}`)).text()).toContain("하늘의 메모리얼");
+    expect((await fetch(`${BASE}/m/P-9999`)).status).toBe(404);
+  });
+
+  test("비밀번호 바꾸기", async () => {
+    const login = await post("/api/login", { phone: "01012345678", password: "secret12" });
+    const c = (login.headers.get("set-cookie") || "").split(";")[0];
+    const put = (data: unknown) => fetch(BASE + "/api/me/password", { method: "PUT", headers: { "content-type": "application/json", cookie: c }, body: JSON.stringify(data) });
+    expect((await put({ current: "wrong", next: "newpass1" })).status).toBe(400);
+    expect((await put({ current: "secret12", next: "newpass1" })).status).toBe(200);
+    expect((await post("/api/login", { phone: "01012345678", password: "newpass1" })).status).toBe(200);
+    await put({ current: "newpass1", next: "secret12" });
+  });
+
   test("잘못된 입력은 막음", async () => {
     expect((await post("/api/reserve", { hall: "star", seats: [5000], pet: "a", owner: "b", phone: "01012345678", password: "secret12" })).status).toBe(400);
     expect((await post("/api/guestbook", { text: "  " })).status).toBe(400);
@@ -118,6 +145,16 @@ describe("관리자", () => {
   test("코드 없으면 401", async () => {
     expect((await fetch(BASE + "/api/admin/overview")).status).toBe(401);
     expect((await fetch(BASE + "/api/admin/overview", { headers: { "x-admin-code": "wrong" } })).status).toBe(401);
+  });
+
+  test("임시 비밀번호 발급", async () => {
+    const h = { "x-admin-code": CODE };
+    const ov = await (await fetch(BASE + "/api/admin/overview", { headers: h })).json();
+    const m = ov.members.find((x: any) => x.phone === "01012345678");
+    expect(m.pets.length).toBeGreaterThan(0);
+    const d = await (await post(`/api/admin/accounts/${m.id}/password`, {}, h)).json();
+    expect(d.temp.length).toBe(8);
+    expect((await post("/api/login", { phone: "01012345678", password: d.temp })).status).toBe(200);
   });
 
   test("양도 요청 → 승인, 방명록 숨기기", async () => {

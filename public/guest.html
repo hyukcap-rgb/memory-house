@@ -124,7 +124,7 @@ const I={
   shuffle:'<svg class="ico" style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3c4 0 6 10 10 10h3M4 17h3c1.6 0 2.8-1.5 3.8-3.3M13.2 10.3C14.2 8.5 15.4 7 17 7h3M18 4l3 3-3 3M18 14l3 3-3 3"/></svg>',
 };
 const S={screen:'home',halls:null,hall:null,taken:null,zone:'halo',pick:null,zoom:false,
-  form:{pet:'',kind:'',breed:'',petStatus:'',owner:'',phone:'',password:''},pet:null,errors:{},sending:false,result:null,history:[]};
+  form:{pet:'',kind:'',breed:'',petStatus:'',owner:'',phone:'',password:'',agree:false},pet:null,errors:{},sending:false,result:null,history:[]};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=n=>n.toLocaleString('ko-KR');
@@ -148,7 +148,7 @@ R.home=()=>`<section class="screen" data-testid="screen-home">
   ${status()}
   <div class="scroll" id="homescroll">
     <div class="hero">
-      <div class="eyebrow">기억의 집</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;min-height:44px"><span class="eyebrow">기억의 집</span><a href="/member" data-testid="home-login" style="font-size:13px;font-weight:700;color:#fff;text-decoration:none;height:36px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.22);display:inline-flex;align-items:center">내 메모리얼 로그인</a></div>
       <canvas id="heroAngel" aria-hidden="true"></canvas>
       <h1>1004자리의<br>반려인을 찾습니다</h1>
       <p>메모리얼마다 1004자리.<br>다 채워지면 더는 늘리지 않아요.</p>
@@ -221,6 +221,8 @@ return `<section class="screen" data-testid="screen-form" style="background:var(
       <input id="f-password" type="password" maxlength="64" autocomplete="new-password" data-testid="f-password" value="${esc(f.password)}" oninput="S.form.password=this.value;clearErr('password',this)" onblur="checkF('password')" aria-invalid="${!!e.password}" aria-describedby="e-password h-password">
       <div class="err" id="e-password">${e.password||''}</div>
       <div id="h-password" style="font-size:12px;color:var(--sub);margin-top:4px">회원 화면에 들어갈 때 휴대폰 번호와 함께 써요</div>
+      <label style="display:flex;gap:10px;align-items:flex-start;margin-top:18px;font-size:14px;line-height:1.5;cursor:pointer"><input type="checkbox" id="f-agree" data-testid="f-agree" ${f.agree?'checked':''} onchange="S.form.agree=this.checked;delete S.errors.agree;$('#e-agree').textContent=''" style="width:20px;height:20px;margin-top:1px;flex:none;accent-color:var(--navy)"><span>[필수] 개인정보 수집·이용에 동의해요 <a href="/privacy" target="_blank" rel="noopener" style="color:var(--navy);font-weight:700">내용 보기</a><br><span style="font-size:12px;color:var(--sub)">보호자 이름·휴대폰 번호·아이 정보를 메모리얼 운영에만 써요</span></span></label>
+      <div class="err" id="e-agree">${e.agree||''}</div>
       <div class="err" data-testid="e-server" style="margin-top:12px">${e.server||''}</div>
       <button class="cta navy" type="submit" style="margin-top:14px" data-testid="f-submit" ${S.sending?'disabled':''}>${S.sending?'예약하는 중…':'이 자리 예약하기'}</button>
       <p class="fine">한 번 정한 자리는 영원히 그 아이의 자리예요. 양도는 할 수 있지만 매매는 없어요. 시제품이라 결제와 본인인증은 연결되어 있지 않아요.</p>
@@ -277,15 +279,16 @@ const RULES={
   kind:v=>v?'':'어떤 아이인지 골라 주세요.',
   petStatus:v=>v?'':'아이가 지금 어떤지 골라 주세요.',
   password:v=>v.length>=6?'':'비밀번호를 6자 이상으로 정해 주세요.',
+  agree:v=>v?'':'개인정보 수집·이용에 동의해 주셔야 예약할 수 있어요.',
 };
-function checkF(k){const m=RULES[k](S.form[k]);const el=$('#f-'+k);if(m){S.errors[k]=m;if(el)el.setAttribute('aria-invalid','true');const e=$('#e-'+k);if(e)e.textContent=m}}
+function checkF(k){const m=RULES[k](S.form[k]||'');const el=$('#f-'+k);if(m){S.errors[k]=m;if(el)el.setAttribute('aria-invalid','true');const e=$('#e-'+k);if(e)e.textContent=m}}
 async function submitForm(){
   S.errors={};for(const k in RULES){const m=RULES[k](S.form[k]);if(m)S.errors[k]=m}
   if(Object.keys(S.errors).length){render();const first=['pet','owner','phone','password'].find(k=>S.errors[k]);first&&$('#f-'+first)?.focus();return}
   S.sending=true;render();
   try{
     const f=S.form;
-    const d=await api('/api/reserve',{method:'POST',body:JSON.stringify({hall:S.hall.id,seats:[S.pick],pet:f.pet,kind:f.kind,petStatus:f.petStatus,owner:f.owner,phone:f.phone,password:f.password,source:'guest'})});
+    const d=await api('/api/reserve',{method:'POST',body:JSON.stringify({hall:S.hall.id,seats:[S.pick],pet:f.pet,kind:f.kind,petStatus:f.petStatus,owner:f.owner,phone:f.phone,password:f.password,agree:!!f.agree,source:'guest'})});
     S.result={id:d.reservation.id,seat:S.pick,pet:f.pet.trim()};S.pet=d.pet;S.taken=[...S.taken,S.pick];S.hall={...S.hall,...d.hall};
     S.form.password='';S.sending=false;S.history=[];S.screen='profile';render();
   }catch(e){
@@ -294,7 +297,7 @@ async function submitForm(){
     render();
   }
 }
-function reset(){S.form={pet:'',kind:'',breed:'',petStatus:'',owner:'',phone:'',password:''};S.pet=null;S.errors={};S.result=null;S.pick=null;S.history=[];S.screen='home';S.halls=null;render();loadHalls()}
+function reset(){S.form={pet:'',kind:'',breed:'',petStatus:'',owner:'',phone:'',password:'',agree:false};S.pet=null;S.errors={};S.result=null;S.pick=null;S.history=[];S.screen='home';S.halls=null;render();loadHalls()}
 
 function mountEnter(){
   const cv=$('#enterAngel'); if(!cv||!S.taken) return;

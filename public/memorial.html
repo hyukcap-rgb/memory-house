@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--OG-->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%230E1220%27/%3E%3Cellipse cx=%2716%27 cy=%2710%27 rx=%277%27 ry=%272.2%27 fill=%27none%27 stroke=%27%23E7C77B%27 stroke-width=%272%27/%3E%3Cpath d=%27M16 15l-9-4c0 7 4 10 9 10s9-3 9-10z%27 fill=%27%23E7C77B%27/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--night:#0E1220;--navy:#2E4374;--gold:#E7C77B;--gold2:#C9A24E;--cream:#F7F1E3;--ink:#1D2130;--sub:#6B7080;--line:#E6E3DD;--bg:#F6F5F2;--err:#B2453A;
+  --sans:'Noto Sans KR',system-ui,sans-serif;--serif:'Noto Serif KR',serif;--ease:cubic-bezier(.2,.8,.2,1)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#0A0D18}
+body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;display:flex;justify-content:center;min-height:100vh}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.app{width:100%;max-width:480px;min-height:100vh;background:var(--bg);position:relative;box-shadow:0 0 80px rgba(0,0,0,.25)}
+.serif{font-family:var(--serif)}
+.hero{position:relative;min-height:540px;display:flex;flex-direction:column;justify-content:flex-end;color:#fff;background:radial-gradient(120% 80% at 50% 25%,#2A3254 0%,#0E1220 70%)}
+.hero .bg{position:absolute;inset:0;background:center/cover no-repeat}
+.hero .shade{position:absolute;inset:0;background:linear-gradient(rgba(10,14,26,.55),rgba(10,14,26,0) 30%,rgba(10,14,26,0) 45%,rgba(10,14,26,.92))}
+.hero .top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 0;z-index:2}
+.hero .in{position:relative;z-index:2;padding:0 20px 26px}
+.chipbtn{height:40px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.14);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.tag{display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:999px;font-size:12px;font-weight:500;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.18);color:#fff}
+.sec{padding:20px 16px 0}
+.card{background:#fff;border-radius:20px;padding:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.info{background:#fff;border-radius:16px;padding:12px 14px}
+.info span{font-size:12px;color:var(--sub)}
+.info b{display:block;font-size:15px;margin-top:2px}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.act{height:76px;border-radius:16px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:13px;font-weight:700;border:1.5px solid transparent;transition:transform .15s var(--ease)}
+.act:active{transform:scale(.97)}
+.act[aria-pressed="true"]{background:var(--gold);color:var(--night)}
+.act small{font-size:11px;font-weight:500;color:var(--sub)}
+.act[aria-pressed="true"] small{color:var(--night)}
+.ico{width:22px;height:22px}
+.angelbox{background:radial-gradient(120% 80% at 50% 10%,#1E2440,var(--night) 65%);border-radius:20px;padding:18px 16px;color:#fff;display:flex;gap:16px;align-items:center}
+.angelbox canvas{width:110px;flex:none}
+label.fl{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}
+input.in,textarea.in{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;font-size:16px;background:#FBFAF8;color:var(--ink);resize:none}
+input.in:focus,textarea.in:focus{outline:2px solid var(--navy);border-color:transparent}
+.err{color:var(--err);font-size:13px;margin-top:6px}
+.cta{display:flex;align-items:center;justify-content:center;height:52px;border-radius:14px;font-weight:700;font-size:15px;width:100%;text-decoration:none}
+.cta.navy{background:var(--navy);color:#fff}
+.cta.gold{background:var(--gold);color:var(--night)}
+.cta[disabled]{opacity:.5}
+.gb{padding:12px 0;border-top:1px solid var(--line)}
+.gb:first-child{border-top:0;padding-top:0}
+.gb .w{font-size:12px;color:#8A6D2C;font-weight:700}
+.gb p{font-size:15px;line-height:1.6;margin-top:2px;word-break:keep-all}
+.foot{padding:28px 16px calc(36px + env(safe-area-inset-bottom,0px));text-align:center}
+#toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,12px);background:rgba(20,26,44,.95);color:#fff;font-size:13px;padding:10px 16px;border-radius:999px;opacity:0;transition:all .25s var(--ease);z-index:30;pointer-events:none;max-width:88%;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.petals{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:20}
+.petal{position:absolute;top:-20px;font-size:18px;animation:fall 2.4s linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(240deg);opacity:0}}
+.skel{height:540px;background:linear-gradient(90deg,#161B2E,#1E2440,#161B2E);background-size:200% 100%;animation:sk 1.2s linear infinite}
+@keyframes sk{to{background-position:-200% 0}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="app" id="app" aria-live="polite"><div class="skel"></div></main>
+<div class="petals" id="petals"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="/static/angel.js"></script>
+<script>
+const ID=location.pathname.split('/').pop();
+const PHOTOS=['portrait','p1','p2','p3','p4','p5','p7'].map(k=>'/img/'+k+'.jpg');
+const I={
+  flower:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="9" r="2.2"/><path d="M12 6.8C11 4 13 3 12 3s1 1 0 3.8M14.2 9c2.8-1 3.8 1 3.8 0s-1 1-3.8 0M12 11.2c1 2.8-1 3.8 0 3.8s-1-1 0-3.8M9.8 9c-2.8 1-3.8-1-3.8 0s1-1 3.8 0M12 15v6M12 18c-2-2-4-1.5-4-1.5M12 19c2-2 4-1.5 4-1.5"/></svg>',
+  candle:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1.5 1.8 1.5 3.5 0 4.5-1.5-1-1.5-2.7 0-4.5z"/><rect x="9" y="9.5" width="6" height="11" rx="1.5"/></svg>',
+  pen:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 20l1-4L16 5l3 3L8 19z"/></svg>',
+  share:'<svg class="ico" style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v7h14v-7"/></svg>',
+};
+let P=null, G=[], sending=false;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function hasB(w){const c=w.charCodeAt(w.length-1);return c>=0xAC00&&c<=0xD7A3&&(c-0xAC00)%28>0}
+const J=(w,a,b)=>w+(hasB(w)?a:b);
+const dot=d=>d?d.replace(/-/g,'.'):'';
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2000)}
+function petals(){const box=$('#petals');for(let i=0;i<14;i++){const p=document.createElement('span');p.className='petal';p.textContent=['❀','✿','❁'][i%3];p.style.left=Math.random()*100+'%';p.style.color=['#F3C6CF','#FFFFFF','#E7C77B'][i%3];p.style.animationDelay=(Math.random()*.6)+'s';box.appendChild(p);setTimeout(()=>p.remove(),3200)}}
+async function api(path,opt){const r=await fetch(path,{...opt,headers:{'content-type':'application/json'}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'잠시 후 다시 시도해 주세요');return d}
+function rel(iso){const m=(Date.now()-new Date(iso))/6e4;if(m<2)return '방금';if(m<60)return `${Math.floor(m)}분 전`;if(m<1440)return `${Math.floor(m/60)}시간 전`;const d=Math.floor(m/1440);return d<7?`${d}일 전`:new Date(iso).toLocaleDateString('ko-KR')}
+function days(){if(!P.birth)return '';const end=P.passed?new Date(P.passed):new Date();const n=Math.floor((end-new Date(P.birth))/864e5)+1;if(n<1)return '';return P.passed?`함께한 ${n.toLocaleString('ko-KR')}일`:`함께한 지 ${n.toLocaleString('ko-KR')}일째`}
+function seat(){const n=P.seats&&P.seats[0];return n?`${P.hallName} ${Angel.ZONES[Angel.zoneOf(n)]} ${String(n).padStart(4,'0')}번`:P.hallName}
+
+function render(){
+  const N=esc(P.name);
+  const sub=[esc(P.breed||(P.kind!=='-'?P.kind:'')),P.nickname?`별명 ${esc(P.nickname)}`:'',(P.birth||P.passed)?`${dot(P.birth)||'?'} ~ ${dot(P.passed)}`.trim():''].filter(Boolean).join(' · ');
+  const info=[['생일',P.birth?`${+P.birth.slice(5,7)}월 ${+P.birth.slice(8,10)}일`:''],['몸무게',P.weight?esc(P.weight)+'kg':''],['좋아한 것',esc(P.likes||'')],['자리',seat()]].filter(([,v])=>v);
+  $('#app').innerHTML=`
+  <section class="hero" aria-label="${N}의 메모리얼">
+    ${P.photo?`<div class="bg" style="background-image:url('${P.photo}')" role="img" aria-label="${N}의 사진"></div>`:''}<div class="shade"></div>
+    <div class="top"><span class="serif" style="font-weight:700;font-size:17px">기억의 집</span><button class="chipbtn" data-testid="share" onclick="share()">${I.share}링크 보내기</button></div>
+    <div class="in">
+      ${days()?`<div style="color:var(--gold);font-size:14px;font-weight:500">${days()}</div>`:''}
+      <h1 class="serif" style="font-size:46px;line-height:1.1;margin:2px 0 6px" data-testid="m-name">${N}</h1>
+      ${sub?`<div style="font-size:14px;color:#E3E6EE">${sub}</div>`:''}
+      ${(P.tags||[]).length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">${P.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`:''}
+    </div>
+  </section>
+  ${info.length?`<div class="sec"><div class="grid2">${info.map(([k,v])=>`<div class="info"><span>${k}</span><b>${v}</b></div>`).join('')}</div></div>`:''}
+  <div class="sec"><div class="acts">
+    <button class="act" data-testid="m-flower" onclick="flower()">${I.flower}꽃 놓기<small data-testid="m-flowers">오늘 ${P.flowers.today}송이</small></button>
+    <button class="act" data-testid="m-candle" aria-pressed="${P.candle}" onclick="candle()">${I.candle}${P.candle?'촛불 켜짐':'촛불 켜기'}<small>${P.candle?'오늘 밤까지':'함께 밝혀요'}</small></button>
+    <button class="act" data-testid="m-write" onclick="document.getElementById('g-text').focus()">${I.pen}한 마디<small>방명록 ${G.length}</small></button>
+  </div></div>
+  <div class="sec"><div class="angelbox"><canvas id="angel" aria-hidden="true"></canvas><div><div style="font-size:12px;color:var(--gold)">${esc(P.hallName)}</div><b class="serif" style="font-size:17px;line-height:1.5;display:block;margin-top:2px">1004의 별이 모여<br>하나의 빛이 됩니다</b><p style="font-size:13px;color:#AEB5C6;margin-top:6px">반짝이는 별이 ${J(N,'이에요','예요')}</p></div></div></div>
+  <div class="sec"><div class="card">
+    <h2 class="serif" style="font-size:18px;margin-bottom:12px">${N}에게 남긴 말</h2>
+    <div data-testid="m-guestbook">${G.length?G.map(g=>`<div class="gb"><div class="w">${esc(g.who)} · ${rel(g.at)}</div><p>${esc(g.text)}</p></div>`).join(''):`<p style="font-size:14px;color:var(--sub)">아직 남긴 말이 없어요. 첫 한 마디를 남겨 주세요.</p>`}</div>
+    <form onsubmit="event.preventDefault();sendNote()" novalidate style="margin-top:14px;border-top:1px solid var(--line);padding-top:4px">
+      <label class="fl" for="g-who">이름</label><input class="in" id="g-who" maxlength="20" autocomplete="name" placeholder="예: 지수" data-testid="g-who">
+      <label class="fl" for="g-text">남길 말</label><textarea class="in" id="g-text" rows="3" maxlength="200" placeholder="${J(N,'아','야')}, " data-testid="g-text"></textarea>
+      <div class="err" id="g-err" role="alert"></div>
+      <button class="cta navy" type="submit" style="margin-top:10px" data-testid="g-save">방명록 남기기</button>
+    </form>
+  </div></div>
+  <div class="foot">
+    <p style="font-size:14px;color:var(--sub);line-height:1.7">사랑한 아이를 영원히 기억하는 곳<br>메모리얼마다 1004자리만 있어요</p>
+    <a class="cta gold" href="/" style="margin-top:14px" data-testid="m-cta">우리 아이 자리 알아보기</a>
+  </div>`;
+  const n=P.seats&&P.seats[0];
+  api(`/api/halls/${P.hall}/seats`).then(d=>{const cv=$('#angel');if(cv)Angel.mount(cv,{taken:d.taken,mine:n?[n]:[],picked:n?[n]:[],photos:PHOTOS})}).catch(()=>{});
+}
+async function flower(){petals();try{const d=await api(`/api/pets/${ID}/flower`,{method:'POST',body:'{}'});P.flowers=d.flowers;$('[data-testid=m-flowers]').textContent=`오늘 ${P.flowers.today}송이`;toast(`${P.name}에게 꽃을 놓았어요`)}catch(e){toast(e.message)}}
+async function candle(){try{const d=await api(`/api/pets/${ID}/candle`,{method:'POST',body:JSON.stringify({on:!P.candle})});P.candle=d.candle;render();toast(P.candle?'촛불을 켰어요. 오늘 밤까지 밝혀둘게요':'촛불을 껐어요')}catch(e){toast(e.message)}}
+async function sendNote(){
+  if(sending)return;
+  const who=$('#g-who').value.trim(),text=$('#g-text').value.trim(),err=$('#g-err');
+  if(!who){err.textContent='이름을 적어 주세요. 가족이 누가 남겼는지 알 수 있어요.';$('#g-who').focus();return}
+  if(!text){err.textContent='남길 말을 한 글자 이상 적어 주세요.';$('#g-text').focus();return}
+  sending=true;$('[data-testid=g-save]').disabled=true;
+  try{const d=await api('/api/guestbook',{method:'POST',body:JSON.stringify({pet:ID,who,text})});G.unshift(d.entry);sending=false;render();toast('방명록을 남겼어요')}
+  catch(e){sending=false;err.textContent=e.message;$('[data-testid=g-save]').disabled=false}
+}
+async function share(){
+  const url=location.origin+'/m/'+ID, title=`${P.name}의 메모리얼`;
+  try{ if(navigator.share){await navigator.share({title,text:'꽃 한 송이, 한 마디를 남겨 주세요.',url});return} await navigator.clipboard.writeText(url); toast('링크를 복사했어요. 가족에게 보내 주세요'); }
+  catch(e){ if(e&&e.name==='AbortError')return; prompt('이 링크를 복사해 보내 주세요',url); }
+}
+(async function(){
+  try{ P=await api('/api/pets/'+encodeURIComponent(ID)); G=await api('/api/guestbook?pet='+encodeURIComponent(ID)).catch(()=>[]); render(); }
+  catch(e){ $('#app').innerHTML=`<div style="padding:120px 24px;text-align:center;background:var(--night);color:#fff;min-height:100vh"><h1 class="serif" style="font-size:22px">메모리얼을 찾을 수 없어요</h1><p style="color:#AEB5C6;margin-top:8px;line-height:1.6">링크가 바뀌었거나 잘못 복사됐을 수 있어요.<br>보낸 분께 다시 받아 주세요.</p><a class="cta gold" href="/" style="margin-top:24px">기억의 집 둘러보기</a></div>`; }
+})();
+</script>
+</body>
+</html>

@@ -17,16 +17,17 @@ export type Reservation = {
   accountId?: string; petId?: string;
 };
 // 회원 계정: 휴대폰 번호 + 비밀번호
-export type Account = { id: string; at: string; owner: string; phone: string; pwHash: string };
+export type Account = { id: string; at: string; owner: string; phone: string; pwHash: string; agreedAt?: string };
 // 아이 정보: 회원 화면에 보이는 내용
 export type Pet = {
   id: string; accountId: string; at: string; name: string; kind: string; breed: string; petStatus: string;
   nickname: string; birth: string; passed: string; weight: string; likes: string; tags: string[];
   photoV: number; hall: string; seats: number[];
+  showInPlaza?: boolean; flowerDay?: string; flowersToday?: number; flowersTotal?: number; candleUntil?: number; lastActive?: string;
 };
 export type FeedItem = { id: string; at: string; petId: string; who: string; text: string; photoV: number };
 export type Session = { accountId: string; exp: number };
-export type Transfer = { id: string; at: string; seatLabel: string; fromName: string; toPhone: string; status: "pending" | "approved" | "rejected"; decidedAt?: string };
+export type Transfer = { id: string; at: string; seatLabel: string; fromName: string; toPhone: string; status: "pending" | "approved" | "rejected"; decidedAt?: string; accountId?: string; petId?: string };
 export type Guest = { id: string; at: string; pet: string; who: string; text: string; hidden: boolean; reports: number };
 export type State = {
   reservations: Reservation[]; transfers: Transfer[]; guestbook: Guest[]; seq: number;
