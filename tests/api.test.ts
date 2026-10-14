@@ -26,7 +26,7 @@ const post = (path: string, data: unknown, headers: Record<string, string> = {})
   fetch(BASE + path, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(data) });
 
 describe("화면", () => {
-  for (const p of ["/", "/guest", "/member", "/admin", "/static/angel.js", "/img/p1.jpg"]) {
+  for (const p of ["/", "/start", "/guest", "/member", "/admin", "/static/angel.js", "/img/p1.jpg"]) {
     test(`${p} 열림`, async () => expect((await fetch(BASE + p)).status).toBe(200));
   }
   test("없는 경로·상위 폴더 접근은 404", async () => {

@@ -76,7 +76,7 @@ function limited(req: Request, server: { requestIP(r: Request): { address: strin
 }
 
 // ---------- pages & static ----------
-const PAGES: Record<string, string> = { "/": "index.html", "/guest": "guest.html", "/member": "member.html", "/admin": "admin.html" };
+const PAGES: Record<string, string> = { "/": "guest.html", "/start": "index.html", "/guest": "guest.html", "/member": "member.html", "/admin": "admin.html" };
 const SECURITY_HEADERS = { "x-content-type-options": "nosniff", "referrer-policy": "strict-origin-when-cross-origin" };
 
 async function serveStatic(path: string): Promise<Response | null> {

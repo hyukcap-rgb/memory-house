@@ -21,8 +21,9 @@ body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 a{color:inherit}
-#phone{position:relative;width:390px;height:844px;overflow:hidden;background:var(--night);border-radius:40px;box-shadow:0 30px 80px rgba(0,0,0,.3),0 0 0 10px #0d0f15}
-@media (max-width:480px){ body{align-items:stretch} #phone{width:100%;height:100dvh;border-radius:0;box-shadow:none} }
+#phone{position:relative;width:100%;max-width:480px;height:100vh;height:100dvh;overflow:hidden;background:var(--night);box-shadow:0 0 80px rgba(0,0,0,.18)}
+body{align-items:stretch!important}
+html,body{background:#0A0D18}
 .screen{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;animation:in .35s var(--ease)}
 @keyframes in{from{opacity:0}to{opacity:1}}
 .scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
@@ -128,7 +129,7 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const fmt=n=>n.toLocaleString('ko-KR');
 const pad=n=>String(n).padStart(4,'0');
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2200)}
-function status(dark){return `<div class="status ${dark?'dark':''}"><span>9:41</span><span>100%</span></div>`}
+function status(){return `<div aria-hidden="true" style="height:calc(14px + env(safe-area-inset-top,0px));flex:none"></div>`}
 async function api(path,opt){
   const r=await fetch(path,{...opt,headers:{'content-type':'application/json'}});
   const d=await r.json().catch(()=>({}));
