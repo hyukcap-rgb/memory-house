@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%230E1220%27/%3E%3Cellipse cx=%2716%27 cy=%2710%27 rx=%277%27 ry=%272.2%27 fill=%27none%27 stroke=%27%23E7C77B%27 stroke-width=%272%27/%3E%3Cpath d=%27M16 15l-9-4c0 7 4 10 9 10s9-3 9-10z%27 fill=%27%23E7C77B%27/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>기억의 집 · 관리자</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#0E1220; --navy:#2E4374; --navy-h:#25375f; --gold:#E7C77B; --gold2:#B48A2C; --cream:#F7F1E3;
+  --ink:#1D2130; --sub:#646B7B; --line:#E4E2DC; --bg:#F5F4F1; --card:#fff; --ok:#2F6B4F; --ok-bg:#E6F1EB; --err:#A63D33; --err-bg:#F8E7E4; --warn-bg:#FBF1DC;
+  --sans:'Noto Sans KR',system-ui,sans-serif; --serif:'Noto Serif KR',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.serif{font-family:var(--serif)}
+.btn{height:40px;padding:0 16px;border-radius:10px;font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn.primary{background:var(--navy);color:#fff}.btn.primary:hover{background:var(--navy-h)}
+.btn.line{border:1px solid var(--line);background:#fff}.btn.line:hover{background:#FAF9F7}
+.btn.danger{background:var(--err);color:#fff}
+.btn.sm{height:34px;padding:0 12px;font-size:13px;border-radius:8px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+/* gate */
+#gate{min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(90% 60% at 50% 0%,#1E2440,var(--night) 70%)}
+.gatecard{width:100%;max-width:380px;background:#fff;border-radius:20px;padding:32px 28px}
+.gatecard h1{font-size:22px;margin:8px 0 4px}
+.gatecard p{color:var(--sub);font-size:14px;margin-bottom:20px}
+label.fl{display:block;font-weight:700;font-size:13px;margin-bottom:6px}
+.input{width:100%;height:44px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:#fff;font-size:15px}
+.input:focus{outline:2px solid var(--navy);border-color:transparent}
+.input[aria-invalid="true"]{border-color:var(--err)}
+.err{color:var(--err);font-size:13px;margin-top:6px}
+/* shell */
+#app{display:none;min-height:100vh;grid-template-columns:232px 1fr}
+#app.on{display:grid}
+aside{background:var(--night);color:#fff;padding:22px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:4px}
+#nav{display:flex;flex-direction:column;gap:4px}
+.brand{display:flex;align-items:center;gap:10px;padding:0 8px 22px}
+.brand b{font-size:16px}
+.brand span{font-size:12px;color:#9AA2B5;display:block}
+.nav{display:flex;align-items:center;gap:10px;height:42px;padding:0 12px;border-radius:10px;color:#C6CCDA;font-weight:500;width:100%;text-align:left}
+.nav:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav[aria-current="page"]{background:rgba(231,199,123,.14);color:var(--gold);font-weight:700}
+.nav .ico{width:18px;height:18px;flex:none}
+.badge{margin-left:auto;min-width:22px;height:22px;border-radius:11px;background:var(--gold);color:var(--night);font-size:12px;font-weight:700;display:grid;place-items:center;padding:0 6px}
+.navfoot{margin-top:auto;padding:12px 8px 0;border-top:1px solid rgba(255,255,255,.08);font-size:12px;color:#8C94A8;line-height:1.7}
+.navfoot a{color:#C6CCDA}
+main{min-width:0;padding:24px 32px 48px}
+.head{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.head h1{font-size:22px;font-weight:700}
+.head .sub{color:var(--sub);font-size:13px}
+.head .act{margin-left:auto;display:flex;gap:8px;align-items:center}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.kpi{padding:16px 18px}
+.kpi .l{font-size:13px;color:var(--sub)}
+.kpi .v{font-size:26px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kpi .v small{font-size:13px;color:var(--sub);font-weight:500;margin-left:4px}
+.kpi .d{font-size:12px;color:var(--sub);margin-top:2px}
+.kpi.attn{border-color:#E9D3A2;background:var(--warn-bg)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px}
+.sec{padding:18px 20px}
+.sec h2{font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.sec h2 .more{margin-left:auto;font-size:13px;font-weight:500;color:var(--navy)}
+.halls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.hall{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.hall .pic{background:radial-gradient(120% 80% at 50% 10%,#1E2440,var(--night) 65%);display:grid;place-items:center;padding:12px 0}
+.hall .pic canvas{width:min(150px,80%);display:block}
+.hall .meta{padding:12px 14px}
+.bar{height:6px;background:#EEECE7;border-radius:3px;overflow:hidden;margin:8px 0 6px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold2),var(--gold))}
+.zones{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.zones span{font-size:12px;background:var(--bg);border-radius:6px;padding:3px 8px;color:var(--sub)}
+.zones b{color:var(--ink);font-weight:700}
+.feed{list-style:none}
+.feed li{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line);align-items:flex-start}
+.feed li:first-child{border-top:0;padding-top:0}
+.dot{width:8px;height:8px;border-radius:50%;margin-top:7px;flex:none}
+.feed .t{font-size:12px;color:var(--sub);margin-left:auto;white-space:nowrap}
+.filters{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px}
+.filters .f{display:flex;flex-direction:column;gap:4px}
+.filters label{font-size:12px;font-weight:700;color:var(--sub)}
+.filters .input,.filters select{height:38px;font-size:14px}
+select{border:1px solid var(--line);border-radius:10px;padding:0 10px;background:#fff;min-width:130px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:880px}
+th{font-size:12px;color:var(--sub);text-align:left;font-weight:700;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:#FBFAF8}
+td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+tr.dim td{color:#9AA0AD}
+.tag{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:12px;font-size:12px;font-weight:700;white-space:nowrap}
+.tag.guest{background:#E9EEF8;color:var(--navy)}
+.tag.member{background:var(--cream);color:#7A5B1E}
+.tag.seed{background:#EFEFEF;color:#5D6270}
+.tag.ok{background:var(--ok-bg);color:var(--ok)}
+.tag.err{background:var(--err-bg);color:var(--err)}
+.tag.wait{background:var(--warn-bg);color:#8A6418}
+.tag.mute{background:#EFEFEF;color:#6B7080}
+.empty{padding:40px 20px;text-align:center;color:var(--sub)}
+.empty b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+.gb{display:flex;gap:14px;padding:14px 0;border-top:1px solid var(--line)}
+.gb:first-child{border-top:0}
+.gb .txt{flex:1;min-width:0}
+.gb .txt p{margin-top:4px;line-height:1.6}
+.gb.hidden .txt p{color:#9AA0AD;text-decoration:line-through}
+.mask{letter-spacing:.02em}
+.linklike{color:var(--navy);font-size:12px;font-weight:700;margin-left:6px}
+/* dialog */
+#scrim{position:fixed;inset:0;background:rgba(10,12,20,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+#scrim.on{display:flex}
+.dialog{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:22px}
+.dialog h3{font-size:17px;margin-bottom:8px}
+.dialog p{color:var(--sub);line-height:1.6}
+.dialog .row{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+#toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,10px);background:var(--night);color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;opacity:0;transition:all .2s;pointer-events:none;z-index:60}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.skel{height:90px;border-radius:16px;background:linear-gradient(90deg,#ECEAE5,#F4F3F0,#ECEAE5);background-size:200% 100%;animation:sk 1.2s linear infinite}
+@keyframes sk{to{background-position:-200% 0}}
+@media (max-width:1180px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.grid2{grid-template-columns:1fr}}
+@media (max-width:860px){
+  #app.on{grid-template-columns:1fr}
+  aside{position:sticky;top:0;height:auto;flex-direction:row;overflow-x:auto;padding:10px 12px;z-index:5;gap:4px}
+  .brand,.navfoot{display:none}
+  #nav{flex-direction:row}
+  .nav{width:auto;flex:none;height:38px}
+  main{padding:18px 16px 40px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .halls{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<section id="gate" aria-labelledby="gateTitle">
+  <form class="gatecard" onsubmit="event.preventDefault();login()" novalidate>
+    <div style="color:var(--gold2);font-size:12px;font-weight:700;letter-spacing:.08em">기억의 집</div>
+    <h1 id="gateTitle" class="serif">관리자 페이지</h1>
+    <p>운영자만 들어올 수 있어요.</p>
+    <label class="fl" for="code">관리자 코드</label>
+    <input id="code" class="input" type="password" autocomplete="current-password" data-testid="admin-code" aria-describedby="codeErr" oninput="this.setAttribute('aria-invalid','false');document.getElementById('codeErr').textContent=''">
+    <div class="err" id="codeErr" role="alert"></div>
+    <button class="btn primary" type="submit" style="width:100%;justify-content:center;height:46px;margin-top:16px" data-testid="admin-login">들어가기</button>
+  </form>
+</section>
+
+<div id="app">
+  <aside aria-label="관리 메뉴">
+    <div class="brand"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#E7C77B" stroke-width="1.6"><ellipse cx="12" cy="4" rx="4" ry="1.3"/><path d="M12 7c-1.2 2-1 4 0 5 1-1 1.2-3 0-5zM11 12L3 6c0 6 4 9 8 9zM13 12l8-6c0 6-4 9-8 9zM10 15l-2 7h8l-2-7"/></svg><div><b class="serif">기억의 집</b><span>운영 관리자</span></div></div>
+    <div id="nav"></div>
+    <div class="navfoot">화면 바로가기<br><a href="/guest" target="_blank" rel="noopener">비회원 화면</a> · <a href="/member" target="_blank" rel="noopener">회원 화면</a><br><button style="color:#C6CCDA;font-size:12px;padding:6px 0" onclick="logout()">로그아웃</button></div>
+  </aside>
+  <main id="main" tabindex="-1"></main>
+</div>
+
+<div id="scrim" role="presentation" onclick="if(event.target===this)closeDialog()"><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlgTitle" id="dialog"></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="/static/angel.js"></script>
+<script>
+const PHOTOS=['portrait','p1','p2','p3','p4','p5','p7'].map(k=>'/img/'+k+'.jpg');
+const IC={
+  dash:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="7" height="8" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.5"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.5"/><rect x="3.5" y="14.5" width="7" height="6" rx="1.5"/></svg>',
+  seat:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.8z"/></svg>',
+  transfer:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg>',
+  book:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 20l1-4L16 5l3 3L8 19z"/></svg>',
+  hall:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 10l9-6 9 6M5 10v9h14v-9M9 19v-5h6v5"/></svg>',
+  refresh:'<svg class="ico" style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 11a8 8 0 10-2.3 5.7M20 4v7h-7"/></svg>',
+};
+const PAGES=[['dash','대시보드',IC.dash],['res','자리 예약',IC.seat],['tr','양도 요청',IC.transfer],['gb','방명록',IC.book],['halls','메모리얼',IC.hall]];
+const SRC={guest:['비회원','guest'],member:['회원','member'],seed:['기존','seed']};
+const A={code:null,data:null,page:'dash',f:{q:'',hall:'',src:'',st:'active'},gbOnlyReported:false,busy:false,loadedAt:null};
+let views=[];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>Number(n).toLocaleString('ko-KR');
+const pad=n=>String(n).padStart(4,'0');
+const hallName=id=>(A.data?.halls.find(h=>h.id===id)||{}).name||id;
+const maskPhone=p=>{const d=String(p).replace(/\D/g,'');return d.length>=10?`${d.slice(0,3)}-****-${d.slice(-4)}`:p};
+const fullPhone=p=>{const d=String(p).replace(/\D/g,'');return d.length===11?`${d.slice(0,3)}-${d.slice(3,7)}-${d.slice(7)}`:d.length===10?`${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}`:p};
+function when(iso){const d=new Date(iso),m=(Date.now()-d)/6e4;if(m<1)return '방금';if(m<60)return `${Math.floor(m)}분 전`;if(m<1440)return `${Math.floor(m/60)}시간 전`;return d.toLocaleDateString('ko-KR',{month:'long',day:'numeric'})+' '+d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2200)}
+function seatText(r){return `${hallName(r.hall)} ${r.seats.map(pad).join('·')}번${r.seatLabel?` <span style="color:var(--sub);font-size:12px">(${esc(r.seatLabel)})</span>`:''}`}
+
+async function api(path,opt={}){
+  const r=await fetch(path,{...opt,headers:{'content-type':'application/json','x-admin-code':A.code||''}});
+  const d=await r.json().catch(()=>({}));
+  if(r.status===401){logout(true);throw new Error(d.error||'관리자 코드를 확인해 주세요')}
+  if(!r.ok) throw new Error(d.error||'잠시 후 다시 시도해 주세요');
+  return d;
+}
+async function login(){
+  const v=$('#code').value.trim();
+  if(!v){$('#code').setAttribute('aria-invalid','true');$('#codeErr').textContent='관리자 코드를 적어 주세요.';$('#code').focus();return}
+  A.code=v;
+  try{ await load(); try{sessionStorage.setItem('adminCode',v)}catch{} $('#gate').style.display='none'; $('#app').classList.add('on'); render(); $('#main').focus(); }
+  catch(e){ A.code=null; $('#code').setAttribute('aria-invalid','true'); $('#codeErr').textContent='코드가 맞지 않아요. 다시 확인해 주세요.'; }
+}
+function logout(expired){A.code=null;A.data=null;try{sessionStorage.removeItem('adminCode')}catch{};$('#app').classList.remove('on');$('#gate').style.display='grid';$('#code').value='';if(expired)$('#codeErr').textContent='다시 로그인해 주세요.'}
+async function load(){ A.data=await api('/api/admin/overview'); A.loadedAt=new Date(); }
+async function refresh(silent){ try{ await load(); render(); if(!silent) toast('최신 내용으로 바꿨어요'); }catch(e){ if(!silent) toast(e.message) } }
+
+function counts(){
+  const d=A.data, now=Date.now();
+  return {
+    taken:d.halls.reduce((n,h)=>n+h.taken,0), total:d.halls.reduce((n,h)=>n+h.total,0),
+    today:d.reservations.filter(r=>r.source!=='seed'&&r.status==='active'&&now-new Date(r.at)<864e5).length,
+    pending:d.transfers.filter(t=>t.status==='pending').length,
+    reported:d.guestbook.filter(g=>g.reports>0&&!g.hidden).length,
+  };
+}
+function nav(){const c=counts();const badge={tr:c.pending,gb:c.reported};
+  $('#nav').innerHTML=PAGES.map(([k,l,ic])=>`<button class="nav" data-testid="nav-${k}" ${A.page===k?'aria-current="page"':''} onclick="goPage('${k}')">${ic}<span>${l}</span>${badge[k]?`<span class="badge" aria-label="${badge[k]}건">${badge[k]}</span>`:''}</button>`).join('')}
+function goPage(k){A.page=k;render();$('#main').focus();window.scrollTo(0,0)}
+function head(title,sub){return `<div class="head"><div><h1>${title}</h1>${sub?`<div class="sub">${sub}</div>`:''}</div><div class="act"><span class="sub">${A.loadedAt?A.loadedAt.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})+' 기준':''}</span><button class="btn line sm" data-testid="refresh" onclick="refresh()">${IC.refresh}새로고침</button></div></div>`}
+
+// ---------- pages ----------
+const P={};
+P.dash=()=>{const d=A.data,c=counts();
+  const acts=[
+    ...d.reservations.filter(r=>r.source!=='seed').map(r=>({at:r.at,color:'var(--gold2)',html:`<b>${esc(r.owner)}</b>님이 ${esc(r.pet)}의 자리를 예약했어요 · ${seatText(r)}${r.status==='cancelled'?' <span class="tag mute">취소됨</span>':''}`})),
+    ...d.transfers.map(t=>({at:t.at,color:'var(--navy)',html:`<b>${esc(t.fromName)}</b>님이 ${esc(t.seatLabel)} 양도를 요청했어요 ${tTag(t)}`})),
+    ...d.guestbook.map(g=>({at:g.at,color:g.reports?'var(--err)':'#9AA0AD',html:`${esc(g.pet)}에게 <b>${esc(g.who)}</b>님이 방명록을 남겼어요${g.reports?` <span class="tag err">신고 ${g.reports}</span>`:''}`})),
+  ].sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,8);
+  return head('대시보드','오늘 기억의 집 상황이에요')+`
+  <div class="kpis">
+    <div class="card kpi"><div class="l">채워진 별</div><div class="v" data-testid="kpi-taken">${fmt(c.taken)}<small>/ ${fmt(c.total)}</small></div><div class="d">메모리얼 ${d.halls.length}곳 · 각 1004자리</div></div>
+    <div class="card kpi"><div class="l">남은 자리</div><div class="v">${fmt(c.total-c.taken)}</div><div class="d">증설 없음</div></div>
+    <div class="card kpi"><div class="l">최근 24시간 예약</div><div class="v" data-testid="kpi-today">${fmt(c.today)}</div><div class="d">비회원·회원 합계</div></div>
+    <div class="card kpi ${c.pending?'attn':''}"><div class="l">양도 대기</div><div class="v" data-testid="kpi-pending">${c.pending}</div><div class="d">${c.pending?'승인이 필요해요':'처리할 요청이 없어요'}</div></div>
+    <div class="card kpi ${c.reported?'attn':''}"><div class="l">신고된 방명록</div><div class="v">${c.reported}</div><div class="d">${c.reported?'확인이 필요해요':'깨끗해요'}</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card sec"><h2>메모리얼별 채움<button class="more" onclick="goPage('halls')">자세히</button></h2><div class="halls">${d.halls.map(hallCard).join('')}</div></div>
+    <div class="card sec"><h2>최근 활동</h2>${acts.length?`<ul class="feed">${acts.map(a=>`<li><span class="dot" style="background:${a.color}"></span><span style="line-height:1.6">${a.html}</span><span class="t">${when(a.at)}</span></li>`).join('')}</ul>`:'<div class="empty"><b>아직 활동이 없어요</b>예약이나 방명록이 생기면 여기에 보여요.</div>'}</div>
+  </div>`};
+function hallCard(h){const z=Angel.zoneStats(h.takenSeats);return `<div class="hall"><div class="pic"><canvas data-angel="${h.id}" aria-label="${h.name} 채움 모습"></canvas></div><div class="meta"><b class="serif" style="font-size:16px">${h.name}</b> <span style="color:var(--sub);font-size:12px">${esc(h.desc)}</span>
+  <div class="bar"><i style="width:${(h.taken/h.total*100).toFixed(1)}%"></i></div>
+  <div style="display:flex;justify-content:space-between;font-size:13px"><span>${fmt(h.taken)} / 1004</span><b style="color:${h.left<=20?'var(--err)':'var(--gold2)'}">남은 ${fmt(h.left)}</b></div>
+  <div class="zones">${['halo','wing','robe'].map(k=>`<span>${Angel.ZONES[k]} <b>${z[k].left}</b></span>`).join('')}</div></div></div>`}
+
+P.res=()=>{const d=A.data,f=A.f;const q=f.q.trim().toLowerCase();
+  const rows=d.reservations.filter(r=>(!f.hall||r.hall===f.hall)&&(!f.src||r.source===f.src)&&(!f.st||r.status===f.st)&&(!q||[r.id,r.pet,r.owner,r.phone,r.kind].join(' ').toLowerCase().includes(q)));
+  return head('자리 예약',`전체 ${d.reservations.length}건 · 비회원·회원 화면에서 들어온 예약이 바로 보여요`)+`
+  <div class="filters">
+    <div class="f"><label for="fq">검색</label><input id="fq" class="input" style="width:240px" placeholder="예약번호, 아이·보호자 이름" value="${esc(f.q)}" oninput="A.f.q=this.value;renderKeep('fq')"></div>
+    <div class="f"><label for="fh">메모리얼</label><select id="fh" onchange="A.f.hall=this.value;render()"><option value="">전체</option>${d.halls.map(h=>`<option value="${h.id}" ${f.hall===h.id?'selected':''}>${h.name}</option>`).join('')}</select></div>
+    <div class="f"><label for="fs">경로</label><select id="fs" onchange="A.f.src=this.value;render()"><option value="">전체</option>${Object.entries(SRC).map(([k,[l]])=>`<option value="${k}" ${f.src===k?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="f"><label for="ft">상태</label><select id="ft" onchange="A.f.st=this.value;render()"><option value="active" ${f.st==='active'?'selected':''}>유지 중</option><option value="cancelled" ${f.st==='cancelled'?'selected':''}>취소됨</option><option value="" ${f.st===''?'selected':''}>전체</option></select></div>
+  </div>
+  <div class="card tablewrap" data-testid="res-table">${rows.length?`<table><thead><tr><th>예약번호</th><th>예약 시각</th><th>메모리얼·자리</th><th>아이</th><th>보호자</th><th>연락처</th><th>경로</th><th>상태</th><th><span class="sr" style="position:absolute;left:-9999px">관리</span></th></tr></thead><tbody>
+    ${rows.map(r=>`<tr class="${r.status==='cancelled'?'dim':''}" data-testid="res-row"><td><b>${esc(r.id)}</b></td><td>${when(r.at)}</td><td>${seatText(r)}</td><td><b>${esc(r.pet)}</b><div style="font-size:12px;color:var(--sub)">${esc(r.kind)} · ${esc(r.petStatus)}</div></td><td>${esc(r.owner)}</td>
+      <td><span class="mask" id="ph-${r.id}">${maskPhone(r.phone)}</span><button class="linklike" onclick="showPhone('${r.id}')" aria-label="${esc(r.owner)} 연락처 전체 보기">보기</button></td>
+      <td><span class="tag ${SRC[r.source][1]}">${SRC[r.source][0]}</span></td>
+      <td>${r.status==='active'?'<span class="tag ok">유지 중</span>':'<span class="tag mute">취소됨</span>'}</td>
+      <td style="text-align:right">${r.status==='active'?`<button class="btn line sm" data-testid="res-cancel" onclick="askCancel('${r.id}')">예약 취소</button>`:`<button class="btn line sm" onclick="restoreRes('${r.id}')">되돌리기</button>`}</td></tr>`).join('')}
+  </tbody></table>`:`<div class="empty"><b>맞는 예약이 없어요</b>검색어나 필터를 바꿔 보세요. <div style="margin-top:12px"><button class="btn line sm" onclick="A.f={q:'',hall:'',src:'',st:''};render()">필터 모두 풀기</button></div></div>`}</div>`};
+
+function tTag(t){return t.status==='pending'?'<span class="tag wait">대기</span>':t.status==='approved'?'<span class="tag ok">승인</span>':'<span class="tag err">거절</span>'}
+P.tr=()=>{const d=A.data;const list=[...d.transfers].sort((a,b)=>(a.status==='pending'?0:1)-(b.status==='pending'?0:1)||new Date(b.at)-new Date(a.at));
+  return head('양도 요청','매매는 없어요. 조건은 두 보호자가 정하고, 운영자는 본인 확인 후 명의만 바꿔요')+`
+  <div class="card tablewrap">${list.length?`<table><thead><tr><th>요청번호</th><th>요청 시각</th><th>자리</th><th>보내는 분</th><th>받는 분 연락처</th><th>상태</th><th></th></tr></thead><tbody>
+  ${list.map(t=>`<tr data-testid="tr-row"><td><b>${esc(t.id)}</b></td><td>${when(t.at)}</td><td>${esc(t.seatLabel)}</td><td>${esc(t.fromName)}</td><td><span id="ph-${t.id}">${maskPhone(t.toPhone)}</span><button class="linklike" onclick="showPhone('${t.id}')" aria-label="받는 분 연락처 전체 보기">보기</button></td><td>${tTag(t)}${t.decidedAt?`<div style="font-size:12px;color:var(--sub);margin-top:2px">${when(t.decidedAt)} 처리</div>`:''}</td>
+    <td style="text-align:right;white-space:nowrap">${t.status==='pending'?`<button class="btn line sm" onclick="askReject('${t.id}')">양도 거절</button> <button class="btn primary sm" data-testid="tr-approve" onclick="decide('${t.id}','approve')">양도 승인</button>`:''}</td></tr>`).join('')}
+  </tbody></table>`:'<div class="empty"><b>양도 요청이 없어요</b>회원 화면에서 요청이 들어오면 여기에 보여요.</div>'}</div>`};
+
+P.gb=()=>{const d=A.data;const list=d.guestbook.filter(g=>!A.gbOnlyReported||g.reports>0);
+  return head('방명록','가족과 아는 사람이 남긴 말이에요. 상처가 되는 글은 숨길 수 있어요')+`
+  <div class="filters"><label style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:var(--ink);min-height:40px;cursor:pointer"><input type="checkbox" ${A.gbOnlyReported?'checked':''} onchange="A.gbOnlyReported=this.checked;render()" style="width:18px;height:18px"> 신고된 글만 보기</label></div>
+  <div class="card sec">${list.length?list.map(g=>`<div class="gb ${g.hidden?'hidden':''}" data-testid="gb-row"><div class="txt"><div><b>${esc(g.who)}</b> <span style="color:var(--sub);font-size:12px">→ ${esc(g.pet)} · ${when(g.at)}</span> ${g.reports?`<span class="tag err">신고 ${g.reports}</span>`:''} ${g.hidden?'<span class="tag mute">숨김</span>':''}</div><p>${esc(g.text)}</p></div>
+    <div><button class="btn ${g.hidden?'line':'line'} sm" data-testid="gb-toggle" onclick="toggleGb('${g.id}',${!g.hidden})">${g.hidden?'다시 보이기':'숨기기'}</button></div></div>`).join(''):'<div class="empty"><b>보여줄 글이 없어요</b>신고된 글이 없어요.</div>'}</div>`};
+
+P.halls=()=>{const d=A.data;return head('메모리얼','메모리얼마다 1004자리, 증설 없음. 자리 번호는 후광에서 가까운 순서예요')+`
+  <div class="halls" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">${d.halls.map(h=>{const z=Angel.zoneStats(h.takenSeats);return `<div class="card hall"><div class="pic" style="padding:20px 0"><canvas data-angel="${h.id}" aria-label="${h.name} 채움 모습" style="width:min(220px,80%)"></canvas></div><div class="meta">
+    <b class="serif" style="font-size:18px">${h.name}</b> <span style="color:var(--sub);font-size:13px">${esc(h.desc)}</span>
+    <div class="bar"><i style="width:${(h.taken/h.total*100).toFixed(1)}%"></i></div>
+    <div style="display:flex;justify-content:space-between"><span>${fmt(h.taken)}개의 별이 빛나요</span><b style="color:${h.left<=20?'var(--err)':'var(--gold2)'}">남은 ${fmt(h.left)}자리</b></div>
+    <table style="min-width:0;margin-top:12px"><thead><tr><th>구역</th><th>전체</th><th>남음</th><th>예시가</th></tr></thead><tbody>${[['halo',180],['wing',140],['robe',120]].map(([k,p])=>`<tr><td>${Angel.ZONES[k]}</td><td>${z[k].total}</td><td><b>${z[k].left}</b></td><td>${p}만원</td></tr>`).join('')}</tbody></table>
+  </div></div>`}).join('')}</div>
+  <div class="card sec" style="margin-top:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap"><div style="flex:1;min-width:220px"><b>예시 데이터로 되돌리기</b><div class="sub" style="color:var(--sub);font-size:13px;margin-top:2px">시연 전에 테스트로 들어간 예약·양도·방명록을 지우고 처음 상태로 돌려요.</div></div><button class="btn line" data-testid="reset-open" onclick="askReset()">예시 데이터로 되돌리기</button></div>`};
+
+// ---------- actions ----------
+function showPhone(id){const d=A.data;const r=d.reservations.find(x=>x.id===id)||d.transfers.find(x=>x.id===id);const el=$('#ph-'+id);if(el&&r){el.textContent=fullPhone(r.phone||r.toPhone);el.nextElementSibling?.remove()}}
+let lastFocus=null;
+function openDialog(html){lastFocus=document.activeElement;$('#dialog').innerHTML=html;$('#scrim').classList.add('on');setTimeout(()=>$('#dialog [data-focus]')?.focus(),20)}
+function closeDialog(){$('#scrim').classList.remove('on');lastFocus?.focus?.()}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&$('#scrim').classList.contains('on'))closeDialog();
+  if(e.key==='Tab'&&$('#scrim').classList.contains('on')){const f=[...$('#dialog').querySelectorAll('button')];if(!f.length)return;const i=f.indexOf(document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();f[f.length-1].focus()}else if(!e.shiftKey&&i===f.length-1){e.preventDefault();f[0].focus()}}
+});
+function askCancel(id){const r=A.data.reservations.find(x=>x.id===id);
+  openDialog(`<h3 id="dlgTitle">${esc(r.pet)}의 자리 예약을 취소할까요?</h3><p>${esc(r.id)} · ${seatText(r)}<br>${esc(r.owner)}님께는 실제 서비스에서 따로 안내가 나가요. 취소한 뒤에도 '되돌리기'로 살릴 수 있어요.</p><div class="row"><button class="btn line" data-focus onclick="closeDialog()">그대로 두기</button><button class="btn danger" data-testid="confirm-cancel" onclick="doRes('${id}','cancel')">예약 취소하기</button></div>`)}
+async function doRes(id,action){A.busy=true;try{await api('/api/admin/reservations/'+id,{method:'POST',body:JSON.stringify({action})});closeDialog();await refresh(true);toast(action==='cancel'?'예약을 취소했어요':'예약을 되돌렸어요')}catch(e){closeDialog();toast(e.message)}A.busy=false}
+const restoreRes=id=>doRes(id,'restore');
+function askReject(id){const t=A.data.transfers.find(x=>x.id===id);
+  openDialog(`<h3 id="dlgTitle">${esc(t.seatLabel)} 양도를 거절할까요?</h3><p>${esc(t.fromName)}님의 요청이에요. 거절하면 자리는 지금 보호자에게 그대로 남아요.</p><div class="row"><button class="btn line" data-focus onclick="closeDialog()">돌아가기</button><button class="btn danger" onclick="decide('${id}','reject')">양도 거절하기</button></div>`)}
+async function decide(id,action){try{await api('/api/admin/transfers/'+id,{method:'POST',body:JSON.stringify({action})});closeDialog();await refresh(true);toast(action==='approve'?'양도를 승인했어요':'양도를 거절했어요')}catch(e){closeDialog();toast(e.message)}}
+function askReset(){openDialog(`<h3 id="dlgTitle">예시 데이터로 되돌릴까요?</h3><p>지금까지 들어온 예약, 양도 요청, 방명록이 모두 지워지고 처음 예시 상태로 돌아가요. 되돌릴 수 없어요.</p><div class="row"><button class="btn line" data-focus onclick="closeDialog()">그대로 두기</button><button class="btn danger" data-testid="reset-confirm" onclick="doReset()">모두 지우고 되돌리기</button></div>`)}
+async function doReset(){try{await api('/api/admin/reset',{method:'POST',body:'{}'});closeDialog();await refresh(true);toast('예시 데이터로 되돌렸어요')}catch(e){closeDialog();toast(e.message)}}
+async function toggleGb(id,hidden){try{await api('/api/admin/guestbook/'+id,{method:'POST',body:JSON.stringify({hidden})});await refresh(true);toast(hidden?'글을 숨겼어요. 회원 화면에서 보이지 않아요':'글을 다시 보이게 했어요')}catch(e){toast(e.message)}}
+
+// ---------- render ----------
+function render(){
+  views.forEach(v=>v.destroy());views=[];
+  nav(); $('#main').innerHTML=P[A.page]();
+  document.querySelectorAll('canvas[data-angel]').forEach(cv=>{const h=A.data.halls.find(x=>x.id===cv.dataset.angel);views.push(Angel.mount(cv,{taken:h.takenSeats,photos:PHOTOS}))});
+}
+function renderKeep(id){const el=document.getElementById(id);const pos=el.selectionStart;render();const n=document.getElementById(id);n.focus();n.setSelectionRange(pos,pos)}
+setInterval(()=>{if(A.code&&!$('#scrim').classList.contains('on')&&document.activeElement?.tagName!=='INPUT')refresh(true)},20000);
+(function boot(){let c=null;try{c=sessionStorage.getItem('adminCode')}catch{} if(c){$('#code').value=c;login()} else $('#code').focus()})();
+</script>
+</body>
+</html>

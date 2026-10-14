@@ -1,0 +1,100 @@
+# 기억의 집
+
+반려동물을 영원히 기억할 수 있는 온라인 메모리얼. 메모리얼마다 1004자리, 다 채워지면 늘리지 않는다.
+메모리얼에 들어가면 1004개의 조각이 아이들 사진으로 채워져 하나의 천사(날개와 빛)가 된다.
+
+> 1004의 별이 모여 하나의 빛이 됩니다
+
+## 화면
+
+| 경로 | 화면 | 내용 |
+|---|---|---|
+| `/` | 첫 페이지 | 세 화면으로 가는 입구 |
+| `/guest` | 비회원 | 메모리얼 둘러보기 → 천사 입장 → 구역(후광 곁·날개·옷자락)에서 자리 고르기 → 예약 |
+| `/member` | 회원 | 보리의 메모리얼: 입장, 피드, 참배(꽃·촛불·방명록), 기억의 방(360°/VR), 기억 보존, 별빛 광장, 자리 양도 |
+| `/admin` | 관리자 | 대시보드, 예약 관리(취소·되돌리기), 양도 승인·거절, 방명록 숨기기, 메모리얼별 채움 |
+
+세 화면은 같은 데이터를 쓴다. 비회원 화면에서 예약하면 관리자 화면에 바로 보인다.
+
+## 원칙
+
+- 메모리얼마다 **1004자리 고정, 증설 없음**. 자리 번호는 후광(빛)에서 가까운 순서로 1~1004.
+- 자리 **매매 메뉴는 없고 양도만** 있다. 조건은 두 보호자가 정하고, 운영자는 승인만 한다.
+- 오프라인 시설 연계가 아니라 **온라인에서 영원히 기억하는 곳**.
+- 아이를 "마리"로 세지 않는다.
+
+## 구조
+
+```
+public/            화면 (HTML 한 장씩, 빌드 없음)
+  index.html       첫 페이지
+  guest.html       비회원 화면
+  member.html      회원 화면
+  admin.html       관리자 페이지
+  static/angel.js  1004 조각 천사 그리기 (세 화면 공용)
+  img/             사진
+src/
+  server.ts        화면 + API 서버 (Bun)
+  seed.ts          메모리얼 정의, 예시 데이터
+  storage.ts       데이터 저장소 (S3 호환 버킷 또는 로컬 폴더)
+tests/api.test.ts  API 테스트
+```
+
+## 로컬 실행
+
+[Bun](https://bun.sh) 1.1 이상이 필요하다.
+
+```bash
+ADMIN_CODE=원하는코드 bun run dev     # http://localhost:3000
+bun test                              # 테스트
+```
+
+버킷 환경변수가 없으면 데이터는 `./.data/data/state.json`에 저장된다.
+
+## 환경변수
+
+| 이름 | 필수 | 설명 |
+|---|---|---|
+| `ADMIN_CODE` | 예 | 관리자 페이지 코드. 없으면 관리자 페이지가 잠긴다 |
+| `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | 배포 시 권장 | 데이터를 S3 호환 버킷에 저장 (재배포해도 유지) |
+| `S3_REGION` | | 기본 `auto` |
+| `DATA_DIR` | | 버킷을 안 쓸 때 저장 폴더. 기본 `./.data` |
+| `PORT` | | 기본 3000 |
+
+## 배포 (Railway)
+
+`main` 브랜치에 푸시하면 Railway가 `Dockerfile`로 빌드해 자동 배포한다(`railway.json`).
+데이터는 같은 프로젝트의 Railway 버킷에 저장되며, 서비스 변수는 버킷 값을 참조한다.
+
+```
+S3_ENDPOINT=${{site.ENDPOINT}}
+S3_BUCKET=${{site.BUCKET}}
+S3_REGION=${{site.REGION}}
+S3_ACCESS_KEY_ID=${{site.ACCESS_KEY_ID}}
+S3_SECRET_ACCESS_KEY=${{site.SECRET_ACCESS_KEY}}
+```
+
+## API
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| GET | `/api/halls` | 메모리얼 목록과 남은 자리 |
+| GET | `/api/halls/:id/seats` | 채워진 자리 번호 |
+| POST | `/api/reserve` | 자리 예약 `{hall, seats, pet, kind, petStatus, owner, phone, source}` |
+| POST | `/api/transfer` | 양도 요청 `{seatLabel, fromName, toPhone}` |
+| GET/POST | `/api/guestbook` | 방명록 읽기·남기기 |
+| GET | `/api/admin/overview` | 관리자 전체 데이터 (`x-admin-code` 헤더) |
+| POST | `/api/admin/transfers/:id` | `{action: "approve" \| "reject"}` |
+| POST | `/api/admin/guestbook/:id` | `{hidden: true \| false}` |
+| POST | `/api/admin/reservations/:id` | `{action: "cancel" \| "restore"}` |
+| POST | `/api/admin/reset` | 예시 데이터로 되돌리기 |
+
+쓰기 요청은 IP당 1분 40회로 제한된다.
+
+## 아직 시제품인 부분
+
+- 결제·본인인증은 연결되어 있지 않다. 예약은 확정까지만 동작한다.
+- 회원 화면은 "보리" 보호자 한 명 기준의 시연 화면이다. 실제 로그인·회원별 데이터는 없다.
+- 기억의 방 360°/VR은 화면 전환만 되고 기울기 센서·헤드셋 연동은 없다.
+- 3중 백업·전체 내려받기는 진행 표시만 흉내 낸다.
+- 관리자 인증은 공용 코드 하나다. 실서비스 전에 운영자 계정·권한으로 바꿔야 한다.

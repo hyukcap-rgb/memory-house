@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%230E1220%27/%3E%3Cellipse cx=%2716%27 cy=%2710%27 rx=%277%27 ry=%272.2%27 fill=%27none%27 stroke=%27%23E7C77B%27 stroke-width=%272%27/%3E%3Cpath d=%27M16 15l-9-4c0 7 4 10 9 10s9-3 9-10z%27 fill=%27%23E7C77B%27/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>기억의 집 · 1004자리의 반려인을 찾습니다</title>
+<meta name="description" content="메모리얼마다 1004자리. 사랑한 아이의 별을 미리 정해 두세요.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#0E1220; --night2:#161B2E; --navy:#2E4374; --gold:#E7C77B; --gold2:#C9A24E; --cream:#F7F1E3;
+  --ink:#1D2130; --sub:#6B7080; --line:#E6E3DD; --bg:#F6F5F2; --stage:#E9E7E2; --err:#B2453A;
+  --sans:'Noto Sans KR',system-ui,sans-serif; --serif:'Noto Serif KR',serif; --ease:cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-color-scheme: dark){ :root{ --stage:#07090F; } }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--stage)}
+body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;display:flex;justify-content:center;align-items:center;min-height:100%}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+a{color:inherit}
+#phone{position:relative;width:390px;height:844px;overflow:hidden;background:var(--night);border-radius:40px;box-shadow:0 30px 80px rgba(0,0,0,.3),0 0 0 10px #0d0f15}
+@media (max-width:480px){ body{align-items:stretch} #phone{width:100%;height:100dvh;border-radius:0;box-shadow:none} }
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;animation:in .35s var(--ease)}
+@keyframes in{from{opacity:0}to{opacity:1}}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.status{height:44px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 24px;font-size:13px;font-weight:700;color:#fff}
+.status.dark{color:var(--ink)}
+.serif{font-family:var(--serif)}
+.top{display:flex;align-items:center;gap:6px;padding:4px 12px 8px;min-height:52px}
+.iconbtn{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;flex:none}
+.ico{width:22px;height:22px}
+.cta{display:flex;align-items:center;justify-content:center;gap:8px;height:56px;border-radius:16px;font-weight:700;font-size:16px;width:100%;transition:transform .15s var(--ease),opacity .15s}
+.cta:active{transform:scale(.98)}
+.cta.gold{background:var(--gold);color:var(--night)}
+.cta.white{background:#fff;color:var(--night)}
+.cta.navy{background:var(--navy);color:#fff}
+.cta.ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.18)}
+.cta.soft{background:#EDEBE6;color:var(--ink)}
+.cta[disabled]{opacity:.45;cursor:not-allowed}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--gold)}
+.light{color:#fff}
+.muted{color:#AEB5C6}
+/* home */
+.hero{position:relative;padding:4px 20px 28px;color:#fff;text-align:center}
+.hero canvas{width:230px;display:block;margin:4px auto 6px}
+.hero h1{font-family:var(--serif);font-size:30px;line-height:1.3;font-weight:700;margin:10px 0 8px;word-break:keep-all}
+.hero p{font-size:15px;line-height:1.65;color:#C9CFDC;word-break:keep-all}
+.sheet{background:var(--bg);border-radius:28px 28px 0 0;padding:26px 16px 32px;min-height:60%}
+.h2{font-family:var(--serif);font-size:21px;font-weight:700;margin:0 4px 4px}
+.lede{font-size:14px;color:var(--sub);margin:0 4px 14px;line-height:1.6;word-break:keep-all}
+.hallcard{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:#fff;border-radius:20px;padding:12px 16px 12px 12px;margin-bottom:10px;border:1px solid transparent;transition:transform .15s var(--ease)}
+.hallcard:active{transform:scale(.985)}
+.hallthumb{width:84px;height:103px;border-radius:14px;background:var(--night);flex:none;overflow:hidden;display:grid;place-items:center}
+.hallthumb canvas{width:84px}
+.bar{height:6px;border-radius:3px;background:#ECE9E2;overflow:hidden;margin:10px 0 6px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold2),var(--gold));border-radius:3px}
+.note{display:flex;gap:12px;background:#fff;border-radius:18px;padding:16px;margin-top:10px;align-items:flex-start}
+.note b{font-size:15px}
+.note p{font-size:13px;color:var(--sub);line-height:1.6;margin-top:3px;word-break:keep-all}
+.note .ico{color:var(--gold2);margin-top:1px;flex:none}
+/* entry */
+.stage{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 14px}
+.stage canvas{width:100%;max-width:340px;display:block}
+.caption{text-align:center;color:#fff;padding:0 24px;transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.caption.hide{opacity:0;transform:translateY(8px)}
+.caption h1{font-family:var(--serif);font-size:23px;line-height:1.45;font-weight:700;word-break:keep-all}
+.caption p{font-size:14px;color:#AEB5C6;margin-top:6px}
+.dock{padding:12px 16px 26px;flex:none}
+/* seats */
+.canvasbox{position:relative;background:var(--night);border-radius:22px;overflow:auto;height:360px;margin:0 16px;-webkit-overflow-scrolling:touch}
+.canvasbox canvas{display:block;margin:0 auto}
+.zoom{position:absolute;right:26px;top:12px;z-index:2;height:36px;padding:0 12px;border-radius:999px;background:rgba(255,255,255,.14);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,.18)}
+.zones{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 16px 0}
+.zone{border-radius:14px;padding:10px 8px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.12);color:#fff;text-align:center;min-height:62px}
+.zone[aria-pressed="true"]{border-color:var(--gold);background:rgba(231,199,123,.14)}
+.zone b{display:block;font-size:14px}
+.zone span{font-size:12px;color:#AEB5C6}
+.zone[aria-pressed="true"] span{color:var(--gold)}
+.pickcard{margin:12px 16px 0;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:14px 16px;color:#fff}
+.pickcard .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.pickcard p{font-size:13px;color:#AEB5C6;line-height:1.6;margin-top:6px;word-break:keep-all}
+.linkbtn{font-size:13px;font-weight:700;color:var(--gold);min-height:44px;padding:0 4px}
+/* form */
+.form{padding:4px 16px 20px}
+label.fl,span.fl{display:block;font-size:13px;font-weight:700;margin:16px 0 6px;color:var(--ink)}
+input[type=text],input[type=tel]{width:100%;height:50px;border:1px solid var(--line);border-radius:14px;padding:0 14px;font:inherit;font-size:16px;background:#fff;color:var(--ink)}
+input:focus{outline:2px solid var(--navy);border-color:transparent}
+input[aria-invalid="true"]{border-color:var(--err)}
+.err{color:var(--err);font-size:13px;margin-top:6px;min-height:0}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chipbtn{height:46px;padding:0 16px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-size:14px;font-weight:500}
+.chipbtn[aria-pressed="true"]{border-color:var(--navy);background:var(--navy);color:#fff;font-weight:700}
+.summary{display:flex;gap:12px;align-items:center;background:var(--night);color:#fff;border-radius:18px;padding:12px 14px;margin:0 16px}
+.summary canvas{width:56px;flex:none}
+.fine{font-size:12px;color:var(--sub);line-height:1.6;margin-top:14px;word-break:keep-all}
+#toast{position:absolute;left:50%;bottom:108px;transform:translate(-50%,12px);background:rgba(20,26,44,.95);color:#fff;font-size:13px;padding:10px 16px;border-radius:999px;opacity:0;transition:all .25s var(--ease);z-index:30;pointer-events:none;max-width:88%;text-align:center;border:1px solid rgba(255,255,255,.12)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+.skeleton{background:linear-gradient(90deg,#ECE9E2 0%,#F4F2EE 50%,#ECE9E2 100%);background-size:200% 100%;animation:sk 1.2s linear infinite;border-radius:20px;height:127px;margin-bottom:10px}
+@keyframes sk{to{background-position:-200% 0}}
+@media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
+</style>
+</head>
+<body>
+<div id="phone" role="application" aria-label="기억의 집 비회원 화면">
+  <div id="view"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+</div>
+<script src="/static/angel.js"></script>
+<script>
+const PHOTOS=['portrait','p1','p2','p3','p4','p5','p7'].map(k=>'/img/'+k+'.jpg');
+const PRICE={halo:180,wing:140,robe:120};
+const ZONE_DESC={halo:'빛에 가장 가까운 104자리',wing:'두 날개를 이루는 자리',robe:'흩날리는 옷자락의 자리'};
+const I={
+  back:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  star:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.8z"/></svg>',
+  heart:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></svg>',
+  hand:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13l3.5-3.5a2 2 0 012.8 0L12 11l1.7-1.5a2 2 0 012.8 0L20 13M4 13l6 6h4l6-6"/></svg>',
+  lock:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 017 0v2.5"/></svg>',
+  shuffle:'<svg class="ico" style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3c4 0 6 10 10 10h3M4 17h3c1.6 0 2.8-1.5 3.8-3.3M13.2 10.3C14.2 8.5 15.4 7 17 7h3M18 4l3 3-3 3M18 14l3 3-3 3"/></svg>',
+};
+const S={screen:'home',halls:null,hall:null,taken:null,zone:'halo',pick:null,zoom:false,
+  form:{pet:'',kind:'',breed:'',petStatus:'',owner:'',phone:''},errors:{},sending:false,result:null,history:[]};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>n.toLocaleString('ko-KR');
+const pad=n=>String(n).padStart(4,'0');
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2200)}
+function status(dark){return `<div class="status ${dark?'dark':''}"><span>9:41</span><span>100%</span></div>`}
+async function api(path,opt){
+  const r=await fetch(path,{...opt,headers:{'content-type':'application/json'}});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(d.error||'잠시 후 다시 시도해 주세요');
+  return d;
+}
+let mounted=[];
+function unmountAll(){mounted.forEach(m=>m.destroy());mounted=[]}
+function go(s){S.history.push(S.screen);S.screen=s;render()}
+function back(){S.screen=S.history.pop()||'home';render()}
+
+// ---------- screens ----------
+const R={};
+R.home=()=>`<section class="screen" data-testid="screen-home">
+  ${status()}
+  <div class="scroll" id="homescroll">
+    <div class="hero">
+      <div class="eyebrow">기억의 집</div>
+      <canvas id="heroAngel" aria-hidden="true"></canvas>
+      <h1>1004자리의<br>반려인을 찾습니다</h1>
+      <p>메모리얼마다 1004자리.<br>다 채워지면 더는 늘리지 않아요.</p>
+      <button class="cta gold" style="margin-top:20px" data-testid="home-browse" onclick="document.getElementById('halls').scrollIntoView({behavior:'smooth'})">메모리얼 둘러보기</button>
+    </div>
+    <div class="sheet" id="halls">
+      <h2 class="h2">메모리얼</h2>
+      <p class="lede">들어가면 1004개의 별이 모여 천사가 돼요. 별 하나하나가 누군가 사랑한 아이예요.</p>
+      <div data-testid="hall-list">${S.halls?S.halls.map(h=>`<button class="hallcard" data-testid="hall-${h.id}" onclick="enter('${h.id}')">
+        <span class="hallthumb"><canvas data-thumb="${h.id}" aria-hidden="true"></canvas></span>
+        <span style="flex:1;min-width:0"><b class="serif" style="font-size:19px">${h.name}</b><br><span style="font-size:13px;color:var(--sub)">${h.desc}</span>
+          <span class="bar" aria-hidden="true"><i style="width:${(h.taken/h.total*100).toFixed(1)}%"></i></span>
+          <span style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--sub)">${fmt(h.taken)}개의 별이 빛나요</span><b style="color:${h.left<=20?'var(--err)':'var(--gold2)'}" data-testid="left-${h.id}">남은 ${fmt(h.left)}자리</b></span>
+        </span></button>`).join(''):'<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>'}</div>
+      <div class="note">${I.heart}<div><b>곁에 있는 아이도 미리</b><p>지금 함께 사는 아이의 자리를 미리 정해 둘 수 있어요. 빛에 가까운 자리부터 먼저 채워져요.</p></div></div>
+      <div class="note">${I.hand}<div><b>양도는 되지만, 매매는 없어요</b><p>사정이 생기면 다른 보호자에게 넘길 수 있어요. 조건은 두 분이 직접 정해요.</p></div></div>
+      <div class="note">${I.lock}<div><b>온라인에서 영원히</b><p>찾아갈 장소가 없어도 괜찮아요. 아이의 별은 이곳에 계속 남아요.</p></div></div>
+      <a href="/member" data-testid="to-member" style="display:block;text-align:center;font-size:14px;color:var(--sub);margin-top:22px;padding:12px">이미 자리가 있으신가요? <b style="color:var(--navy)">내 메모리얼로 가기</b></a>
+    </div>
+  </div></section>`;
+
+R.enter=()=>{const h=S.hall;return `<section class="screen" data-testid="screen-enter" style="background:radial-gradient(120% 70% at 50% 18%,#1E2440 0%,var(--night) 60%)">
+  ${status()}
+  <div class="top light"><button class="iconbtn" aria-label="뒤로" data-testid="back" onclick="back()">${I.back}</button><span class="serif" style="font-size:17px;font-weight:700">${h.name}</span></div>
+  <div class="stage"><canvas id="enterAngel" data-testid="enter-angel" aria-label="${h.name}의 1004개의 별로 이루어진 천사"></canvas></div>
+  <div class="caption hide" id="cap"><h1>1004의 별이 모여<br>하나의 빛이 됩니다</h1><p>별 하나하나가 누군가 사랑한 아이예요</p></div>
+  <div class="dock"><button class="cta gold" data-testid="enter-pick" onclick="startPick()">이곳에 자리 고르기</button></div>
+</section>`};
+
+R.seats=()=>{const h=S.hall;const zs=Angel.zoneStats(S.taken);const p=S.pick;return `<section class="screen" data-testid="screen-seats" style="background:var(--night)">
+  ${status()}
+  <div class="top light"><button class="iconbtn" aria-label="뒤로" data-testid="back" onclick="back()">${I.back}</button><span style="flex:1"><b class="serif" style="font-size:17px">${h.name} 자리 고르기</b><br><span style="font-size:12px;color:#AEB5C6" data-testid="seats-left">1004자리 중 남은 ${fmt(h.left)}자리</span></span></div>
+  <div class="scroll" style="padding-bottom:12px">
+    <div style="position:relative">
+      <button class="zoom" data-testid="zoom" aria-pressed="${S.zoom}" onclick="toggleZoom()">${S.zoom?'전체 보기':'크게 보기'}</button>
+      <div class="canvasbox" id="cbox"><canvas id="seatAngel" data-testid="seat-angel" aria-label="자리를 고르는 천사. 빈 별을 눌러 고를 수 있어요" style="width:${S.zoom?720:300}px"></canvas></div>
+    </div>
+    <div class="zones" role="group" aria-label="자리 구역">${['halo','wing','robe'].map(z=>`<button class="zone" data-testid="zone-${z}" aria-pressed="${S.zone===z}" onclick="setZone('${z}')"><b>${Angel.ZONES[z]}</b><span>남은 ${fmt(zs[z].left)}자리</span></button>`).join('')}</div>
+    <div class="pickcard" data-testid="pick-card">${p?`<div class="row"><b class="serif" style="font-size:18px" data-testid="pick-label">${Angel.ZONES[Angel.zoneOf(p)]} ${pad(p)}번 자리</b><b style="color:var(--gold);font-size:13px;white-space:nowrap">영구 · 예시 ${PRICE[Angel.zoneOf(p)]}만원</b></div>
+      <p>${ZONE_DESC[Angel.zoneOf(p)]}이에요. 반짝이는 조각이 고른 자리예요. 다른 빈 별을 눌러 바꿀 수도 있어요.</p>
+      <button class="linkbtn" data-testid="pick-shuffle" onclick="shuffle()" style="display:inline-flex;align-items:center;gap:6px;margin-top:2px">${I.shuffle}같은 구역 다른 자리</button>`
+      :`<p style="margin:0" data-testid="pick-empty">${zs[S.zone].left?'빈 별을 눌러 자리를 골라 주세요.':'이 구역은 모두 채워졌어요. 다른 구역을 골라 주세요.'}</p>`}</div>
+  </div>
+  <div class="dock" style="padding-top:8px"><button class="cta gold" data-testid="pick-next" ${p?'':'disabled'} onclick="go('form')">이 자리로 정하기</button></div>
+</section>`};
+
+R.form=()=>{const h=S.hall,p=S.pick,f=S.form,e=S.errors;const chip=(k,v)=>`<button type="button" class="chipbtn" data-testid="${k}-${v}" aria-pressed="${f[k]===v}" onclick="setF('${k}','${v}')">${v}</button>`;
+return `<section class="screen" data-testid="screen-form" style="background:var(--bg)">
+  ${status(true)}
+  <div class="top"><button class="iconbtn" aria-label="뒤로" data-testid="back" onclick="back()">${I.back}</button><b style="font-size:17px">자리 예약하기</b></div>
+  <div class="scroll">
+    <div class="summary"><canvas id="miniAngel" aria-hidden="true"></canvas><div><div style="font-size:12px;color:var(--gold)">${h.name}</div><b class="serif" style="font-size:17px">${Angel.ZONES[Angel.zoneOf(p)]} ${pad(p)}번 자리</b><div style="font-size:12px;color:#AEB5C6">영구 · 예시 ${PRICE[Angel.zoneOf(p)]}만원</div></div></div>
+    <form class="form" novalidate onsubmit="event.preventDefault();submitForm()">
+      <label class="fl" for="f-pet">아이 이름</label>
+      <input id="f-pet" type="text" maxlength="20" autocomplete="off" data-testid="f-pet" value="${esc(f.pet)}" oninput="S.form.pet=this.value;clearErr('pet',this)" onblur="checkF('pet')" aria-invalid="${!!e.pet}" aria-describedby="e-pet">
+      <div class="err" id="e-pet">${e.pet||''}</div>
+      <span class="fl" id="l-kind">어떤 아이인가요</span>
+      <div class="chips" role="group" aria-labelledby="l-kind">${chip('kind','강아지')}${chip('kind','고양이')}${chip('kind','그 밖의 아이')}</div>
+      <div class="err" data-testid="e-kind">${e.kind||''}</div>
+      <span class="fl" id="l-status">아이는 지금</span>
+      <div class="chips" role="group" aria-labelledby="l-status">${chip('petStatus','함께 살고 있어요')}${chip('petStatus','먼저 떠났어요')}</div>
+      <div class="err" data-testid="e-status">${e.petStatus||''}</div>
+      <label class="fl" for="f-owner">보호자 이름</label>
+      <input id="f-owner" type="text" maxlength="20" autocomplete="name" data-testid="f-owner" value="${esc(f.owner)}" oninput="S.form.owner=this.value;clearErr('owner',this)" onblur="checkF('owner')" aria-invalid="${!!e.owner}" aria-describedby="e-owner">
+      <div class="err" id="e-owner">${e.owner||''}</div>
+      <label class="fl" for="f-phone">휴대폰 번호</label>
+      <input id="f-phone" type="tel" inputmode="tel" maxlength="13" autocomplete="tel" placeholder="010-0000-0000" data-testid="f-phone" value="${esc(f.phone)}" oninput="S.form.phone=this.value;clearErr('phone',this)" onblur="checkF('phone')" aria-invalid="${!!e.phone}" aria-describedby="e-phone">
+      <div class="err" id="e-phone">${e.phone||''}</div>
+      <div class="err" data-testid="e-server" style="margin-top:12px">${e.server||''}</div>
+      <button class="cta navy" type="submit" style="margin-top:14px" data-testid="f-submit" ${S.sending?'disabled':''}>${S.sending?'예약하는 중…':'이 자리 예약하기'}</button>
+      <p class="fine">한 번 정한 자리는 영원히 그 아이의 자리예요. 양도는 할 수 있지만 매매는 없어요. 시제품이라 결제와 본인인증은 연결되어 있지 않아요.</p>
+    </form>
+  </div>
+</section>`};
+
+R.done=()=>{const r=S.result,h=S.hall;return `<section class="screen" data-testid="screen-done" style="background:radial-gradient(120% 70% at 50% 18%,#1E2440 0%,var(--night) 60%)">
+  ${status()}
+  <div class="stage" style="padding-top:8px"><canvas id="doneAngel" aria-label="${esc(r.pet)}의 별이 빛나는 천사"></canvas></div>
+  <div class="caption"><div class="eyebrow">${h.name} · ${Angel.ZONES[Angel.zoneOf(r.seat)]} ${pad(r.seat)}번 자리</div><h1 style="margin-top:6px" data-testid="done-title">${esc(r.pet)}의 별이 생겼어요</h1><p>예약번호 ${esc(r.id)} · 반짝이는 별이 ${esc(r.pet)}의 자리예요</p></div>
+  <div class="dock" style="display:flex;flex-direction:column;gap:8px"><a class="cta gold" href="/member" data-testid="done-member" style="text-decoration:none">내 메모리얼 보기</a><button class="cta ghost" data-testid="done-home" onclick="reset()">처음으로</button></div>
+</section>`};
+
+// ---------- behaviour ----------
+async function loadHalls(){
+  try{S.halls=await api('/api/halls');}catch(e){toast(e.message);S.halls=[]}
+  if(S.screen==='home') render();
+}
+async function enter(id){
+  S.hall=S.halls.find(h=>h.id===id); S.pick=null; S.zone='halo'; S.taken=null;
+  go('enter');
+  try{const d=await api(`/api/halls/${id}/seats`);S.taken=d.taken;S.hall={...S.hall,left:d.left,taken:d.taken.length}}catch(e){toast(e.message)}
+  if(S.screen==='enter') mountEnter();
+}
+function startPick(){ if(!S.taken){toast('자리를 불러오는 중이에요');return} if(!S.hall.left){toast('이 메모리얼은 모두 채워졌어요');return} go('seats') }
+function setZone(z){S.zone=z;const free=Angel.freeSeats(S.taken,z);S.pick=free.length?free[0]:null;render();focusPick()}
+function shuffle(){const free=Angel.freeSeats(S.taken,S.zone).filter(n=>n!==S.pick);if(!free.length){toast('이 구역엔 다른 빈 자리가 없어요');return}S.pick=free[Math.floor(Math.random()*free.length)];render();focusPick()}
+function toggleZoom(){S.zoom=!S.zoom;render();focusPick()}
+function focusPick(){ if(!S.zoom||!S.pick) return; const box=$('#cbox'),m=mounted[0]; if(!box||!m) return; const pt=m.pointOf(S.pick); const cv=$('#seatAngel');
+  requestAnimationFrame(()=>{box.scrollLeft=pt.x*cv.clientWidth-box.clientWidth/2;box.scrollTop=pt.y*cv.clientHeight-box.clientHeight/2}) }
+function setF(k,v){S.form[k]=v;delete S.errors[k];render()}
+function clearErr(k,el){ if(S.errors[k]){delete S.errors[k];el.setAttribute('aria-invalid','false');const e=$('#e-'+k);if(e)e.textContent=''} }
+const RULES={
+  pet:v=>v.trim()?'':'아이 이름을 적어 주세요.',
+  owner:v=>v.trim()?'':'보호자 이름을 적어 주세요.',
+  phone:v=>/^01\d{8,9}$/.test(v.replace(/\D/g,''))?'':'휴대폰 번호 10~11자리를 확인해 주세요.',
+  kind:v=>v?'':'어떤 아이인지 골라 주세요.',
+  petStatus:v=>v?'':'아이가 지금 어떤지 골라 주세요.',
+};
+function checkF(k){const m=RULES[k](S.form[k]);const el=$('#f-'+k);if(m){S.errors[k]=m;if(el)el.setAttribute('aria-invalid','true');const e=$('#e-'+k);if(e)e.textContent=m}}
+async function submitForm(){
+  S.errors={};for(const k in RULES){const m=RULES[k](S.form[k]);if(m)S.errors[k]=m}
+  if(Object.keys(S.errors).length){render();const first=['pet','owner','phone'].find(k=>S.errors[k]);first&&$('#f-'+first)?.focus();return}
+  S.sending=true;render();
+  try{
+    const f=S.form;
+    const d=await api('/api/reserve',{method:'POST',body:JSON.stringify({hall:S.hall.id,seats:[S.pick],pet:f.pet,kind:f.kind,petStatus:f.petStatus,owner:f.owner,phone:f.phone,source:'guest'})});
+    S.result={id:d.reservation.id,seat:S.pick,pet:f.pet.trim()};S.taken=[...S.taken,S.pick];S.hall={...S.hall,...d.hall};
+    S.sending=false;S.history=['home'];S.screen='done';render();
+  }catch(e){
+    S.sending=false;S.errors.server=e.message;
+    if(/다른 분이/.test(e.message)){try{const d=await api(`/api/halls/${S.hall.id}/seats`);S.taken=d.taken}catch{} }
+    render();
+  }
+}
+function reset(){S.form={pet:'',kind:'',breed:'',petStatus:'',owner:'',phone:''};S.errors={};S.result=null;S.pick=null;S.history=[];S.screen='home';S.halls=null;render();loadHalls()}
+
+function mountEnter(){
+  const cv=$('#enterAngel'); if(!cv||!S.taken) return;
+  const m=Angel.mount(cv,{taken:S.taken,photos:PHOTOS,animate:true,onTap:(s,i)=>toast(i.taken?'누군가 사랑한 아이의 별이에요':'아직 비어 있는 별이에요')});
+  mounted.push(m);
+  m.animateIn(2600).then(()=>{const c=$('#cap');c&&c.classList.remove('hide')});
+}
+function afterRender(){
+  unmountAll();
+  if(S.screen==='home'){
+    const hero=$('#heroAngel');
+    if(hero){const sun=S.halls&&S.halls[0];const fake=[];for(let i=1;i<=1004;i++)if(i%7!==3)fake.push(i);
+      const m=Angel.mount(hero,{taken:fake,photos:PHOTOS,animate:true});mounted.push(m);m.animateIn(3200)}
+    document.querySelectorAll('canvas[data-thumb]').forEach(cv=>{const h=S.halls.find(x=>x.id===cv.dataset.thumb);
+      api(`/api/halls/${h.id}/seats`).then(d=>{if(!cv.isConnected)return;mounted.push(Angel.mount(cv,{taken:d.taken,photos:PHOTOS}))}).catch(()=>{})});
+  }
+  if(S.screen==='enter') mountEnter();
+  if(S.screen==='seats'){
+    if(!S.pick){const free=Angel.freeSeats(S.taken,S.zone);S.pick=free[0]||null; if(S.pick){render();return}}
+    const m=Angel.mount($('#seatAngel'),{taken:S.taken,picked:S.pick?[S.pick]:[],photos:PHOTOS,onTap:(s,i)=>{
+      if(i.taken){toast('이미 누군가의 아이가 있는 자리예요');return}
+      S.pick=s;S.zone=i.zone;render();focusPick()}});
+    mounted.push(m);
+  }
+  if(S.screen==='form'){const cv=$('#miniAngel');if(cv)mounted.push(Angel.mount(cv,{taken:S.taken,mine:[S.pick],photos:PHOTOS}))}
+  if(S.screen==='done'){const cv=$('#doneAngel');if(cv){const m=Angel.mount(cv,{taken:S.taken,mine:[S.result.seat],picked:[S.result.seat],photos:PHOTOS});mounted.push(m)}}
+}
+function render(){ $('#view').innerHTML=R[S.screen](); afterRender(); }
+render(); loadHalls();
+</script>
+</body>
+</html>
