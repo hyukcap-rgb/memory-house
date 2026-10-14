@@ -230,7 +230,7 @@ P.dash=()=>{const d=A.data,c=counts();
   ].sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,8);
   return head('대시보드','오늘 기억의 집 상황이에요')+`
   <div class="kpis">
-    <div class="card kpi"><div class="l">채워진 별</div><div class="v" data-testid="kpi-taken">${fmt(c.taken)}<small>/ ${fmt(c.total)}</small></div><div class="d">메모리얼 ${d.halls.length}곳 · 각 1004자리</div></div>
+    <div class="card kpi"><div class="l">채워진 별</div><div class="v" data-testid="kpi-taken">${fmt(c.taken)}<small>/ ${fmt(c.total)}</small></div><div class="d">메모리얼 ${d.halls.length}곳 · 각 1004자리 · 회원 ${fmt(d.accounts||0)}명</div></div>
     <div class="card kpi"><div class="l">남은 자리</div><div class="v">${fmt(c.total-c.taken)}</div><div class="d">증설 없음</div></div>
     <div class="card kpi"><div class="l">최근 24시간 예약</div><div class="v" data-testid="kpi-today">${fmt(c.today)}</div><div class="d">비회원·회원 합계</div></div>
     <div class="card kpi ${c.pending?'attn':''}"><div class="l">양도 대기</div><div class="v" data-testid="kpi-pending">${c.pending}</div><div class="d">${c.pending?'승인이 필요해요':'처리할 요청이 없어요'}</div></div>
@@ -255,13 +255,14 @@ P.res=()=>{const d=A.data,f=A.f;const q=f.q.trim().toLowerCase();
     <div class="f"><label for="ft">상태</label><select id="ft" onchange="A.f.st=this.value;render()"><option value="active" ${f.st==='active'?'selected':''}>유지 중</option><option value="cancelled" ${f.st==='cancelled'?'selected':''}>취소됨</option><option value="" ${f.st===''?'selected':''}>전체</option></select></div>
   </div>
   <div class="card tablewrap" data-testid="res-table">${rows.length?`<table><thead><tr><th>예약번호</th><th>예약 시각</th><th>메모리얼·자리</th><th>아이</th><th>보호자</th><th>연락처</th><th>경로</th><th>상태</th><th><span class="sr" style="position:absolute;left:-9999px">관리</span></th></tr></thead><tbody>
-    ${rows.map(r=>`<tr class="${r.status==='cancelled'?'dim':''}" data-testid="res-row"><td><b>${esc(r.id)}</b></td><td>${when(r.at)}</td><td>${seatText(r)}</td><td><b>${esc(r.pet)}</b><div style="font-size:12px;color:var(--sub)">${esc(r.kind)} · ${esc(r.petStatus)}</div></td><td>${esc(r.owner)}</td>
+    ${rows.map(r=>`<tr class="${r.status==='cancelled'?'dim':''}" data-testid="res-row"><td><b>${esc(r.id)}</b></td><td>${when(r.at)}</td><td>${seatText(r)}</td><td><b>${esc(r.pet)}</b>${petTag(r)}<div style="font-size:12px;color:var(--sub)">${esc(r.kind)} · ${esc(r.petStatus)}</div></td><td>${esc(r.owner)}</td>
       <td><span class="mask" id="ph-${r.id}">${maskPhone(r.phone)}</span><button class="linklike" onclick="showPhone('${r.id}')" aria-label="${esc(r.owner)} 연락처 전체 보기">보기</button></td>
       <td><span class="tag ${SRC[r.source][1]}">${SRC[r.source][0]}</span></td>
       <td>${r.status==='active'?'<span class="tag ok">유지 중</span>':'<span class="tag mute">취소됨</span>'}</td>
       <td style="text-align:right">${r.status==='active'?`<button class="btn line sm" data-testid="res-cancel" onclick="askCancel('${r.id}')">예약 취소</button>`:`<button class="btn line sm" onclick="restoreRes('${r.id}')">되돌리기</button>`}</td></tr>`).join('')}
   </tbody></table>`:`<div class="empty"><b>맞는 예약이 없어요</b>검색어나 필터를 바꿔 보세요. <div style="margin-top:12px"><button class="btn line sm" onclick="A.f={q:'',hall:'',src:'',st:''};render()">필터 모두 풀기</button></div></div>`}</div>`};
 
+function petTag(r){const p=r.petId&&(A.data.pets||[]).find(x=>x.id===r.petId);if(!p)return '';const filled=p.photo||p.birth||p.weight||p.likes;return ` <span class="tag ${filled?'ok':'wait'}" title="회원 화면 아이 정보">${filled?'정보 입력됨':'정보 미입력'}</span>`}
 function tTag(t){return t.status==='pending'?'<span class="tag wait">대기</span>':t.status==='approved'?'<span class="tag ok">승인</span>':'<span class="tag err">거절</span>'}
 P.tr=()=>{const d=A.data;const list=[...d.transfers].sort((a,b)=>(a.status==='pending'?0:1)-(b.status==='pending'?0:1)||new Date(b.at)-new Date(a.at));
   return head('양도 요청','매매는 없어요. 조건은 두 보호자가 정하고, 운영자는 본인 확인 후 명의만 바꿔요')+`

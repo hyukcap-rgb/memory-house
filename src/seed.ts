@@ -14,10 +14,24 @@ export type Reservation = {
   id: string; at: string; hall: string; seats: number[]; seatLabel?: string;
   pet: string; kind: string; petStatus: string; owner: string; phone: string;
   source: "guest" | "member" | "seed"; status: "active" | "cancelled";
+  accountId?: string; petId?: string;
 };
+// 회원 계정: 휴대폰 번호 + 비밀번호
+export type Account = { id: string; at: string; owner: string; phone: string; pwHash: string };
+// 아이 정보: 회원 화면에 보이는 내용
+export type Pet = {
+  id: string; accountId: string; at: string; name: string; kind: string; breed: string; petStatus: string;
+  nickname: string; birth: string; passed: string; weight: string; likes: string; tags: string[];
+  photoV: number; hall: string; seats: number[];
+};
+export type FeedItem = { id: string; at: string; petId: string; who: string; text: string; photoV: number };
+export type Session = { accountId: string; exp: number };
 export type Transfer = { id: string; at: string; seatLabel: string; fromName: string; toPhone: string; status: "pending" | "approved" | "rejected"; decidedAt?: string };
 export type Guest = { id: string; at: string; pet: string; who: string; text: string; hidden: boolean; reports: number };
-export type State = { reservations: Reservation[]; transfers: Transfer[]; guestbook: Guest[]; seq: number };
+export type State = {
+  reservations: Reservation[]; transfers: Transfer[]; guestbook: Guest[]; seq: number;
+  accounts: Account[]; pets: Pet[]; feed: FeedItem[]; sessions: Record<string, Session>;
+};
 
 function rng(seed: number) {
   let a = seed >>> 0;
@@ -58,6 +72,7 @@ const ago = (h: number) => new Date(Date.now() - h * 3600e3).toISOString();
 export function seedState(): State {
   return {
     seq: 100,
+    accounts: [], pets: [], feed: [], sessions: {},
     reservations: [
       { id: "R-0091", at: ago(52), hall: "sun", seats: [15], seatLabel: "C-3", pet: "보리", kind: "말티즈", petStatus: "먼저 떠났어요", owner: "김지현", phone: "01023457788", source: "seed", status: "active" },
       { id: "R-0092", at: ago(30), hall: "star", seats: [212], pet: "콩이", kind: "비숑", petStatus: "먼저 떠났어요", owner: "이수민", phone: "01088123344", source: "seed", status: "active" },

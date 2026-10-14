@@ -87,7 +87,7 @@ html,body{background:#0A0D18}
 /* form */
 .form{padding:4px 16px 20px}
 label.fl,span.fl{display:block;font-size:13px;font-weight:700;margin:16px 0 6px;color:var(--ink)}
-input[type=text],input[type=tel]{width:100%;height:50px;border:1px solid var(--line);border-radius:14px;padding:0 14px;font:inherit;font-size:16px;background:#fff;color:var(--ink)}
+input[type=text],input[type=tel],input[type=password]{width:100%;height:50px;border:1px solid var(--line);border-radius:14px;padding:0 14px;font:inherit;font-size:16px;background:#fff;color:var(--ink)}
 input:focus{outline:2px solid var(--navy);border-color:transparent}
 input[aria-invalid="true"]{border-color:var(--err)}
 .err{color:var(--err);font-size:13px;margin-top:6px;min-height:0}
@@ -110,6 +110,7 @@ input[aria-invalid="true"]{border-color:var(--err)}
   <div id="toast" role="status" aria-live="polite"></div>
 </div>
 <script src="/static/angel.js"></script>
+<script src="/static/petform.js"></script>
 <script>
 const PHOTOS=['portrait','p1','p2','p3','p4','p5','p7'].map(k=>'/img/'+k+'.jpg');
 const PRICE={halo:180,wing:140,robe:120};
@@ -123,7 +124,7 @@ const I={
   shuffle:'<svg class="ico" style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3c4 0 6 10 10 10h3M4 17h3c1.6 0 2.8-1.5 3.8-3.3M13.2 10.3C14.2 8.5 15.4 7 17 7h3M18 4l3 3-3 3M18 14l3 3-3 3"/></svg>',
 };
 const S={screen:'home',halls:null,hall:null,taken:null,zone:'halo',pick:null,zoom:false,
-  form:{pet:'',kind:'',breed:'',petStatus:'',owner:'',phone:''},errors:{},sending:false,result:null,history:[]};
+  form:{pet:'',kind:'',breed:'',petStatus:'',owner:'',phone:'',password:''},pet:null,errors:{},sending:false,result:null,history:[]};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=n=>n.toLocaleString('ko-KR');
@@ -216,6 +217,10 @@ return `<section class="screen" data-testid="screen-form" style="background:var(
       <label class="fl" for="f-phone">휴대폰 번호</label>
       <input id="f-phone" type="tel" inputmode="tel" maxlength="13" autocomplete="tel" placeholder="010-0000-0000" data-testid="f-phone" value="${esc(f.phone)}" oninput="S.form.phone=this.value;clearErr('phone',this)" onblur="checkF('phone')" aria-invalid="${!!e.phone}" aria-describedby="e-phone">
       <div class="err" id="e-phone">${e.phone||''}</div>
+      <label class="fl" for="f-password">비밀번호 <span style="font-weight:400;color:var(--sub);font-size:12px">6자 이상</span></label>
+      <input id="f-password" type="password" maxlength="64" autocomplete="new-password" data-testid="f-password" value="${esc(f.password)}" oninput="S.form.password=this.value;clearErr('password',this)" onblur="checkF('password')" aria-invalid="${!!e.password}" aria-describedby="e-password h-password">
+      <div class="err" id="e-password">${e.password||''}</div>
+      <div id="h-password" style="font-size:12px;color:var(--sub);margin-top:4px">회원 화면에 들어갈 때 휴대폰 번호와 함께 써요</div>
       <div class="err" data-testid="e-server" style="margin-top:12px">${e.server||''}</div>
       <button class="cta navy" type="submit" style="margin-top:14px" data-testid="f-submit" ${S.sending?'disabled':''}>${S.sending?'예약하는 중…':'이 자리 예약하기'}</button>
       <p class="fine">한 번 정한 자리는 영원히 그 아이의 자리예요. 양도는 할 수 있지만 매매는 없어요. 시제품이라 결제와 본인인증은 연결되어 있지 않아요.</p>
@@ -223,11 +228,27 @@ return `<section class="screen" data-testid="screen-form" style="background:var(
   </div>
 </section>`};
 
+R.profile=()=>{const p=S.pet;return `<section class="screen" data-testid="screen-profile" style="background:var(--bg)">
+  ${status()}
+  <div class="top"><b style="font-size:17px;padding-left:6px">${esc(p.name)} 소개하기</b></div>
+  <div class="scroll" style="padding:0 16px 20px">
+    <div style="background:var(--night);color:#fff;border-radius:18px;padding:14px 16px;margin-bottom:6px"><div style="font-size:12px;color:var(--gold)">${S.hall.name} · ${Angel.ZONES[Angel.zoneOf(S.result.seat)]} ${pad(S.result.seat)}번 자리 예약 완료</div><p style="font-size:14px;line-height:1.6;margin-top:4px;color:#DDE2EC">회원 화면에서 ${esc(p.name)}의 메모리얼에 들어가면 보이는 정보예요. 지금 다 채우지 않아도 되고, 나중에 고칠 수 있어요.</p></div>
+    ${PetForm.html(p, p.petStatus==='먼저 떠났어요')}
+    <div class="err" data-testid="e-profile" role="alert" style="margin-top:12px">${S.errors.profile||''}</div>
+  </div>
+  <div class="dock" style="display:flex;flex-direction:column;gap:6px;background:var(--bg);padding-top:10px"><button class="cta navy" data-testid="pf-save" ${S.sending?'disabled':''} onclick="saveProfile()">${S.sending?'저장하는 중…':'저장하고 계속'}</button><button class="cta" style="height:48px;color:var(--sub);font-weight:500;font-size:15px" data-testid="pf-later" onclick="S.history=[];S.screen='done';render()">나중에 할게요</button></div>
+</section>`};
+async function saveProfile(){
+  const d=PetForm.read(); if(!PetForm.validate(d)) return;
+  S.sending=true;delete S.errors.profile;$('[data-testid=pf-save]').disabled=true;$('[data-testid=pf-save]').textContent='저장하는 중…';
+  try{ S.pet=await PetForm.save(S.pet.id,d); S.sending=false; S.history=[]; S.screen='done'; render(); toast(`${S.pet.name}의 정보를 저장했어요`); }
+  catch(e){ S.sending=false; const el=$('[data-testid=e-profile]'); if(el) el.textContent=e.message; const b=$('[data-testid=pf-save]'); if(b){b.disabled=false;b.textContent='저장하고 계속'} }
+}
 R.done=()=>{const r=S.result,h=S.hall;return `<section class="screen" data-testid="screen-done" style="background:radial-gradient(120% 70% at 50% 18%,#1E2440 0%,var(--night) 60%)">
   ${status()}
   <div class="stage" style="padding-top:8px"><canvas id="doneAngel" aria-label="${esc(r.pet)}의 별이 빛나는 천사"></canvas></div>
   <div class="caption"><div class="eyebrow">${h.name} · ${Angel.ZONES[Angel.zoneOf(r.seat)]} ${pad(r.seat)}번 자리</div><h1 style="margin-top:6px" data-testid="done-title">${esc(r.pet)}의 별이 생겼어요</h1><p>예약번호 ${esc(r.id)} · 반짝이는 별이 ${esc(r.pet)}의 자리예요</p></div>
-  <div class="dock" style="display:flex;flex-direction:column;gap:8px"><a class="cta gold" href="/member" data-testid="done-member" style="text-decoration:none">내 메모리얼 보기</a><button class="cta ghost" data-testid="done-home" onclick="reset()">처음으로</button></div>
+  <div class="dock" style="display:flex;flex-direction:column;gap:8px"><a class="cta gold" href="/member" data-testid="done-member" style="text-decoration:none">${esc(r.pet)}의 메모리얼로 가기</a><button class="cta ghost" data-testid="done-home" onclick="reset()">처음으로</button></div>
 </section>`};
 
 // ---------- behaviour ----------
@@ -255,24 +276,25 @@ const RULES={
   phone:v=>/^01\d{8,9}$/.test(v.replace(/\D/g,''))?'':'휴대폰 번호 10~11자리를 확인해 주세요.',
   kind:v=>v?'':'어떤 아이인지 골라 주세요.',
   petStatus:v=>v?'':'아이가 지금 어떤지 골라 주세요.',
+  password:v=>v.length>=6?'':'비밀번호를 6자 이상으로 정해 주세요.',
 };
 function checkF(k){const m=RULES[k](S.form[k]);const el=$('#f-'+k);if(m){S.errors[k]=m;if(el)el.setAttribute('aria-invalid','true');const e=$('#e-'+k);if(e)e.textContent=m}}
 async function submitForm(){
   S.errors={};for(const k in RULES){const m=RULES[k](S.form[k]);if(m)S.errors[k]=m}
-  if(Object.keys(S.errors).length){render();const first=['pet','owner','phone'].find(k=>S.errors[k]);first&&$('#f-'+first)?.focus();return}
+  if(Object.keys(S.errors).length){render();const first=['pet','owner','phone','password'].find(k=>S.errors[k]);first&&$('#f-'+first)?.focus();return}
   S.sending=true;render();
   try{
     const f=S.form;
-    const d=await api('/api/reserve',{method:'POST',body:JSON.stringify({hall:S.hall.id,seats:[S.pick],pet:f.pet,kind:f.kind,petStatus:f.petStatus,owner:f.owner,phone:f.phone,source:'guest'})});
-    S.result={id:d.reservation.id,seat:S.pick,pet:f.pet.trim()};S.taken=[...S.taken,S.pick];S.hall={...S.hall,...d.hall};
-    S.sending=false;S.history=['home'];S.screen='done';render();
+    const d=await api('/api/reserve',{method:'POST',body:JSON.stringify({hall:S.hall.id,seats:[S.pick],pet:f.pet,kind:f.kind,petStatus:f.petStatus,owner:f.owner,phone:f.phone,password:f.password,source:'guest'})});
+    S.result={id:d.reservation.id,seat:S.pick,pet:f.pet.trim()};S.pet=d.pet;S.taken=[...S.taken,S.pick];S.hall={...S.hall,...d.hall};
+    S.form.password='';S.sending=false;S.history=[];S.screen='profile';render();
   }catch(e){
     S.sending=false;S.errors.server=e.message;
     if(/다른 분이/.test(e.message)){try{const d=await api(`/api/halls/${S.hall.id}/seats`);S.taken=d.taken}catch{} }
     render();
   }
 }
-function reset(){S.form={pet:'',kind:'',breed:'',petStatus:'',owner:'',phone:''};S.errors={};S.result=null;S.pick=null;S.history=[];S.screen='home';S.halls=null;render();loadHalls()}
+function reset(){S.form={pet:'',kind:'',breed:'',petStatus:'',owner:'',phone:'',password:''};S.pet=null;S.errors={};S.result=null;S.pick=null;S.history=[];S.screen='home';S.halls=null;render();loadHalls()}
 
 function mountEnter(){
   const cv=$('#enterAngel'); if(!cv||!S.taken) return;
@@ -298,6 +320,7 @@ function afterRender(){
     mounted.push(m);
   }
   if(S.screen==='form'){const cv=$('#miniAngel');if(cv)mounted.push(Angel.mount(cv,{taken:S.taken,mine:[S.pick],photos:PHOTOS}))}
+  if(S.screen==='profile') PetForm.bind();
   if(S.screen==='done'){const cv=$('#doneAngel');if(cv){const m=Angel.mount(cv,{taken:S.taken,mine:[S.result.seat],picked:[S.result.seat],photos:PHOTOS});mounted.push(m)}}
 }
 function render(){ $('#view').innerHTML=R[S.screen](); afterRender(); }
