@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>기억의 집 · 사랑한 만큼, 오래 기억할 수 있도록</title>
+<meta name="description" content="반려동물을 온라인에서 영원히 기억하는 곳. 아이를 사랑하는 마음을 하나의 별로 남겨 두세요.">
+<meta property="og:title" content="기억의 집 · 사랑한 만큼, 오래 기억할 수 있도록">
+<meta property="og:description" content="1004의 별이 모여 하나의 빛이 됩니다. 아이를 사랑하는 마음을 하나의 별로 남겨 두세요.">
+<meta property="og:image" content="/img/portrait.jpg">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0E1220">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="기억의 집">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&family=Noto+Serif+KR:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#0E1220; --night2:#1A2038; --gold:#E7C77B; --gold2:#B38B3A; --starlight:#C9CFDC;
+  --paper:#F6F1E7; --paper2:#EFE8DA; --ink:#2A2620; --sub:#6F675B; --line:#DCD3C2;
+  --sans:'Noto Sans KR',system-ui,sans-serif; --serif:'Noto Serif KR',serif; --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--night)}
+body{font-family:var(--sans);font-weight:400;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-x:hidden}
+a{color:inherit}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+a:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+
+/* 위: 밤하늘 */
+.sky{position:relative;color:#fff;background:radial-gradient(120% 70% at 50% 0%,var(--night2),var(--night) 62%);padding:env(safe-area-inset-top) 0 0;overflow:hidden}
+.sky::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:120px;background:linear-gradient(to bottom,rgba(246,241,231,0),var(--paper));pointer-events:none}
+.stars{position:absolute;inset:0;pointer-events:none}
+.stars i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.5;animation:tw 4s ease-in-out infinite}
+@keyframes tw{50%{opacity:.12}}
+nav.top{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;height:64px}
+.brand{display:flex;align-items:center;gap:8px;text-decoration:none;font-family:var(--serif);font-size:17px;font-weight:500;letter-spacing:.02em}
+.brand img{width:26px;height:26px}
+.toplink{font-size:14px;color:var(--starlight);text-decoration:none;padding:10px 4px}
+.toplink:hover{color:#fff}
+.hero{position:relative;z-index:2;display:grid;gap:8px;align-items:center;padding:12px 0 140px}
+.hero canvas{display:block;width:min(78vw,330px);margin:0 auto}
+.hero .copy{text-align:center}
+.eyebrow{font-size:13px;color:var(--gold);letter-spacing:.06em}
+.hero h1{font-family:var(--serif);font-weight:500;font-size:clamp(28px,6.4vw,44px);line-height:1.38;margin:14px 0 18px}
+.hero p{font-size:16px;line-height:1.85;color:var(--starlight);font-weight:300}
+.actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:30px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 28px;border-radius:999px;font-size:16px;font-weight:500;text-decoration:none;transition:background .2s var(--ease),transform .15s var(--ease)}
+.btn:active{transform:scale(.98)}
+.btn.gold{background:var(--gold);color:var(--night)}
+.btn.gold:hover{background:#F0D48E}
+.textlink{display:inline-flex;align-items:center;gap:6px;min-height:52px;padding:0 6px;font-size:15px;color:var(--gold);text-decoration:underline;text-underline-offset:5px;text-decoration-thickness:1px}
+.textlink svg{width:16px;height:16px}
+@media (min-width:860px){
+  .hero{grid-template-columns:1.05fr .95fr;gap:40px;padding:28px 0 170px}
+  .hero .copy{text-align:left;order:-1}
+  .actions{justify-content:flex-start}
+  .hero canvas{width:380px}
+}
+
+/* 아래: 종이 앨범 */
+.album{position:relative;z-index:1}
+.lead{text-align:center;padding:8px 0 56px}
+.lead .line{width:1px;height:48px;background:var(--line);margin:0 auto 26px}
+.lead p{font-family:var(--serif);font-size:clamp(20px,4.6vw,26px);line-height:1.7;color:var(--ink)}
+.chapter{display:grid;gap:26px;align-items:center;padding:52px 0;border-top:1px solid var(--line)}
+.chapter .num{font-family:var(--serif);font-size:14px;color:var(--gold2)}
+.chapter h2{font-family:var(--serif);font-weight:500;font-size:clamp(22px,5vw,30px);line-height:1.5;margin:8px 0 14px}
+.chapter p{font-size:16px;line-height:1.9;color:var(--sub);font-weight:300}
+.chapter p + p{margin-top:12px}
+.frame{justify-self:center;background:#fff;padding:12px 12px 40px;box-shadow:0 1px 2px rgba(60,45,20,.08),0 12px 30px rgba(60,45,20,.10);width:min(78vw,320px);transform:rotate(-2deg)}
+.frame.r{transform:rotate(1.6deg)}
+.frame img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover}
+.frame figcaption{font-family:var(--serif);font-size:14px;color:var(--sub);text-align:center;margin-top:12px}
+.frame.dark{background:var(--night);padding:16px 16px 40px}
+.frame.dark canvas{display:block;width:100%}
+.frame.dark figcaption{color:var(--starlight)}
+@media (min-width:860px){
+  .chapter{grid-template-columns:1fr 1fr;gap:64px;padding:80px 0}
+  .chapter.flip .frame{order:-1}
+}
+.promise{padding:60px 0 20px;border-top:1px solid var(--line)}
+.promise h2{font-family:var(--serif);font-weight:500;font-size:clamp(22px,5vw,30px);text-align:center}
+.promise ol{list-style:none;max-width:640px;margin:34px auto 0}
+.promise li{display:grid;grid-template-columns:32px 1fr;gap:6px 14px;padding:20px 0;border-bottom:1px solid var(--line)}
+.promise li:last-child{border-bottom:0}
+.promise li span{font-family:var(--serif);color:var(--gold2);font-size:15px;padding-top:2px}
+.promise li b{font-weight:500;font-size:17px}
+.promise li p{grid-column:2;font-size:15px;line-height:1.8;color:var(--sub);font-weight:300}
+
+/* 앱으로 두기 */
+.app{margin:60px 0 0;background:var(--paper2);border-radius:2px;padding:44px 22px;text-align:center}
+.app img.ic{width:72px;height:72px;border-radius:18px;box-shadow:0 8px 24px rgba(14,18,32,.18)}
+.app h2{font-family:var(--serif);font-weight:500;font-size:clamp(21px,4.8vw,27px);margin:18px 0 10px}
+.app > p{font-size:15px;line-height:1.8;color:var(--sub);font-weight:300}
+.app .btn{margin-top:22px;background:var(--night);color:#fff}
+.app .btn:hover{background:#1E2440}
+.app .btn[hidden]{display:none}
+.howto{max-width:420px;margin:22px auto 0;text-align:left;font-size:15px;line-height:1.8;color:var(--ink)}
+.howto[hidden]{display:none}
+.howto ol{padding-left:22px}
+.howto li{padding:2px 0}
+.howto svg{width:16px;height:16px;vertical-align:-3px;color:var(--gold2)}
+.installed{margin-top:18px;font-size:15px;color:var(--gold2)}
+.installed[hidden]{display:none}
+
+footer{padding:56px 0 calc(40px + env(safe-area-inset-bottom));text-align:center;font-size:13px;color:var(--sub)}
+footer .end{font-family:var(--serif);font-size:18px;color:var(--ink);margin-bottom:22px;line-height:1.7}
+footer nav{display:flex;justify-content:center;gap:20px;margin-top:12px}
+footer nav a{padding:10px 4px}
+
+.rise{opacity:0;transform:translateY(14px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.rise.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .rise{opacity:1;transform:none;transition:none}
+  .stars i{animation:none}
+}
+</style>
+</head>
+<body>
+<header class="sky">
+  <div class="stars" id="stars" aria-hidden="true"></div>
+  <div class="wrap">
+    <nav class="top" aria-label="주요 메뉴">
+      <a class="brand" href="/intro"><img src="/static/logo.svg" alt="">기억의 집</a>
+      <a class="toplink" href="/member">우리 아이 만나기</a>
+    </nav>
+    <div class="hero">
+      <canvas id="heroAngel" aria-label="아이들의 별이 모여 빛나는 천사"></canvas>
+      <div class="copy">
+        <div class="eyebrow">1004의 별이 모여 하나의 빛이 됩니다</div>
+        <h1 data-testid="intro-title">사랑한 만큼,<br>오래 기억할 수 있도록</h1>
+        <p>여기까지 와 주셨다면, 아이를 정말 많이 사랑하고,<br>사랑하셨을 거예요. 그 아름다운 마음을<br>하나의 별로 이곳에 남겨 두세요.</p>
+        <div class="actions">
+          <a class="btn gold" href="/guest" data-testid="intro-start">만나러 가기</a>
+          <a class="textlink" href="#app">휴대폰에 앱으로 두기
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3v9m0 0 4-4m-4 4L4 8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="album">
+  <div class="wrap">
+    <section class="lead rise">
+      <div class="line" aria-hidden="true"></div>
+      <p>이곳에 아이가 있다는 것만으로,<br>얼마나 사랑했는지 알 수 있는 곳.</p>
+    </section>
+
+    <section class="chapter rise">
+      <div>
+        <div class="num">하나</div>
+        <h2>아이의 별 하나가<br>천사의 빛이 됩니다</h2>
+        <p>천사를 만난 날마다 1004개의 별 자리가 있어요. 아이의 사진이 별 조각 하나가 되고, 그 조각들이 모여 날개와 빛을 이룹니다.</p>
+        <p>사랑받은 아이들이 서로의 곁에서 함께 빛나는 곳이에요.</p>
+      </div>
+      <figure class="frame dark"><canvas id="miniAngel" aria-hidden="true"></canvas><figcaption>별 하나하나가 사랑받은 아이예요</figcaption></figure>
+    </section>
+
+    <section class="chapter flip rise">
+      <div>
+        <div class="num">둘</div>
+        <h2>보고 싶을 때면<br>언제든 만나러 오세요</h2>
+        <p>들어서면 아이의 얼굴과 이름, 생일, 좋아하던 것들이 먼저 맞아 줍니다. 아이의 방에서는 이름을 부르고, 가만히 쓰다듬어 줄 수 있어요.</p>
+        <p>함께한 날의 사진과 영상, 하고 싶던 말은 차곡차곡 오래 남겨 둡니다.</p>
+      </div>
+      <figure class="frame"><img src="/img/p7.jpg" alt="창가 방석에서 곤히 잠든 아이" loading="lazy"><figcaption>아이의 방</figcaption></figure>
+    </section>
+
+    <section class="chapter rise">
+      <div>
+        <div class="num">셋</div>
+        <h2>가족과 친구도<br>마음을 보탤 수 있어요</h2>
+        <p>링크 하나면 아이를 아는 사람들이 찾아와 꽃 한 송이, 짧은 편지를 남깁니다. 남겨진 마음은 보호자께 고스란히 전해져요.</p>
+      </div>
+      <figure class="frame r"><img src="/img/p4.jpg" alt="보호자 손에 포근히 안긴 아이" loading="lazy"><figcaption>꽃 한 송이, 한 마디</figcaption></figure>
+    </section>
+
+    <section class="chapter flip rise">
+      <div>
+        <div class="num">넷</div>
+        <h2>아직 곁에 있는 아이라면,<br>준비된 사랑꾼으로</h2>
+        <p>지금 주인의 사랑을 듬뿍 받고 있는 아이는 날짜도 자리도 정하지 않아요. 대신 오늘의 사진과 이야기를 모아 두는 사랑 저장소가 생깁니다.</p>
+        <p>아이를 아끼는 그 마음이, 언젠가 천사의 곁에 갈 때까지 아이와 함께합니다.</p>
+      </div>
+      <figure class="frame"><img src="/img/p1.jpg" alt="강변 풀밭을 신나게 달리는 아이" loading="lazy"><figcaption>사랑 저장소</figcaption></figure>
+    </section>
+
+    <section class="promise rise" aria-labelledby="promise-h">
+      <h2 id="promise-h">기억의 집이 지키는 약속</h2>
+      <ol>
+        <li><span>1</span><b>온라인에서 오래오래</b><p>이곳은 시설이 아니라 온라인 메모리얼이에요. 어디에 있든 휴대폰 하나로 아이를 만날 수 있어요.</p></li>
+        <li><span>2</span><b>아이의 자리는 사고팔지 않아요</b><p>자리를 옮기고 싶을 때는 가족이나 아끼는 사람에게 넘겨줄 수만 있어요. 받는 분도 기억의 집 가족이어야 해요.</p></li>
+        <li><span>3</span><b>떠나는 마음에도 30일을 기다려요</b><p>탈퇴하거나 자리를 넘겨도 30일 동안은 모든 기억을 그대로 두어요. 마음이 바뀌면 언제든 되돌릴 수 있어요.</p></li>
+      </ol>
+    </section>
+
+    <section class="app rise" id="app" aria-labelledby="app-h">
+      <img class="ic" src="/static/icon-192.png" alt="">
+      <h2 id="app-h">휴대폰에 앱으로 두기</h2>
+      <p>따로 내려받지 않아도 돼요.<br>홈 화면에 두면 앱처럼 한 번에 아이를 만나러 올 수 있어요.</p>
+      <button class="btn" id="installBtn" data-testid="install-btn" hidden>홈 화면에 두기</button>
+      <div class="howto" id="howIos" hidden>
+        <ol>
+          <li>Safari 아래쪽의 공유 버튼
+            <svg viewBox="0 0 16 16" fill="none" aria-label="공유"><path d="M8 10V2m0 0L5 5m3-3 3 3M4 7H3v7h10V7h-1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg> 을 눌러 주세요</li>
+          <li>목록에서 <b>홈 화면에 추가</b>를 골라 주세요</li>
+          <li>오른쪽 위 <b>추가</b>를 누르면 끝이에요</li>
+        </ol>
+      </div>
+      <div class="howto" id="howOther" hidden>
+        <ol>
+          <li>휴대폰으로 이 페이지를 열어 주세요</li>
+          <li>브라우저 메뉴에서 <b>홈 화면에 추가</b>를 골라 주세요</li>
+        </ol>
+      </div>
+      <p class="installed" id="installed" hidden>이미 홈 화면에 있어요. 언제든 눌러서 만나러 오세요.</p>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p class="end">아이를 사랑하는 그 마음이,<br>다른 이와 그 아이에게 전해지길 바랍니다.</p>
+    <a class="btn gold" href="/guest">만나러 가기</a>
+    <nav aria-label="하단 메뉴"><a href="/member">이미 함께하고 있어요</a><a href="/privacy">개인정보 처리방침</a></nav>
+    <p style="margin-top:14px">© 기억의 집</p>
+  </div>
+</footer>
+
+<script src="/static/angel.js"></script>
+<script>
+(function(){
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 별
+  const st = document.getElementById('stars');
+  for (let i = 0; i < 46; i++) {
+    const s = document.createElement('i');
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 70 + '%';
+    s.style.animationDelay = (Math.random() * 4).toFixed(2) + 's';
+    st.appendChild(s);
+  }
+  // 천사
+  const PHOTOS = ['portrait','p1','p2','p3','p4','p5','p7'].map(k => '/img/' + k + '.jpg');
+  const filled = []; for (let i = 1; i <= 1004; i++) if (i % 7 !== 3) filled.push(i);
+  try {
+    const hero = Angel.mount(document.getElementById('heroAngel'), { taken: filled, photos: PHOTOS, animate: !reduce });
+    if (!reduce) hero.animateIn(3200);
+    const few = []; for (let i = 1; i <= 1004; i++) if (i % 3 === 0) few.push(i);
+    Angel.mount(document.getElementById('miniAngel'), { taken: few, photos: PHOTOS });
+  } catch (e) {}
+  // 천천히 떠오르기
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('on'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' }) : null;
+  document.querySelectorAll('.rise').forEach(el => io ? io.observe(el) : el.classList.add('on'));
+
+  // 앱으로 두기 (하이브리드: 웹 + 홈 화면 앱)
+  const btn = document.getElementById('installBtn');
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  let deferred = null;
+  const show = id => document.getElementById(id).hidden = false;
+  if (standalone) show('installed');
+  else if (ios) show('howIos');
+  else {
+    show('howOther');
+    addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; btn.hidden = false; document.getElementById('howOther').hidden = true; });
+  }
+  btn.addEventListener('click', async () => {
+    if (!deferred) return;
+    deferred.prompt();
+    const r = await deferred.userChoice.catch(() => null);
+    deferred = null; btn.hidden = true;
+    if (r && r.outcome === 'accepted') show('installed'); else show('howOther');
+  });
+  addEventListener('appinstalled', () => { btn.hidden = true; document.getElementById('howOther').hidden = true; show('installed'); });
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>

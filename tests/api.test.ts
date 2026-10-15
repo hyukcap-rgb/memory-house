@@ -26,9 +26,25 @@ const post = (path: string, data: unknown, headers: Record<string, string> = {})
   fetch(BASE + path, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(data) });
 
 describe("화면", () => {
-  for (const p of ["/", "/start", "/guest", "/member", "/admin", "/static/angel.js", "/img/p1.jpg"]) {
+  for (const p of ["/", "/start", "/guest", "/member", "/admin", "/static/angel.js", "/img/p1.jpg", "/intro", "/static/icon-192.png", "/static/icon-512.png"]) {
     test(`${p} 열림`, async () => expect((await fetch(BASE + p)).status).toBe(200));
   }
+  test("앱 소개 페이지: 확정 카피, 감성 원칙", async () => {
+    const t = await (await fetch(BASE + "/intro")).text();
+    expect(t).toContain("오래 기억할 수 있도록");
+    expect(t).toContain('rel="manifest"');
+    for (const w of ["마리", "같은 날", "366", "남은 자리", "만원", "결제"]) expect(t).not.toContain(w);
+  });
+  test("홈 화면 앱: manifest와 서비스 워커", async () => {
+    const m = await fetch(BASE + "/manifest.json");
+    expect(m.headers.get("content-type")).toContain("manifest+json");
+    const j = await m.json();
+    expect(j.display).toBe("standalone");
+    expect(j.icons.length).toBe(2);
+    const sw = await fetch(BASE + "/sw.js");
+    expect(sw.headers.get("content-type")).toContain("javascript");
+    expect(await sw.text()).toContain("/api/");
+  });
   test("없는 경로·상위 폴더 접근은 404", async () => {
     expect((await fetch(BASE + "/nope")).status).toBe(404);
     expect((await fetch(BASE + "/static/..%2F..%2Fpackage.json")).status).toBe(404);

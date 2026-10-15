@@ -1,0 +1,15 @@
+{
+  "name": "기억의 집",
+  "short_name": "기억의 집",
+  "description": "사랑한 만큼, 오래 기억할 수 있도록. 반려동물을 온라인에서 영원히 기억하는 곳.",
+  "lang": "ko",
+  "start_url": "/member?from=app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0E1220",
+  "theme_color": "#0E1220",
+  "icons": [
+    { "src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

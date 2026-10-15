@@ -290,7 +290,7 @@ function decodeJpeg(dataUrl: unknown): Uint8Array | string {
 }
 
 // ---------- pages & static ----------
-const PAGES: Record<string, string> = { "/": "guest.html", "/start": "index.html", "/guest": "guest.html", "/member": "member.html", "/admin": "admin.html", "/privacy": "privacy.html" };
+const PAGES: Record<string, string> = { "/": "guest.html", "/start": "index.html", "/guest": "guest.html", "/member": "member.html", "/admin": "admin.html", "/privacy": "privacy.html", "/intro": "intro.html", "/manifest.json": "manifest.json", "/sw.js": "sw.js" };
 const escHtml = (v: string) => v.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 // 공개 메모리얼 /m/:id — 링크 미리보기(카카오톡 등)를 위해 아이 이름·사진을 메타 태그로 넣어 준다
 async function serveMemorial(req: Request, id: string): Promise<Response> {
@@ -320,6 +320,8 @@ async function serveStatic(path: string): Promise<Response | null> {
   if (!(await file.exists())) return null;
   const extra: Record<string, string> = page ? { "cache-control": "no-cache" } : { "cache-control": rel.startsWith("img/") ? "public, max-age=86400" : "public, max-age=300" };
   if (path === "/admin") extra["x-robots-tag"] = "noindex";
+  if (path === "/manifest.json") extra["content-type"] = "application/manifest+json";
+  if (path === "/sw.js") { extra["content-type"] = "text/javascript; charset=utf-8"; extra["service-worker-allowed"] = "/"; }
   return new Response(file, { headers: { ...SECURITY_HEADERS, ...extra } });
 }
 
