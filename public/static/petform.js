@@ -6,7 +6,10 @@
 .pf .pf-photo{display:flex;align-items:center;gap:16px;margin:4px 0 6px}
 .pf .pf-pic{width:96px;height:96px;border-radius:50%;background:#EDEBE6 center/cover no-repeat;display:grid;place-items:center;flex:none;overflow:hidden;color:#8A8F9C;border:1px solid #E6E3DD}
 .pf .pf-pic svg{width:30px;height:30px}
-.pf .pf-pick{display:inline-flex;align-items:center;height:44px;padding:0 16px;border-radius:12px;background:#fff;border:1.5px solid #E6E3DD;font-weight:700;font-size:14px;cursor:pointer}
+.pf-proof .pf-l:first-child{margin-top:0}
+.pf-proof{background:#FBFAF8;border:1px solid #E6E3DD;border-radius:14px;padding:12px 14px;margin-top:14px}
+.pf-proof .pf-pick{position:relative}
+.pf .pf-pick,.pf-proof .pf-pick{display:inline-flex;align-items:center;height:44px;padding:0 16px;border-radius:12px;background:#fff;border:1.5px solid #E6E3DD;font-weight:700;font-size:14px;cursor:pointer}
 .pf .pf-pick:focus-within{outline:2px solid #2E4374;outline-offset:2px}
 .pf .pf-pick input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .pf label.pf-l,.pf span.pf-l{display:block;font-size:13px;font-weight:700;margin:16px 0 6px}
@@ -159,4 +162,40 @@
   }
 
   window.PetForm = { html, bind, read, validate, save, resize };
+
+  // 천사를 만난 날 확인용 서류 사진 (운영팀만 봄)
+  let proofData = null;
+  const DOCS = ["장례·화장 확인서", "동물등록 말소 확인서", "동물병원 확인서", "기타"];
+  function proofHtml(note) {
+    proofData = null;
+    return `<div class="pf"><div class="pf-proof" data-testid="proof-box">
+      <label class="pf-l" for="pf-doc">날짜를 확인할 서류</label>
+      <select class="pf-in" id="pf-doc" data-testid="proof-doc">${DOCS.map((d) => `<option>${d}</option>`).join("")}</select>
+      <label class="pf-pick" style="margin-top:8px"><input type="file" accept="image/*" id="pf-proof" data-testid="proof-file" style="position:absolute;opacity:0;width:1px;height:1px">서류 사진 고르기</label>
+      <span id="pf-proof-name" style="font-size:13px;color:#5B6070;margin-left:8px"></span>
+      <div style="font-size:12px;color:#8A8F9C;line-height:1.6;margin-top:6px">${note || "운영팀만 보고, 어디에도 공개되지 않아요."}</div>
+      <div id="pf-e-proof" role="alert" style="color:#B2453A;font-size:13px;min-height:16px"></div></div></div>`;
+  }
+  function proofBind() {
+    const el = document.getElementById("pf-proof");
+    if (!el) return;
+    el.onchange = async (e) => {
+      const f = e.target.files && e.target.files[0];
+      const err = document.getElementById("pf-e-proof");
+      err.textContent = "";
+      if (!f) return;
+      if (!f.type.startsWith("image/")) { err.textContent = "사진 파일을 골라 주세요"; return; }
+      try { proofData = await resize(f, 1800); document.getElementById("pf-proof-name").textContent = "사진을 골랐어요"; }
+      catch (x) { err.textContent = x.message; }
+    };
+  }
+  const proofRead = () => ({ image: proofData, doc: (document.getElementById("pf-doc") || {}).value || "" });
+  async function proofSave(petId) {
+    if (!proofData) return null;
+    const r = await fetch(`/api/me/pets/${petId}/proof`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(proofRead()) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || "잠시 후 다시 시도해 주세요");
+    return j.pet;
+  }
+  window.Proof = { html: proofHtml, bind: proofBind, read: proofRead, save: proofSave };
 })();

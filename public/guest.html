@@ -33,7 +33,7 @@ html,body{background:#0A0D18}
 .top{display:flex;align-items:center;gap:6px;padding:4px 12px 8px;min-height:52px}
 .iconbtn{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;flex:none}
 .ico{width:22px;height:22px}
-.cta{display:flex;align-items:center;justify-content:center;gap:8px;height:56px;border-radius:16px;font-weight:700;font-size:16px;width:100%;transition:transform .15s var(--ease),opacity .15s}
+.cta{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:999px;font-weight:600;font-size:16px;width:100%;transition:transform .15s var(--ease),opacity .15s}
 .cta:active{transform:scale(.98)}
 .cta.gold{background:var(--gold);color:var(--night)}
 .cta.white{background:#fff;color:var(--night)}
@@ -41,6 +41,9 @@ html,body{background:#0A0D18}
 .cta.ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.18)}
 .cta.soft{background:#EDEBE6;color:var(--ink)}
 .cta[disabled]{opacity:.45;cursor:not-allowed}
+.cta-line{display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 26px;border-radius:999px;border:1px solid rgba(231,199,123,.5);background:transparent;color:var(--gold);font-size:15px;font-weight:500;letter-spacing:.01em;transition:background .2s var(--ease),border-color .2s var(--ease)}
+.cta-line:hover,.cta-line:focus-visible{background:rgba(231,199,123,.08);border-color:var(--gold)}
+.cta-line svg{width:16px;height:16px}
 .eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--gold)}
 .light{color:#fff}
 .muted{color:#AEB5C6}
@@ -58,16 +61,6 @@ html,body{background:#0A0D18}
 .hallthumb canvas{width:84px}
 .bar{height:6px;border-radius:3px;background:#ECE9E2;overflow:hidden;margin:10px 0 6px}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold2),var(--gold));border-radius:3px}
-.cal{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;margin-top:6px}
-.cal .mo b{display:block;font-size:13px;margin-bottom:6px}
-.cal .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
-.cal .d{aspect-ratio:1;border-radius:4px;border:0;padding:0;font-size:9px;color:transparent;cursor:pointer;min-width:0}
-.cal .d:focus-visible{outline:2px solid var(--navy);outline-offset:1px}
-.cal .d.l0{background:#E9E5DA}.cal .d.l1{background:#E3CF9F}.cal .d.l2{background:#D2AE5C}.cal .d.l3{background:#A9813A}
-.cal .d.full{background:var(--night);box-shadow:inset 0 0 0 1.5px var(--gold)}
-.cal .d.today{box-shadow:inset 0 0 0 2px var(--navy)}
-.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin-top:10px;align-items:center}
-.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px}
 .chooser{background:#fff;border-radius:20px;padding:16px}
 .chooser input[type=date]{width:100%;height:50px;border:1px solid var(--line);border-radius:14px;padding:0 14px;font:inherit;font-size:16px;background:#fff;color:var(--ink)}
 .daymsg{border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.6;margin-top:12px}
@@ -107,6 +100,7 @@ input:focus{outline:2px solid var(--navy);border-color:transparent}
 input[aria-invalid="true"]{border-color:var(--err)}
 .err{color:var(--err);font-size:13px;margin-top:6px;min-height:0}
 .chips{display:flex;gap:8px;flex-wrap:wrap}
+.comfort{font-size:14px;line-height:1.75;color:var(--ink);background:#FBF6EA;border-radius:14px;padding:12px 14px;margin:14px 0 2px;word-break:keep-all}
 .chipbtn{height:46px;padding:0 16px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-size:14px;font-weight:500}
 .chipbtn[aria-pressed="true"]{border-color:var(--navy);background:var(--navy);color:#fff;font-weight:700}
 .summary{display:flex;gap:12px;align-items:center;background:var(--night);color:#fff;border-radius:18px;padding:12px 14px;margin:0 16px}
@@ -129,6 +123,7 @@ input[aria-invalid="true"]{border-color:var(--err)}
 <script>
 const PHOTOS=['portrait','p1','p2','p3','p4','p5','p7'].map(k=>'/img/'+k+'.jpg');
 const PRICE={halo:180,wing:140,robe:120};
+const ZONE_SHORT={halo:'빛 가장 가까이',wing:'날개의 품',robe:'옷자락 곁'};
 const ZONE_DESC={halo:'빛에 가장 가까운 104자리',wing:'두 날개를 이루는 자리',robe:'흩날리는 옷자락의 자리'};
 const I={
   back:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
@@ -165,45 +160,38 @@ const todayISO=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.get
 function chooserHTML(lockDay){ const c=S.chosen; const chip=(v,l)=>`<button type="button" class="chipbtn" data-testid="cs-${v}" aria-pressed="${c.status===v}" onclick="S.chosen.status='${v}';S.dayMsg='';render()">${l}</button>`;
   return `<div class="chooser" data-testid="chooser">
     <span class="fl" style="margin-top:0">아이는 지금</span><div class="chips">${chip('passed','먼저 떠났어요')}${chip('alive','아직 곁에 있어요')}</div>
-    ${c.status?`<label class="fl" for="cs-date">${c.status==='passed'?'우리 아이가 천사를 만난 날':'함께 기억하고 싶은 날'}</label>
+    ${c.status?`${c.status==='passed'?'<p class="comfort" data-testid="comfort-passed">많이 아프셨죠. 그 아이는 마지막까지 보호자님의 사랑을 알고 갔을 거예요.<br>그날을 알려 주시면, 같은 날 하늘로 간 아이들 곁에 별을 남겨 드릴게요.</p>':'<p class="comfort" data-testid="comfort-alive">지금 곁에 있는 아이를 이렇게 아끼는 마음이, 이곳에 남아 그 아이와 다른 분들께도 전해질 거예요.</p>'}
+    <label class="fl" for="cs-date">${c.status==='passed'?'아이가 천사를 만난 날':'아이와의 특별한 날'}</label>
     <input type="date" id="cs-date" data-testid="cs-date" max="${todayISO()}" value="${esc(c.date)}" oninput="S.chosen.date=this.value">
-    ${c.status==='alive'?'<p style="font-size:12px;color:var(--sub);margin-top:6px;line-height:1.6">처음 만난 날이나 생일처럼 아이와의 특별한 날을 골라요. 그날의 1004자리 중 하나를 미리 지켜 둬요.<br>나중에 아이가 천사를 만나면 그날로 <b>한 번</b> 옮길 수 있어요. 그날이 다 찼다면 옮길 수 없어요.</p>':''}
-    <button class="cta navy" style="margin-top:14px" data-testid="cs-go" onclick="findDay(${lockDay?`'${lockDay}'`:'null'})">${lockDay?'맞아요, 자리 고르기':'그날의 천사 만나기'}</button>`:''}
+    ${c.status==='alive'?'<p style="font-size:12px;color:var(--sub);margin-top:6px;line-height:1.6;word-break:keep-all">처음 만난 날이나 생일처럼 아이와 함께한 특별한 날을 골라 주세요.<br>먼 훗날 아이가 천사를 만나면, 그날의 천사 곁으로 한 번 옮겨 드려요.</p>':''}
+    ${c.status==='passed'?'<p style="font-size:12px;color:var(--sub);margin-top:6px;line-height:1.6;word-break:keep-all">날짜는 장례·화장 확인서 같은 서류로 확인해요. 마음이 조금 추스러진 뒤에 천천히 올려 주셔도 괜찮아요.</p>':''}
+    <button class="cta navy" style="margin-top:14px" data-testid="cs-go" onclick="findDay(${lockDay?`'${lockDay}'`:'null'})">${lockDay?'맞아요, 이어서 할게요':c.status==='alive'?'이 날에 아이의 별 남기기':'그날의 천사에게 가기'}</button>`:''}
     ${S.dayMsg||''}</div>`; }
-R.home=()=>{const H=S.halls;const tk=todayKey();const th=H&&H.find(h=>h.id===tk);return `<section class="screen" data-testid="screen-home">
+R.home=()=>{return `<section class="screen" data-testid="screen-home">
   ${status()}
   <div class="scroll" id="homescroll">
     <div class="hero">
-      <div style="display:flex;justify-content:space-between;align-items:center;min-height:44px"><span class="eyebrow">기억의 집</span><a href="/member" data-testid="home-login" style="font-size:13px;font-weight:700;color:#fff;text-decoration:none;height:36px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.22);display:inline-flex;align-items:center">내 메모리얼 로그인</a></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;min-height:44px"><span class="eyebrow">기억의 집</span><a href="/member" data-testid="home-login" style="font-size:13px;font-weight:700;color:#fff;text-decoration:none;height:36px;padding:0 14px;border-radius:999px;border:1px solid rgba(255,255,255,.22);display:inline-flex;align-items:center">우리 아이 보러 가기</a></div>
       <canvas id="heroAngel" aria-hidden="true"></canvas>
-      <h1>1004자리의<br>반려인을 찾습니다</h1>
-      <p>1년 366일, 날마다 1004자리.<br>우리 아이가 천사를 만난 날에만 들어갈 수 있어요.</p>
-      <button class="cta gold" style="margin-top:20px" data-testid="home-browse" onclick="document.getElementById('day').scrollIntoView({behavior:'smooth'})">우리 아이의 날 찾기</button>
+      <h1>사랑한 만큼,<br>오래 기억할 수 있도록</h1>
+      <p>여기까지 와 주셨다면,<br>그 아이를 정말 많이 사랑하신 거예요.<br>그 마음을 별 하나로 이곳에 남겨 두세요.</p>
+      <button class="cta-line" style="margin-top:22px" data-testid="home-browse" onclick="document.getElementById('day').scrollIntoView({behavior:'smooth'})">아이의 별 남기기 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg></button>
     </div>
     <div class="sheet" id="day">
-      <h2 class="h2">우리 아이가 천사를 만난 날</h2>
-      <p class="lede">그날의 천사에 1004자리가 있어요. 다른 날이 비어 있어도 그날이 다 차면 들어갈 수 없어요.</p>
+      <h2 class="h2">우리 아이 이야기를 들려주세요</h2>
+      <p class="lede">같은 날 하늘로 간 아이들이 모여 하나의 천사가 돼요. 곁에 있는 아이를 아끼는 마음도 이곳에서 함께 빛나요.</p>
       ${chooserHTML(null)}
-      ${th?`<h2 class="h2" style="margin-top:28px">오늘의 천사</h2><p class="lede">오늘, ${dayName(tk)}에 천사를 만난 아이들이에요.</p>
-      <button class="hallcard" data-testid="hall-today" onclick="enter('${tk}')"><span class="hallthumb"><canvas data-thumb="${tk}" aria-hidden="true"></canvas></span>
-        <span style="flex:1;min-width:0"><b class="serif" style="font-size:19px">${th.name}의 천사</b>
-          <span class="bar" aria-hidden="true"><i style="width:${(th.taken/th.total*100).toFixed(1)}%"></i></span>
-          <span style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--sub)">${fmt(th.taken)}개의 별이 빛나요</span><b style="color:${th.left<=20?'var(--err)':'var(--gold2)'}" data-testid="left-today">${th.left?`남은 ${fmt(th.left)}자리`:'가득 찼어요'}</b></span></span></button>`:''}
-      <h2 class="h2" style="margin-top:28px">1년 366일의 천사</h2>
-      <p class="lede">날짜를 누르면 그날의 천사를 볼 수 있어요.</p>
-      ${H?`<div class="cal" data-testid="calendar">${[...Array(12)].map((_,m)=>{const days=H.filter(h=>+h.id.slice(0,2)===m+1);const first=new Date(2024,m,1).getDay();return `<div class="mo"><b>${m+1}월</b><div class="grid">${'<span></span>'.repeat(first)}${days.map(h=>{const r=h.taken/h.total;const cls=h.left===0?'full':r>.85?'l3':r>.6?'l2':r>.35?'l1':'l0';return `<button class="d ${cls} ${h.id===tk?'today':''}" data-testid="day-${h.id}" title="${h.name} · ${h.left?`남은 ${fmt(h.left)}자리`:'가득'}" aria-label="${h.name}, ${h.left?`남은 ${h.left}자리`:'가득 찼어요'}" onclick="enter('${h.id}')">${+h.id.slice(3)}</button>`}).join('')}</div></div>`}).join('')}</div>
-      <div class="legend"><span><i style="background:#E9E5DA"></i>여유</span><span><i style="background:#D2AE5C"></i>많이 참</span><span><i style="background:var(--night);box-shadow:inset 0 0 0 1.5px var(--gold)"></i>가득</span><span><i style="box-shadow:inset 0 0 0 2px var(--navy)"></i>오늘</span></div>`:'<div class="skeleton"></div>'}
-      <div class="note" style="margin-top:22px">${I.heart}<div><b>곁에 있는 아이도 미리</b><p>아직 함께 사는 아이는 기억하고 싶은 날을 골라 그날의 자리를 미리 지켜 둘 수 있어요.</p></div></div>
-      <div class="note">${I.hand}<div><b>양도는 되지만, 매매는 없어요</b><p>받는 분이 회원이면 넘길 수 있어요. 조건은 두 분이 직접 정해요.</p></div></div>
-      <div class="note">${I.lock}<div><b>온라인에서 영원히</b><p>찾아갈 장소가 없어도 괜찮아요. 아이의 별은 이곳에 계속 남아요.</p></div></div>
-      <a href="/member" data-testid="to-member" style="display:block;text-align:center;font-size:14px;color:var(--sub);margin-top:22px;padding:12px">이미 자리가 있으신가요? <b style="color:var(--navy)">내 메모리얼로 가기</b></a>
+      <div class="note" style="margin-top:22px">${I.heart}<div><b>혼자가 아니에요</b><p>같은 날 아이를 보낸 보호자들이 이곳에서 함께 기억하고 있어요.</p></div></div>
+      <div class="note">${I.lock}<div><b>보고 싶을 때 언제든</b><p>찾아갈 장소가 없어도 괜찮아요. 꽃 한 송이, 한 마디를 아이에게 남길 수 있어요.</p></div></div>
+      <div class="note">${I.hand}<div><b>가족과 함께</b><p>링크를 보내면 가족과 친구도 아이에게 마음을 남길 수 있어요.</p></div></div>
+      <a href="/member" data-testid="to-member" style="display:block;text-align:center;font-size:14px;color:var(--sub);margin-top:22px;padding:12px">이미 아이의 별이 있으신가요? <b style="color:var(--navy)">아이에게 가기</b></a>
     </div>
   </div></section>`};
 function findDay(lockDay){ const c=S.chosen; const d=($('#cs-date')||{}).value||c.date; c.date=d;
   if(!d){S.dayMsg=`<div class="daymsg full" role="alert">날짜를 골라 주세요.</div>`;render();return}
   if(d>todayISO()&&c.status==='passed'){S.dayMsg=`<div class="daymsg full" role="alert">천사를 만난 날은 오늘보다 앞이어야 해요.</div>`;render();return}
   const key=d.slice(5); c.day=key; const h=S.halls&&S.halls.find(x=>x.id===key);
-  if(h&&h.left===0){S.dayMsg=`<div class="daymsg full" role="alert" data-testid="day-full"><b>${h.name}의 1004자리가 모두 찼어요.</b><br>아이의 날이 아닌 다른 날로는 들어갈 수 없어요.</div>`;render();return}
+  if(h&&h.left===0){S.dayMsg=`<div class="daymsg full" role="alert" data-testid="day-full"><b>${h.name}의 천사 곁은 이미 가득 찼어요.</b><br>그날로 모시지 못해 마음이 무거워요.</div>`;render();return}
   S.dayMsg='';
   if(lockDay&&lockDay===key){ go('seats'); return; }
   enter(key); }
@@ -212,33 +200,33 @@ R.enter=()=>{const h=S.hall;return `<section class="screen" data-testid="screen-
   ${status()}
   <div class="top light"><button class="iconbtn" aria-label="뒤로" data-testid="back" onclick="back()">${I.back}</button><span class="serif" style="font-size:17px;font-weight:700">${h.name}의 천사</span></div>
   <div class="stage"><canvas id="enterAngel" data-testid="enter-angel" aria-label="${h.name}의 1004개의 별로 이루어진 천사"></canvas></div>
-  <div class="caption hide" id="cap"><h1>1004의 별이 모여<br>하나의 빛이 됩니다</h1><p>${h.name}에 천사를 만난 아이들이에요</p></div>
-  <div class="dock">${h.left===0?`<button class="cta" disabled style="background:rgba(255,255,255,.08);color:#AEB5C6" data-testid="enter-full">이 날의 1004자리가 모두 찼어요</button>`:`<button class="cta gold" data-testid="enter-pick" onclick="startPick()">이 날에 자리 고르기</button>`}</div>
+  <div class="caption hide" id="cap"><h1>1004의 별이 모여<br>하나의 빛이 됩니다</h1><p>${h.name}, 같은 날 하늘로 간 아이들이 함께 빛나고 있어요</p></div>
+  <div class="dock">${h.left===0?`<button class="cta" disabled style="background:rgba(255,255,255,.08);color:#AEB5C6" data-testid="enter-full">이 날의 천사 곁은 가득 찼어요</button>`:`<button class="cta gold" data-testid="enter-pick" onclick="startPick()">이 곁에 우리 아이 별 두기</button>`}</div>
 </section>`};
 
 R.seats=()=>{const h=S.hall;const zs=Angel.zoneStats(S.taken);const p=S.pick;return `<section class="screen" data-testid="screen-seats" style="background:var(--night)">
   ${status()}
-  <div class="top light"><button class="iconbtn" aria-label="뒤로" data-testid="back" onclick="back()">${I.back}</button><span style="flex:1"><b class="serif" style="font-size:17px">${h.name}의 천사 자리 고르기</b><br><span style="font-size:12px;color:#AEB5C6" data-testid="seats-left">1004자리 중 남은 ${fmt(h.left)}자리</span></span></div>
+  <div class="top light"><button class="iconbtn" aria-label="뒤로" data-testid="back" onclick="back()">${I.back}</button><span style="flex:1"><b class="serif" style="font-size:17px">아이의 별이 머물 곳</b></span></div>
   <div class="scroll" style="padding-bottom:12px">
     <div style="position:relative">
       <button class="zoom" data-testid="zoom" aria-pressed="${S.zoom}" onclick="toggleZoom()">${S.zoom?'전체 보기':'크게 보기'}</button>
       <div class="canvasbox" id="cbox"><canvas id="seatAngel" data-testid="seat-angel" aria-label="자리를 고르는 천사. 빈 별을 눌러 고를 수 있어요" style="width:${S.zoom?720:300}px"></canvas></div>
     </div>
-    <div class="zones" role="group" aria-label="자리 구역">${['halo','wing','robe'].map(z=>`<button class="zone" data-testid="zone-${z}" aria-pressed="${S.zone===z}" onclick="setZone('${z}')"><b>${Angel.ZONES[z]}</b><span>남은 ${fmt(zs[z].left)}자리</span></button>`).join('')}</div>
-    <div class="pickcard" data-testid="pick-card">${p?`<div class="row"><b class="serif" style="font-size:18px" data-testid="pick-label">${Angel.ZONES[Angel.zoneOf(p)]} ${pad(p)}번 자리</b><b style="color:var(--gold);font-size:13px;white-space:nowrap">영구 · 예시 ${PRICE[Angel.zoneOf(p)]}만원</b></div>
+    <div class="zones" role="group" aria-label="자리 구역">${['halo','wing','robe'].map(z=>`<button class="zone" data-testid="zone-${z}" aria-pressed="${S.zone===z}" onclick="setZone('${z}')"><b>${Angel.ZONES[z]}</b><span>${ZONE_SHORT[z]}</span></button>`).join('')}</div>
+    <div class="pickcard" data-testid="pick-card">${p?`<div class="row"><b class="serif" style="font-size:18px" data-testid="pick-label">${Angel.ZONES[Angel.zoneOf(p)]} ${pad(p)}번 자리</b></div>
       <p>${ZONE_DESC[Angel.zoneOf(p)]}이에요. 반짝이는 조각이 고른 자리예요. 다른 빈 별을 눌러 바꿀 수도 있어요.</p>
       <button class="linkbtn" data-testid="pick-shuffle" onclick="shuffle()" style="display:inline-flex;align-items:center;gap:6px;margin-top:2px">${I.shuffle}같은 구역 다른 자리</button>`
       :`<p style="margin:0" data-testid="pick-empty">${zs[S.zone].left?'빈 별을 눌러 자리를 골라 주세요.':'이 구역은 모두 채워졌어요. 다른 구역을 골라 주세요.'}</p>`}</div>
   </div>
-  <div class="dock" style="padding-top:8px"><button class="cta gold" data-testid="pick-next" ${p?'':'disabled'} onclick="go('form')">이 자리로 정하기</button></div>
+  <div class="dock" style="padding-top:8px"><button class="cta gold" data-testid="pick-next" ${p?'':'disabled'} onclick="go('form')">여기로 할게요</button></div>
 </section>`};
 
 R.form=()=>{const h=S.hall,p=S.pick,f=S.form,e=S.errors;const chip=(k,v)=>`<button type="button" class="chipbtn" data-testid="${k}-${v}" aria-pressed="${f[k]===v}" onclick="setF('${k}','${v}')">${v}</button>`;
 return `<section class="screen" data-testid="screen-form" style="background:var(--bg)">
   ${status(true)}
-  <div class="top"><button class="iconbtn" aria-label="뒤로" data-testid="back" onclick="back()">${I.back}</button><b style="font-size:17px">자리 예약하기</b></div>
+  <div class="top"><button class="iconbtn" aria-label="뒤로" data-testid="back" onclick="back()">${I.back}</button><b style="font-size:17px">아이의 별 남기기</b></div>
   <div class="scroll">
-    <div class="summary"><canvas id="miniAngel" aria-hidden="true"></canvas><div><div style="font-size:12px;color:var(--gold)">${h.name}의 천사</div><b class="serif" style="font-size:17px">${Angel.ZONES[Angel.zoneOf(p)]} ${pad(p)}번 자리</b><div style="font-size:12px;color:#AEB5C6">영구 · 예시 ${PRICE[Angel.zoneOf(p)]}만원</div></div></div>
+    <div class="summary"><canvas id="miniAngel" aria-hidden="true"></canvas><div><div style="font-size:12px;color:var(--gold)">${h.name}의 천사</div><b class="serif" style="font-size:17px">${Angel.ZONES[Angel.zoneOf(p)]} ${pad(p)}번 자리</b><div style="font-size:12px;color:#AEB5C6">영원히 이 아이의 자리예요</div></div></div>
     <form class="form" novalidate onsubmit="event.preventDefault();submitForm()">
       <label class="fl" for="f-pet">아이 이름</label>
       <input id="f-pet" type="text" maxlength="20" autocomplete="off" data-testid="f-pet" value="${esc(f.pet)}" oninput="S.form.pet=this.value;clearErr('pet',this)" onblur="checkF('pet')" aria-invalid="${!!e.pet}" aria-describedby="e-pet">
@@ -257,22 +245,23 @@ return `<section class="screen" data-testid="screen-form" style="background:var(
       <label class="fl" for="f-password">비밀번호 <span style="font-weight:400;color:var(--sub);font-size:12px">6자 이상</span></label>
       <input id="f-password" type="password" maxlength="64" autocomplete="new-password" data-testid="f-password" value="${esc(f.password)}" oninput="S.form.password=this.value;clearErr('password',this)" onblur="checkF('password')" aria-invalid="${!!e.password}" aria-describedby="e-password h-password">
       <div class="err" id="e-password">${e.password||''}</div>
-      <div id="h-password" style="font-size:12px;color:var(--sub);margin-top:4px">회원 화면에 들어갈 때 휴대폰 번호와 함께 써요</div>
+      <div id="h-password" style="font-size:12px;color:var(--sub);margin-top:4px">아이를 보러 올 때 휴대폰 번호와 함께 써요</div>
       <label style="display:flex;gap:10px;align-items:flex-start;margin-top:18px;font-size:14px;line-height:1.5;cursor:pointer"><input type="checkbox" id="f-agree" data-testid="f-agree" ${f.agree?'checked':''} onchange="S.form.agree=this.checked;delete S.errors.agree;$('#e-agree').textContent=''" style="width:20px;height:20px;margin-top:1px;flex:none;accent-color:var(--navy)"><span>[필수] 개인정보 수집·이용에 동의해요 <a href="/privacy" target="_blank" rel="noopener" style="color:var(--navy);font-weight:700">내용 보기</a><br><span style="font-size:12px;color:var(--sub)">보호자 이름·휴대폰 번호·아이 정보를 메모리얼 운영에만 써요</span></span></label>
       <div class="err" id="e-agree">${e.agree||''}</div>
       <div class="err" data-testid="e-server" style="margin-top:12px">${e.server||''}</div>
-      <button class="cta navy" type="submit" style="margin-top:14px" data-testid="f-submit" ${S.sending?'disabled':''}>${S.sending?'예약하는 중…':'이 자리 예약하기'}</button>
-      <p class="fine">한 번 정한 자리는 영원히 그 아이의 자리예요. 양도는 할 수 있지만 매매는 없어요. 시제품이라 결제와 본인인증은 연결되어 있지 않아요.</p>
+      <button class="cta navy" type="submit" style="margin-top:14px" data-testid="f-submit" ${S.sending?'disabled':''}>${S.sending?'별을 남기는 중…':'아이의 별 남기기'}</button>
+      <p class="fine">한 번 남긴 별은 영원히 그 아이의 자리예요.<br>시제품이라 결제와 본인인증은 아직 연결되어 있지 않아요.</p>
     </form>
   </div>
 </section>`};
 
 R.profile=()=>{const p=S.pet;return `<section class="screen" data-testid="screen-profile" style="background:var(--bg)">
   ${status()}
-  <div class="top"><b style="font-size:17px;padding-left:6px">${esc(p.name)} 소개하기</b></div>
+  <div class="top"><b style="font-size:17px;padding-left:6px">${esc(p.name)} 이야기</b></div>
   <div class="scroll" style="padding:0 16px 20px">
-    <div style="background:var(--night);color:#fff;border-radius:18px;padding:14px 16px;margin-bottom:6px"><div style="font-size:12px;color:var(--gold)">${S.hall.name}의 천사 · ${Angel.ZONES[Angel.zoneOf(S.result.seat)]} ${pad(S.result.seat)}번 자리 예약 완료</div><p style="font-size:14px;line-height:1.6;margin-top:4px;color:#DDE2EC">회원 화면에서 ${esc(p.name)}의 메모리얼에 들어가면 보이는 정보예요. 지금 다 채우지 않아도 되고, 나중에 고칠 수 있어요.</p></div>
+    <div style="background:var(--night);color:#fff;border-radius:18px;padding:14px 16px;margin-bottom:6px"><div style="font-size:12px;color:var(--gold)">${S.hall.name}의 천사 곁에 ${esc(p.name)}의 별이 생겼어요</div><p style="font-size:14px;line-height:1.6;margin-top:4px;color:#DDE2EC">${esc(p.name)}의 얼굴과 이야기를 남겨 주세요. 지금 다 채우지 않아도 괜찮아요. 생각날 때마다 천천히 더해 주세요.</p></div>
     ${PetForm.html(p, p.petStatus==='먼저 떠났어요')}
+    ${p.petStatus==='먼저 떠났어요'?Proof.html('천사를 만난 날을 확인하는 데만 써요. 운영팀만 보고, 어디에도 공개되지 않아요. 지금 없어도 괜찮아요.'):''}
     <div class="err" data-testid="e-profile" role="alert" style="margin-top:12px">${S.errors.profile||''}</div>
   </div>
   <div class="dock" style="display:flex;flex-direction:column;gap:6px;background:var(--bg);padding-top:10px"><button class="cta navy" data-testid="pf-save" ${S.sending?'disabled':''} onclick="saveProfile()">${S.sending?'저장하는 중…':'저장하고 계속'}</button><button class="cta" style="height:48px;color:var(--sub);font-weight:500;font-size:15px" data-testid="pf-later" onclick="S.history=[];S.screen='done';render()">나중에 할게요</button></div>
@@ -280,14 +269,14 @@ R.profile=()=>{const p=S.pet;return `<section class="screen" data-testid="screen
 async function saveProfile(){
   const d=PetForm.read(); if(!PetForm.validate(d)) return;
   S.sending=true;delete S.errors.profile;$('[data-testid=pf-save]').disabled=true;$('[data-testid=pf-save]').textContent='저장하는 중…';
-  try{ S.pet=await PetForm.save(S.pet.id,d); S.sending=false; S.history=[]; S.screen='done'; render(); toast(`${S.pet.name}의 정보를 저장했어요`); }
+  try{ S.pet=await PetForm.save(S.pet.id,d); await Proof.save(S.pet.id).then(np=>{if(np)S.pet=np}); S.sending=false; S.history=[]; S.screen='done'; render(); toast(`${S.pet.name}의 이야기를 담았어요`); }
   catch(e){ S.sending=false; const el=$('[data-testid=e-profile]'); if(el) el.textContent=e.message; const b=$('[data-testid=pf-save]'); if(b){b.disabled=false;b.textContent='저장하고 계속'} }
 }
 R.done=()=>{const r=S.result,h=S.hall;return `<section class="screen" data-testid="screen-done" style="background:radial-gradient(120% 70% at 50% 18%,#1E2440 0%,var(--night) 60%)">
   ${status()}
   <div class="stage" style="padding-top:8px"><canvas id="doneAngel" aria-label="${esc(r.pet)}의 별이 빛나는 천사"></canvas></div>
-  <div class="caption"><div class="eyebrow">${h.name}의 천사 · ${Angel.ZONES[Angel.zoneOf(r.seat)]} ${pad(r.seat)}번 자리</div><h1 style="margin-top:6px" data-testid="done-title">${esc(r.pet)}의 별이 생겼어요</h1><p>예약번호 ${esc(r.id)} · 반짝이는 별이 ${esc(r.pet)}의 자리예요</p></div>
-  <div class="dock" style="display:flex;flex-direction:column;gap:8px"><a class="cta gold" href="/member" data-testid="done-member" style="text-decoration:none">${esc(r.pet)}의 메모리얼로 가기</a><button class="cta ghost" data-testid="done-home" onclick="reset()">처음으로</button></div>
+  <div class="caption"><div class="eyebrow">${h.name}의 천사 · ${Angel.ZONES[Angel.zoneOf(r.seat)]} ${pad(r.seat)}번 자리</div><h1 style="margin-top:6px" data-testid="done-title">${esc(r.pet)}의 별이 빛나기 시작했어요</h1><p>${S.chosen.status==='alive'?`${esc(r.pet)}, 아끼는 마음이 이 별에 담겼어요`:`반짝이는 별이 ${esc(r.pet)}의 자리예요. 이제 언제든 보러 올 수 있어요`}</p></div>
+  <div class="dock" style="display:flex;flex-direction:column;gap:8px"><a class="cta gold" href="/member" data-testid="done-member" style="text-decoration:none">${esc(r.pet)}에게 가기</a><button class="cta ghost" data-testid="done-home" onclick="reset()">처음으로</button></div>
 </section>`};
 
 // ---------- behaviour ----------
@@ -301,7 +290,7 @@ async function enter(id){
   try{const d=await api(`/api/halls/${id}/seats`);S.taken=d.taken;S.hall={...S.hall,left:d.left,taken:d.taken.length}}catch(e){toast(e.message)}
   if(S.screen==='enter') mountEnter();
 }
-function startPick(){ if(!S.taken){toast('자리를 불러오는 중이에요');return} if(!S.hall.left){toast('이 날의 1004자리가 모두 찼어요');return}
+function startPick(){ if(!S.taken){toast('자리를 불러오는 중이에요');return} if(!S.hall.left){toast('이 날의 천사 곁은 가득 찼어요');return}
   if(S.chosen.status&&S.chosen.day===S.hall.id){ go('seats'); return; } S.dayMsg=''; if(!S.chosen.date||S.chosen.day!==S.hall.id){ S.chosen.date=''; } go('day'); }
 R.day=()=>{const h=S.hall;return `<section class="screen" data-testid="screen-day" style="background:var(--bg)">
   ${status()}
@@ -368,7 +357,7 @@ function afterRender(){
     mounted.push(m);
   }
   if(S.screen==='form'){const cv=$('#miniAngel');if(cv)mounted.push(Angel.mount(cv,{taken:S.taken,mine:[S.pick],photos:PHOTOS}))}
-  if(S.screen==='profile') PetForm.bind();
+  if(S.screen==='profile'){PetForm.bind();Proof.bind();}
   if(S.screen==='done'){const cv=$('#doneAngel');if(cv){const m=Angel.mount(cv,{taken:S.taken,mine:[S.result.seat],picked:[S.result.seat],photos:PHOTOS});mounted.push(m)}}
 }
 function render(){ const sc=$('.scroll'),keep=sc&&S._last===S.screen?sc.scrollTop:0; $('#view').innerHTML=R[S.screen](); const n=$('.scroll'); if(n&&keep) n.scrollTop=keep; S._last=S.screen; afterRender(); }

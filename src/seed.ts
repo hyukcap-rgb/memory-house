@@ -30,6 +30,10 @@ export type Pet = {
   dayLocked?: boolean;
   // 미리 들어온 아이가 떠난 뒤 딱 한 번 날짜를 정한 기록 (kept: 그날이 다 차서 처음 날에 남음)
   dayChange?: { at: string; from: string; to: string; kept: boolean };
+  // 천사를 만난 날 증빙 (장례·화장 확인서, 동물등록 말소 확인서 등). 사진은 공개되지 않고 운영팀만 본다
+  proof?: { status: "pending" | "ok" | "rejected"; at: string; v: number; note?: string; doc?: string };
+  // 미리 들어온 아이의 날짜 변경 신청 (증빙 확인 전까지 옮길 자리를 잡아 둔다)
+  dayRequest?: { at: string; passed: string; from: string; to: string; seats: number[]; keep: boolean };
   showInPlaza?: boolean; flowerDay?: string; flowersToday?: number; flowersTotal?: number; candleUntil?: number; lastActive?: string;
 };
 export type FeedItem = { id: string; at: string; petId: string; who: string; text: string; photoV: number };

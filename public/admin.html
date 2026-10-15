@@ -183,7 +183,7 @@ const IC={
   refresh:'<svg class="ico" style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 11a8 8 0 10-2.3 5.7M20 4v7h-7"/></svg>',
 };
 IC.user='<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/></svg>';
-const PAGES=[['dash','대시보드',IC.dash],['res','자리 예약',IC.seat],['mem','회원·아이',IC.user],['tr','양도 요청',IC.transfer],['gb','방명록',IC.book],['halls','메모리얼',IC.hall]];
+const PAGES=[['dash','대시보드',IC.dash],['res','자리 예약',IC.seat],['mem','회원·아이',IC.user],['tr','양도 요청',IC.transfer],['pf','날짜 확인',IC.book],['gb','방명록',IC.book],['halls','메모리얼',IC.hall]];
 const SRC={guest:['비회원','guest'],member:['회원','member'],seed:['기존','seed']};
 const A={code:null,data:null,page:'dash',f:{q:'',hall:'',src:'',st:'active'},gbOnlyReported:false,busy:false,loadedAt:null};
 let views=[];
@@ -222,10 +222,11 @@ function counts(){
     taken:d.halls.reduce((n,h)=>n+h.taken,0), total:d.halls.reduce((n,h)=>n+h.total,0),
     today:d.reservations.filter(r=>r.source!=='seed'&&r.status==='active'&&now-new Date(r.at)<864e5).length,
     pending:d.transfers.filter(t=>t.status==='pending').length,
+    proofs:(d.proofs||[]).filter(p=>p.proof&&p.proof.status==='pending').length,
     reported:d.guestbook.filter(g=>g.reports>0&&!g.hidden).length,
   };
 }
-function nav(){const c=counts();const badge={tr:c.pending,gb:c.reported};
+function nav(){const c=counts();const badge={tr:c.pending,gb:c.reported,pf:c.proofs};
   $('#nav').innerHTML=PAGES.map(([k,l,ic])=>`<button class="nav" data-testid="nav-${k}" ${A.page===k?'aria-current="page"':''} onclick="goPage('${k}')">${ic}<span>${l}</span>${badge[k]?`<span class="badge" aria-label="${badge[k]}건">${badge[k]}</span>`:''}</button>`).join('')}
 function goPage(k){A.page=k;render();$('#main').focus();window.scrollTo(0,0)}
 function head(title,sub){return `<div class="head"><div><h1>${title}</h1>${sub?`<div class="sub">${sub}</div>`:''}</div><div class="act"><span class="sub">${A.loadedAt?A.loadedAt.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})+' 기준':''}</span><button class="btn line sm" data-testid="refresh" onclick="refresh()">${IC.refresh}새로고침</button></div></div>`}
@@ -280,6 +281,19 @@ P.tr=()=>{const d=A.data;const list=[...d.transfers].sort((a,b)=>(a.status==='pe
     <td style="text-align:right;white-space:nowrap">${t.status==='pending'?`<button class="btn line sm" onclick="askReject('${t.id}')">양도 거절</button> <button class="btn primary sm" data-testid="tr-approve" onclick="askApprove('${t.id}')">양도 승인</button>`:t.status==='approved'&&t.accountId&&t.deleteAt&&left(t.deleteAt)>0?`<span style="font-size:12px;color:var(--sub);margin-right:6px">보낸 분 메모리얼 ${left(t.deleteAt)}일 뒤 삭제</span><button class="btn line sm" data-testid="tr-revert" onclick="askRevert('${t.id}')">되돌리기</button>`:''}</td></tr>`).join('')}
   </tbody></table>`:'<div class="empty"><b>양도 요청이 없어요</b>회원 화면에서 요청이 들어오면 여기에 보여요.</div>'}</div>`};
 
+// 천사를 만난 날 확인 (서류 사진). 미리 들어온 아이의 날짜 변경은 승인해야 옮겨진다
+P.pf=()=>{const list=[...(A.data.proofs||[])].sort((a,b)=>({pending:0,rejected:2,ok:3}[a.proof?.status]??1)-({pending:0,rejected:2,ok:3}[b.proof?.status]??1));
+  const st=p=>!p.proof?'<span class="tag mute">서류 없음</span>':{pending:'<span class="tag wait">확인 대기</span>',ok:'<span class="tag ok">확인됨</span>',rejected:'<span class="tag err">다시 요청</span>'}[p.proof.status];
+  return head('천사를 만난 날 확인','장례·화장 확인서, 동물등록 말소 확인서 등으로 떠난 날을 확인해요. 서류 사진은 운영팀만 볼 수 있어요')+`
+  <div class="card tablewrap">${list.length?`<table><thead><tr><th>아이</th><th>보호자</th><th>천사를 만난 날</th><th>메모리얼</th><th>서류</th><th>상태</th><th></th></tr></thead><tbody>
+  ${list.map(p=>`<tr data-testid="pf-row"><td><a href="/m/${esc(p.id)}" target="_blank" rel="noopener" style="color:var(--ink)"><b>${esc(p.name)}</b></a></td><td>${esc(p.owner)}</td><td>${esc((p.passed||'-').replace(/-/g,'.'))}</td>
+    <td>${p.dayRequest?(p.dayRequest.keep||p.dayRequest.to===p.dayRequest.from?`${esc(p.dayRequest.fromName)} 그대로`:`<b>${esc(p.dayRequest.fromName)} → ${esc(p.dayRequest.toName)}</b><div style="font-size:12px;color:var(--sub)">날짜 변경 신청 · 자리 잡아 둠</div>`):esc(p.hallName)}</td>
+    <td>${p.proof?`<button class="linklike" data-testid="pf-view" onclick="viewProof('${p.id}')">${esc(p.proof.doc||'서류')} 보기</button>`:'-'}</td><td>${st(p)}${p.proof&&p.proof.note&&p.proof.status==='rejected'?`<div style="font-size:12px;color:var(--sub)">${esc(p.proof.note)}</div>`:''}</td>
+    <td style="text-align:right;white-space:nowrap">${p.proof&&p.proof.status==='pending'?`<button class="btn line sm" onclick="proofDecide('${p.id}','reject')">다시 요청</button> <button class="btn primary sm" data-testid="pf-approve" onclick="proofDecide('${p.id}','approve')">${p.dayRequest?'확인하고 옮기기':'확인'}</button>`:''}</td></tr>`).join('')}
+  </tbody></table>`:'<div class="empty"><b>확인할 날짜가 없어요</b>먼저 떠난 아이의 서류가 올라오면 여기에 보여요.</div>'}</div>`};
+async function viewProof(id){ try{ const r=await fetch(`/api/admin/proofs/${id}.jpg`,{headers:{'x-admin-code':A.code||''}}); if(!r.ok) throw new Error('서류 사진을 불러오지 못했어요'); const u=URL.createObjectURL(await r.blob()); const w=window.open('','_blank'); if(w){w.document.title='서류';w.document.body.style.margin='0';w.document.body.innerHTML=`<img src="${u}" style="max-width:100%;display:block;margin:auto">`} }catch(e){toast(e.message)} }
+async function proofDecide(id,action){ let note=''; if(action==='reject'){ note=prompt('보호자에게 보일 안내 (비우면 기본 문구)','')??null; if(note===null) return; }
+  try{ await api(`/api/admin/pets/${id}/proof`,{method:'POST',body:JSON.stringify({action,note})}); await refresh(true); toast(action==='approve'?'확인했어요':'서류를 다시 요청했어요'); }catch(e){ toast(e.message); } }
 P.gb=()=>{const d=A.data;const list=d.guestbook.filter(g=>!A.gbOnlyReported||g.reports>0);
   return head('방명록','가족과 아는 사람이 남긴 말이에요. 상처가 되는 글은 숨길 수 있어요')+`
   <div class="filters"><label style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:var(--ink);min-height:40px;cursor:pointer"><input type="checkbox" ${A.gbOnlyReported?'checked':''} onchange="A.gbOnlyReported=this.checked;render()" style="width:18px;height:18px"> 신고된 글만 보기</label></div>
