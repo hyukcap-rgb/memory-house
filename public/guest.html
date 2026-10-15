@@ -167,7 +167,7 @@ function chooserHTML(lockDay){ const c=S.chosen; const chip=(v,l)=>`<button type
     <span class="fl" style="margin-top:0">아이는 지금</span><div class="chips">${chip('passed','먼저 떠났어요')}${chip('alive','아직 곁에 있어요')}</div>
     ${c.status?`<label class="fl" for="cs-date">${c.status==='passed'?'우리 아이가 천사를 만난 날':'함께 기억하고 싶은 날'}</label>
     <input type="date" id="cs-date" data-testid="cs-date" max="${todayISO()}" value="${esc(c.date)}" oninput="S.chosen.date=this.value">
-    ${c.status==='alive'?'<p style="font-size:12px;color:var(--sub);margin-top:6px;line-height:1.6">처음 만난 날이나 생일처럼 아이와의 특별한 날을 골라요. 그날의 1004자리 중 하나를 미리 지켜 둬요.</p>':''}
+    ${c.status==='alive'?'<p style="font-size:12px;color:var(--sub);margin-top:6px;line-height:1.6">처음 만난 날이나 생일처럼 아이와의 특별한 날을 골라요. 그날의 1004자리 중 하나를 미리 지켜 둬요.<br>나중에 아이가 천사를 만나면 그날로 <b>한 번</b> 옮길 수 있어요. 그날이 다 찼다면 옮길 수 없어요.</p>':''}
     <button class="cta navy" style="margin-top:14px" data-testid="cs-go" onclick="findDay(${lockDay?`'${lockDay}'`:'null'})">${lockDay?'맞아요, 자리 고르기':'그날의 천사 만나기'}</button>`:''}
     ${S.dayMsg||''}</div>`; }
 R.home=()=>{const H=S.halls;const tk=todayKey();const th=H&&H.find(h=>h.id===tk);return `<section class="screen" data-testid="screen-home">

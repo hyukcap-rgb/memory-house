@@ -227,10 +227,14 @@ function applyPetFields(target: Pet, b: any): string | null {
   if (typeof b.showInPlaza === "boolean") p.showInPlaza = b.showInPlaza;
   if (Array.isArray(b.tags)) p.tags = b.tags.map((t: unknown) => clean(t, 16)).filter(Boolean).slice(0, 3);
   if (p.petStatus !== "먼저 떠났어요") p.passed = "";
-  // 천사를 만난 날로 들어온 메모리얼은 날짜를 바꿀 수 없다
+  // 함께 살던 아이가 떠났다는 소식은 '천사를 만난 날 알리기'(한 번만 날짜 변경)로만 받는다
+  if (!target.dayLocked && target.petStatus !== "먼저 떠났어요" && p.petStatus === "먼저 떠났어요")
+    return "아이가 떠났다면 '천사를 만난 날 알리기'에서 알려 주세요. 날짜는 한 번만 옮길 수 있어요";
+  // 천사를 만난 날이 정해진 메모리얼은 날짜를 바꿀 수 없다
   if (p.dayLocked) {
     const day = HALLS.find((h) => h.id === p.hall)?.name || "";
-    if (p.petStatus !== "먼저 떠났어요" || dayOf(p.passed) !== p.hall) return `떠난 날은 메모리얼 날짜(${day})와 같아야 해요. 잘못 들어갔다면 운영팀에 알려 주세요`;
+    if (p.petStatus !== "먼저 떠났어요") return "천사를 만난 날이 정해진 아이예요. 잘못 들어갔다면 운영팀에 알려 주세요";
+    if (p.dayChange?.kept ? p.passed !== target.passed : dayOf(p.passed) !== p.hall) return `떠난 날은 이미 정해졌어요(${day}). 잘못 들어갔다면 운영팀에 알려 주세요`;
   }
   Object.assign(target, p);
   return null;
@@ -441,6 +445,53 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
       await save();
       return json({ ok: true });
     }
+    // 미리 들어온 아이가 떠났을 때: 천사를 만난 날로 딱 한 번 옮긴다. 그날이 다 찼으면 옮길 수 없고 처음 날에 남는다
+    m = path.match(/^\/api\/me\/pets\/([\w-]+)\/angel-day$/);
+    if (req.method === "POST" && m) {
+      const pet = mine.find((p) => p.id === m![1]);
+      if (!pet) return bad("아이를 찾을 수 없어요", 404);
+      if (pet.dayLocked) return bad("천사를 만난 날이 이미 정해졌어요. 날짜는 한 번만 바꿀 수 있어요", 409);
+      if (a.deleteAt || pet.deleteAt) return bad("탈퇴·양도 중에는 날짜를 바꿀 수 없어요", 409);
+      if (s.transfers.some((t) => t.petId === pet.id && t.status === "pending")) return bad("양도 확인 중에는 날짜를 바꿀 수 없어요. 양도를 먼저 취소해 주세요", 409);
+      const b = await body(req);
+      const passed = clean(b.passed, 10);
+      if (!passed || !isDate(passed)) return bad("천사를 만난 날을 골라 주세요");
+      if (passed > kstDay()) return bad("천사를 만난 날은 오늘보다 앞이어야 해요");
+      if (pet.birth && passed < pet.birth) return bad("천사를 만난 날이 생일보다 앞설 수 없어요");
+      const from = pet.hall, to = dayOf(passed);
+      const target = HALLS.find((h) => h.id === to)!;
+      const lock = (hall: string, kept: boolean) => {
+        Object.assign(pet, { hall, passed, petStatus: "먼저 떠났어요", dayLocked: true, dayChange: { at: new Date().toISOString(), from, to, kept } });
+        for (const r of s.reservations) if (r.petId === pet.id && r.status === "active") r.petStatus = "먼저 떠났어요";
+      };
+      if (to === from || b.keep === true) {
+        lock(from, to !== from);
+        await save();
+        return json({ moved: false, pet: petView(pet) });
+      }
+      const taken = takenFor(to);
+      const need = pet.seats.length;
+      if (TOTAL - taken.size < need) return json({ error: `${target.name}의 1004자리가 모두 찼어요. 다른 날로는 옮길 수 없어요`, full: true, day: target.name }, 409);
+      // 같은 번호가 비어 있으면 그대로, 아니면 빛에서 가까운 빈자리
+      const pick = new Map<number, number>();
+      const used = new Set(taken);
+      for (const n of pet.seats) if (!used.has(n)) { pick.set(n, n); used.add(n); }
+      let next = 1;
+      for (const n of pet.seats) {
+        if (pick.has(n)) continue;
+        while (used.has(next)) next++;
+        pick.set(n, next); used.add(next);
+      }
+      for (const r of s.reservations) {
+        if (r.petId !== pet.id || r.status !== "active" || r.hall !== from) continue;
+        r.hall = to;
+        r.seats = r.seats.map((n) => pick.get(n) ?? n);
+      }
+      pet.seats = pet.seats.map((n) => pick.get(n)!);
+      lock(to, false);
+      await save();
+      return json({ moved: true, pet: petView(pet) });
+    }
     m = path.match(/^\/api\/me\/pets\/([\w-]+)(\/photo|\/feed)?$/);
     const pet = m && mine.find((p) => p.id === m![1]);
     if (m && !pet) return bad("아이를 찾을 수 없어요", 404);
@@ -573,7 +624,7 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
         reservations: s.reservations, transfers: s.transfers,
         guestbook: s.guestbook.map((g) => ({ ...g, pet: g.pet.startsWith("P-") ? petName(g.pet) : g.pet })),
         pets: s.pets.map(petView), accounts: s.accounts.length,
-        members: s.accounts.map((a) => ({ id: a.id, at: a.at, owner: a.owner, phone: a.phone, agreedAt: a.agreedAt || "", deleteAt: a.deleteAt || "", pets: s.pets.filter((p) => p.accountId === a.id).map((p) => ({ id: p.id, name: p.name, hallName: HALLS.find((h) => h.id === p.hall)?.name || "", seats: p.seats, deleteAt: p.deleteAt || "", deleteReason: p.deleteReason || "" })) })),
+        members: s.accounts.map((a) => ({ id: a.id, at: a.at, owner: a.owner, phone: a.phone, agreedAt: a.agreedAt || "", deleteAt: a.deleteAt || "", pets: s.pets.filter((p) => p.accountId === a.id).map((p) => ({ id: p.id, name: p.name, hallName: HALLS.find((h) => h.id === p.hall)?.name || "", seats: p.seats, deleteAt: p.deleteAt || "", deleteReason: p.deleteReason || "", dayChange: p.dayChange || null, waiting: !p.dayLocked && p.petStatus !== "먼저 떠났어요" })) })),
         graceDays: Math.round(GRACE_MS / 864e5),
       });
     }

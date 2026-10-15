@@ -254,3 +254,65 @@ describe("양도·탈퇴와 30일 보관 후 삭제", () => {
     expect(seatsAfter.left).toBe(seatsBefore.left + 1); // 자리가 다시 비었음
   });
 });
+
+describe("미리 들어온 아이의 날짜 변경 (한 번)", () => {
+  const signup = async (phone: string, pet: string, hall = "04-11") => {
+    const d = await (await fetch(`${BASE}/api/halls/${hall}/seats`)).json();
+    const taken = new Set(d.taken); let n = 1; while (taken.has(n)) n++;
+    const r = await post("/api/reserve", { hall, seats: [n], pet, kind: "강아지", petStatus: "함께 살고 있어요", owner: pet + "보호자", phone, password: "pass1234", agree: true });
+    expect(r.status).toBe(200);
+    const body = await r.json();
+    return { cookie: (r.headers.get("set-cookie") || "").split(";")[0], pet: body.pet, seat: n };
+  };
+  const as = (cookie: string) => (path: string, data: unknown, method = "POST") => fetch(BASE + path, { method, headers: { "content-type": "application/json", cookie }, body: JSON.stringify(data) });
+
+  test("정보 고치기로는 떠났다고 바꿀 수 없음", async () => {
+    const A = await signup("01040000001", "구름");
+    const r = await as(A.cookie)(`/api/me/pets/${A.pet.id}`, { petStatus: "먼저 떠났어요", passed: "2025-06-01" }, "PUT");
+    expect(r.status).toBe(400);
+  });
+
+  test("가득 찬 날로는 못 옮기고, 빈 날로는 한 번만 옮김", async () => {
+    const A = await signup("01040000002", "달이");
+    const send = as(A.cookie);
+    const full = await send(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-12-25" });
+    expect(full.status).toBe(409);
+    expect((await full.json()).full).toBe(true);
+
+    const before = await (await fetch(`${BASE}/api/halls/06-03/seats`)).json();
+    const ok = await send(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-06-03" });
+    expect(ok.status).toBe(200);
+    const d = await ok.json();
+    expect(d.moved).toBe(true);
+    expect(d.pet.hall).toBe("06-03");
+    expect(d.pet.dayLocked).toBe(true);
+    expect(d.pet.petStatus).toBe("먼저 떠났어요");
+    const after = await (await fetch(`${BASE}/api/halls/06-03/seats`)).json();
+    expect(after.left).toBe(before.left - 1);
+    expect(after.taken).toContain(d.pet.seats[0]);
+    const old = await (await fetch(`${BASE}/api/halls/04-11/seats`)).json();
+    expect(old.taken).not.toContain(A.seat);
+
+    // 두 번째는 안 됨, 정보 고치기로 떠난 날을 바꿔도 안 됨
+    expect((await send(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-06-04" })).status).toBe(409);
+    expect((await send(`/api/me/pets/${A.pet.id}`, { passed: "2025-06-04" }, "PUT")).status).toBe(400);
+    expect((await send(`/api/me/pets/${A.pet.id}`, { weight: "4.1" }, "PUT")).status).toBe(200);
+  });
+
+  test("가득 찬 날이면 처음 날에 그대로 남기 가능 (기회는 사용)", async () => {
+    const A = await signup("01040000003", "솜이");
+    const send = as(A.cookie);
+    const r = await send(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-12-25", keep: true });
+    expect(r.status).toBe(200);
+    const d = await r.json();
+    expect(d.moved).toBe(false);
+    expect(d.pet.hall).toBe("04-11");
+    expect(d.pet.dayChange.kept).toBe(true);
+    expect((await send(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-06-05" })).status).toBe(409);
+  });
+
+  test("미래 날짜 불가", async () => {
+    const A = await signup("01040000004", "하늘");
+    expect((await as(A.cookie)(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2099-01-01" })).status).toBe(400);
+  });
+});

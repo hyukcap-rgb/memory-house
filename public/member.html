@@ -254,7 +254,7 @@ function openEdit(){
   const st=P.petStatus==='먼저 떠났어요';
   openSheet(`<h3 id="sheetTitle">${N()} 정보 고치기</h3><p>입장 화면과 메모리얼 곳곳에 보이는 정보예요.</p>
     <label class="fl" for="ed-name">이름</label><input type="text" id="ed-name" maxlength="20" value="${N()}" data-testid="ed-name">
-    <label class="fl" for="ed-status">아이는 지금</label><select id="ed-status" data-testid="ed-status" onchange="P={...P,petStatus:this.value,name:$('#ed-name').value||P.name};openEdit()" style="width:100%;height:50px;border:1px solid var(--line);border-radius:12px;padding:0 12px;font:inherit;font-size:16px;background:#FBFAF8">${['함께 살고 있어요','먼저 떠났어요'].map(o=>`<option ${P.petStatus===o?'selected':''}>${o}</option>`).join('')}</select>
+    <label class="fl" for="ed-status">아이는 지금</label><select id="ed-status" data-testid="ed-status" onchange="if(this.value==='먼저 떠났어요'&&!P.dayLocked){this.value=P.petStatus;openAngelDay();return}P={...P,petStatus:this.value,name:$('#ed-name').value||P.name};openEdit()" style="width:100%;height:50px;border:1px solid var(--line);border-radius:12px;padding:0 12px;font:inherit;font-size:16px;background:#FBFAF8">${['함께 살고 있어요','먼저 떠났어요'].map(o=>`<option ${P.petStatus===o?'selected':''}>${o}</option>`).join('')}</select>
     ${PetForm.html(P,st)}
     <div id="ed-err" role="alert" style="color:#B2453A;font-size:13px;margin-top:10px;min-height:18px"></div>
     <button class="cta navy" style="margin-top:6px" data-testid="ed-save" onclick="saveEdit()">저장하기</button>`,'edit');
@@ -323,7 +323,7 @@ R.hall=()=>`<section class="screen" data-testid="screen-hall" style="background:
   <div style="position:relative;z-index:2;padding:0 16px 14px;display:flex;flex-direction:column;gap:8px">
     <div class="glass" style="border-radius:16px;padding:14px 16px;color:#fff" data-testid="my-day">
       <div style="display:flex;justify-content:space-between;align-items:baseline"><b class="serif" style="font-size:18px">${P.hallName}</b><b style="font-size:14px;color:var(--gold)" data-testid="left-${P.hall}">${hallOf(P.hall).left===0?'가득 찼어요':hallOf(P.hall).left==null?'':`남은 ${remaining(P.hall)}자리`}</b></div>
-      <div style="font-size:13px;color:#D5DAE5;margin-top:4px">${MYSEAT()?`${ga()} 이 날의 천사 안에 있어요 · ${seatText()}`:'아직 이 날에 자리가 없어요'}</div>
+      <div style="font-size:13px;color:#D5DAE5;margin-top:4px">${MYSEAT()?`${ga()} 이 날의 천사 안에 있어요 · ${seatText()}`:'아직 이 날에 자리가 없어요'}</div>${P.dayChange?`<div style="font-size:12px;color:var(--gold);margin-top:6px" data-testid="day-change-note">${P.dayChange.kept?`천사를 만난 날은 ${dayName(P.dayChange.to)} · 처음 고른 날에 그대로 남았어요`:P.dayChange.from===P.dayChange.to?'천사를 만난 날과 같은 날이에요':`${dayName(P.dayChange.from)}에서 천사를 만난 날로 옮겨 왔어요`}</div>`:''}${MODE==='real'&&!P.dayLocked&&P.petStatus!=='먼저 떠났어요'?`<button onclick="openAngelDay()" data-testid="hall-angelday" style="margin-top:8px;min-height:40px;padding:0 12px;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;font-size:13px;font-weight:700">천사를 만난 날 알리기 · 한 번만 옮길 수 있어요</button>`:''}
     </div>
     ${hallOf(P.hall).left===0?'':`<button class="glass" data-testid="hall-more" onclick="S.hall=P.hall;S.seat=null;go('seat');if(!SRV[P.hall])refreshSeats(P.hall).then(render)" style="border-radius:16px;padding:14px 16px;display:flex;align-items:center;text-align:left;color:#fff;min-height:56px"><span style="flex:1"><b style="font-size:15px">같은 날에 자리 더 잡기</b><br><span style="font-size:12px;color:#D5DAE5">가족의 다른 아이도 ${P.hallName}의 천사 곁에</span></span>${I.chev}</button>`}
     <button class="cta white" data-testid="hall-visit" onclick="go('visit')" style="margin-top:4px">${I.door}${N()}에게 가기</button>
@@ -381,6 +381,41 @@ async function sendTransfer(){ const err=$('[data-testid=transfer-err]'); const 
   catch(e){ err.textContent=e.message; b.disabled=false; } }
 async function cancelTransfer(id){ try{ await api(`/api/me/transfers/${id}/cancel`,{method:'POST',body:'{}'}); await reloadMe(); toast('양도 요청을 취소했어요'); }catch(e){ toast(e.message); } }
 async function reloadMe(){ try{ const r=await fetch('/api/me'); if(!r.ok) return; ME=await r.json(); const np=ME.pets.find(x=>x.id===P.id)||ME.pets[0]; if(np) P=np; render(); }catch{} }
+// 미리 들어온 아이가 떠났을 때: 천사를 만난 날로 딱 한 번 옮긴다. 그날이 다 찼으면 옮길 수 없다
+function openAngelDay(){
+  openSheet(`<h3 id="sheetTitle">${ga()} 천사를 만난 날</h3><p>지금은 ${esc(P.hallName)}의 천사 안에 있어요. 천사를 만난 날의 메모리얼로 <b>딱 한 번</b> 옮길 수 있어요. 그날의 1004자리가 다 찼다면 옮길 수 없어요.</p>
+  <label class="fl" for="ad-date">천사를 만난 날</label><input type="date" id="ad-date" data-testid="angelday-date" max="${new Date(Date.now()+9*3600e3).toISOString().slice(0,10)}" ${P.birth?`min="${esc(P.birth)}"`:''} oninput="angelPreview()" style="width:100%;height:50px;border:1px solid var(--line);border-radius:12px;padding:0 12px;font:inherit;font-size:16px;background:#FBFAF8">
+  <div id="ad-info" data-testid="angelday-info" aria-live="polite" style="font-size:14px;line-height:1.6;margin-top:10px;min-height:22px"></div>
+  <label style="display:flex;gap:10px;align-items:flex-start;margin-top:10px;font-size:14px;cursor:pointer"><input type="checkbox" id="ad-agree" data-testid="angelday-agree" style="width:20px;height:20px;flex:none;margin-top:1px;accent-color:var(--navy)"><span>날짜는 한 번만 정할 수 있고, 정한 뒤에는 바꿀 수 없다는 걸 알아요</span></label>
+  <div id="ad-err" role="alert" style="color:#B2453A;font-size:13px;margin-top:8px;min-height:18px"></div>
+  <div id="ad-btns"><button class="cta navy" style="margin-top:6px" data-testid="angelday-send" onclick="sendAngelDay(false)" disabled>날짜를 먼저 골라 주세요</button></div>`,'angelday');
+}
+async function angelPreview(){
+  const v=$('#ad-date').value, info=$('#ad-info'), btns=$('#ad-btns'); $('#ad-err').textContent='';
+  if(!v){info.textContent='';return}
+  const day=v.slice(5), name=dayName(day);
+  info.textContent='확인하는 중…';
+  await refreshSeats(day); if($('#ad-date').value!==v) return;
+  const left=hallOf(day).left, need=Math.max(1,(P.seats||[]).length);
+  const keepBtn=`<button class="cta" style="margin-top:6px;background:#fff;border:1px solid var(--line)" data-testid="angelday-keep" onclick="sendAngelDay(true)">${esc(P.hallName)}에 그대로 남기</button>`;
+  if(day===P.hall){ info.innerHTML=`<b>${name}</b> · 지금 있는 날과 같아요. 자리는 그대로예요.`; btns.innerHTML=`<button class="cta navy" style="margin-top:6px" data-testid="angelday-send" onclick="sendAngelDay(false)">천사를 만난 날로 정하기</button>`; return }
+  if(left!=null&&left<need){ info.innerHTML=`<span data-testid="angelday-full" style="color:#B2453A"><b>${name}의 1004자리가 모두 찼어요.</b> 다른 날로는 옮길 수 없어요.</span><br><span style="color:var(--sub);font-size:13px">${esc(P.hallName)}의 자리에 그대로 남을 수 있어요. 이 경우에도 날짜 변경 기회는 쓰게 돼요.</span>`; btns.innerHTML=keepBtn; return }
+  info.innerHTML=`<b>${name}의 천사</b>로 옮겨요 · 남은 ${left??'-'}자리<br><span style="color:var(--sub);font-size:13px">같은 자리 번호가 비어 있으면 그대로, 아니면 빛에 가장 가까운 빈자리로 옮겨요.</span>`;
+  btns.innerHTML=`<button class="cta navy" style="margin-top:6px" data-testid="angelday-send" onclick="sendAngelDay(false)">${name}로 옮기기</button>${keepBtn}`;
+}
+async function sendAngelDay(keep){
+  const err=$('#ad-err'), v=$('#ad-date').value;
+  if(!v){err.textContent='천사를 만난 날을 골라 주세요.';return}
+  if(!$('#ad-agree').checked){err.textContent='날짜는 한 번만 정할 수 있다는 데 확인해 주세요.';return}
+  document.querySelectorAll('#ad-btns button').forEach(b=>b.disabled=true);
+  try{
+    const r=await fetch(`/api/me/pets/${P.id}/angel-day`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({passed:v,keep})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){ err.textContent=d.error||'잠시 후 다시 시도해 주세요'; if(d.full) angelPreview(); else document.querySelectorAll('#ad-btns button').forEach(b=>b.disabled=false); return }
+    P=d.pet; closeSheet(); S.hall=P.hall; await reloadMe(); refreshAll();
+    toast(d.moved?`${P.hallName}의 천사로 옮겼어요`:`${P.hallName}의 천사에 그대로 있어요`);
+  }catch(e){ err.textContent='잠시 후 다시 시도해 주세요'; document.querySelectorAll('#ad-btns button').forEach(b=>b.disabled=false); }
+}
 function openWithdraw(){
   openSheet(`<h3 id="sheetTitle">탈퇴하기</h3><p>탈퇴하면 기억의 집의 모든 서비스가 사라져요.</p>
   <div style="background:#FBEDEA;color:#7A2E25;border-radius:12px;padding:12px 14px;margin-top:12px;font-size:13px;line-height:1.7"><b>사라지는 것</b><br>· ${(ME&&ME.pets||[]).map(x=>esc(x.name)).join(', ')}의 메모리얼과 자리<br>· 사진, 기록, 방명록, 꽃과 촛불<br>· 계정과 휴대폰 번호<br><b>30일 뒤 자동으로 지워져요.</b> 그 전에 마음이 바뀌면 로그인해서 탈퇴를 취소할 수 있어요.</div>
@@ -461,11 +496,12 @@ R.keep=()=>`<section class="screen" data-testid="screen-keep">
       ['heir',I.people,'가족 승계',S.heir?`보호자가 떠난 뒤 ${esc(S.heir)}가 이어서 관리`:'이어서 관리할 가족을 정해 두세요',S.heir?'지정됨':'정하기'],
       ['download',I.down,'전체 내려받기','사진·영상·편지를 한 번에',S.downloaded?'완료':'받기'],
       ['terms',I.lock,'보존 약속','서비스가 멈춰도 기억은 다른 곳으로 옮겨 지켜요','약관 보기'],
-    ...(MODE==='real'?[['share',I.people,'가족에게 메모리얼 보내기','링크로 꽃과 한 마디를 받을 수 있어요','보내기'],['view',I.star,'방문자에게 보이는 화면','가족이 링크로 여는 메모리얼','열기'],['edit',I.pen,'아이 정보 고치기','사진, 생일, 몸무게, 좋아한 것','고치기'],['password',I.lock,'비밀번호 바꾸기','임시 비밀번호를 받았다면 꼭 바꿔 주세요','바꾸기'],ME&&ME.account.deleteAt?['withdrawcancel',I.lock,'탈퇴 취소하기',dday(ME.account.deleteAt),'취소']:['withdraw',I.lock,'탈퇴하기','모든 메모리얼이 30일 뒤 사라져요','탈퇴'],['logout',I.lock,'로그아웃',ME?`${esc(ME.account.owner)} · ${esc(ME.account.phone)}`:'','나가기']]:[]),
+    ...(MODE==='real'?[['share',I.people,'가족에게 메모리얼 보내기','링크로 꽃과 한 마디를 받을 수 있어요','보내기'],['view',I.star,'방문자에게 보이는 화면','가족이 링크로 여는 메모리얼','열기'],['edit',I.pen,'아이 정보 고치기','사진, 생일, 몸무게, 좋아한 것','고치기'],...(!P.dayLocked&&P.petStatus!=='먼저 떠났어요'?[['angelday',I.star,'천사를 만난 날 알리기','그날의 메모리얼로 한 번만 옮길 수 있어요','알리기']]:[]),['password',I.lock,'비밀번호 바꾸기','임시 비밀번호를 받았다면 꼭 바꿔 주세요','바꾸기'],ME&&ME.account.deleteAt?['withdrawcancel',I.lock,'탈퇴 취소하기',dday(ME.account.deleteAt),'취소']:['withdraw',I.lock,'탈퇴하기','모든 메모리얼이 30일 뒤 사라져요','탈퇴'],['logout',I.lock,'로그아웃',ME?`${esc(ME.account.owner)} · ${esc(ME.account.phone)}`:'','나가기']]:[]),
     ].map(([k,ic,t,d,a])=>`<button class="row" data-testid="keep-${k}" onclick="keep('${k}')" style="margin-bottom:10px">${ic}<span style="flex:1"><b style="font-size:15px">${t}</b><br><span style="font-size:12px;color:var(--sub)" data-testid="keep-${k}-desc">${d}</span></span><b style="font-size:13px;color:${a==='꺼짐'?'#B2453A':'var(--navy)'}" data-testid="keep-${k}-state">${a}</b></button>`).join('')}
   </div>${tabbar()}</section>`;
 function keep(k){
   if(k==='edit'){openEdit();return}
+  if(k==='angelday'){openAngelDay();return}
   if(k==='share'){shareMemorial();return}
   if(k==='withdraw'){openWithdraw();return}
   if(k==='withdrawcancel'){cancelWithdraw();return}

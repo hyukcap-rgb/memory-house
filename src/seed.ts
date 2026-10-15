@@ -28,6 +28,8 @@ export type Pet = {
   photoV: number; hall: string; seats: number[];
   deleteAt?: string; deleteReason?: "withdraw" | "transfer";
   dayLocked?: boolean;
+  // 미리 들어온 아이가 떠난 뒤 딱 한 번 날짜를 정한 기록 (kept: 그날이 다 차서 처음 날에 남음)
+  dayChange?: { at: string; from: string; to: string; kept: boolean };
   showInPlaza?: boolean; flowerDay?: string; flowersToday?: number; flowersTotal?: number; candleUntil?: number; lastActive?: string;
 };
 export type FeedItem = { id: string; at: string; petId: string; who: string; text: string; photoV: number };
