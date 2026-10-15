@@ -300,7 +300,7 @@ async function serveMemorial(req: Request, id: string): Promise<Response> {
   let html = await file.text();
   const origin = new URL(req.url).origin.replace(/^http:/, req.headers.get("x-forwarded-proto") === "https" ? "https:" : "http:");
   const title = pet ? `${pet.name}의 ${pet.petStatus === "먼저 떠났어요" ? "메모리얼" : "사랑 저장소"} · 기억의 집` : "기억의 집";
-  const desc = pet ? "1004의 별이 모여 하나의 빛이 됩니다. 꽃 한 송이, 한 마디를 남겨 주세요." : "메모리얼을 찾을 수 없어요";
+  const desc = pet ? (pet.petStatus === "먼저 떠났어요" ? "1004의 별이 모여 하나의 빛이 됩니다. 꽃 한 송이, 한 마디를 남겨 주세요." : `${pet.name}는 지금 가족의 사랑을 듬뿍 받고 있어요. 응원의 한 마디를 남겨 주세요.`) : "메모리얼을 찾을 수 없어요";
   const img = pet?.photoV ? `${origin}/photo/${pet.id}.jpg?v=${pet.photoV}` : `${origin}/img/portrait.jpg`;
   const og = `<title>${escHtml(title)}</title><meta property="og:title" content="${escHtml(title)}"><meta property="og:description" content="${escHtml(desc)}"><meta property="og:image" content="${escHtml(img)}"><meta property="og:type" content="website"><meta name="description" content="${escHtml(desc)}">`;
   html = html.replace("<!--OG-->", og);

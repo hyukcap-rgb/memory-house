@@ -97,7 +97,7 @@ function render(){
   const sub=[esc(P.breed||(P.kind!=='-'?P.kind:'')),P.nickname?`별명 ${esc(P.nickname)}`:'',P.passed?`${dot(P.birth)||'?'} ~ ${dot(P.passed)}`:(P.birth?`${dot(P.birth)} 태어남`:'')].filter(Boolean).join(' · ');
   const info=[['태어난 날',P.birth?`${+P.birth.slice(5,7)}월 ${+P.birth.slice(8,10)}일`:''],['품에 안긴 무게',P.weight?esc(P.weight)+'kg':''],[P.petStatus==='먼저 떠났어요'?'좋아하던 것':'좋아하는 것',esc(P.likes||'')],[LOVER?'지금':'아이의 별',LOVER?'준비된 사랑꾼':seat()]].filter(([,v])=>v);
   $('#app').innerHTML=`
-  <section class="hero" aria-label="${N}의 메모리얼">
+  <section class="hero" aria-label="${N}의 ${LOVER?'사랑 저장소':'메모리얼'}">
     ${P.photo?`<div class="bg" style="background-image:url('${P.photo}')" role="img" aria-label="${N}의 사진"></div>`:''}<div class="shade"></div>
     <div class="top"><span class="logo" style="display:inline-flex;align-items:center;gap:7px"><svg class="logo-mark" width="24" height="24" viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M18 50V31a14 14 0 0 1 28 0v19" stroke="#E7C77B" stroke-width="3" stroke-linecap="round"/><path d="M11 50h42" stroke="#E7C77B" stroke-width="3" stroke-linecap="round"/><path d="M32 24.5c.6 3.3 1.7 4.4 5 5-3.3.6-4.4 1.7-5 5-.6-3.3-1.7-4.4-5-5 3.3-.6 4.4-1.7 5-5z" fill="#E7C77B"/></svg><span style="font-family:'Noto Serif KR',serif;font-weight:700;font-size:17px;letter-spacing:.02em;color:#fff">기억의 집</span></span><button class="chipbtn" data-testid="share" onclick="share()">${I.share}가족에게 보내기</button></div>
     <div class="in">

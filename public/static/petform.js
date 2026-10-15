@@ -59,7 +59,7 @@
   <label class="pf-l" for="pf-tagin">${passedAway ? "이런 아이였어요" : "이런 아이예요"} <span class="pf-hint">3개까지</span></label>
   <div class="pf-tagrow"><input class="pf-in" id="pf-tagin" maxlength="16" placeholder="예: 겁 많고 다정함" data-testid="pf-tagin"><button type="button" class="pf-add" id="pf-addtag" data-testid="pf-addtag">추가</button></div>
   <div class="pf-tags" id="pf-tags" aria-live="polite"></div>
-  <label style="display:flex;gap:10px;align-items:flex-start;margin-top:18px;font-size:14px;line-height:1.5;cursor:pointer"><input type="checkbox" id="pf-plaza" data-testid="pf-plaza" ${p.showInPlaza===false?'':'checked'} style="width:20px;height:20px;margin-top:1px;flex:none;accent-color:#2E4374"><span>별빛 광장에 보이기<br><span class="pf-hint" style="margin:0">다른 보호자들이 이름과 대표 사진을 보고 위로의 꽃을 놓을 수 있어요</span></span></label>
+  ${passedAway ? `<label style="display:flex;gap:10px;align-items:flex-start;margin-top:18px;font-size:14px;line-height:1.5;cursor:pointer"><input type="checkbox" id="pf-plaza" data-testid="pf-plaza" ${p.showInPlaza===false?'':'checked'} style="width:20px;height:20px;margin-top:1px;flex:none;accent-color:#2E4374"><span>별빛 광장에 보이기<br><span class="pf-hint" style="margin:0">다른 보호자들이 이름과 대표 사진을 보고 위로의 꽃을 놓을 수 있어요</span></span></label>` : ""}
 </div>`;
   }
 
@@ -127,7 +127,8 @@
     const pending = v("pf-tagin");
     const t = tags.slice();
     if (pending && t.length < 3 && !t.includes(pending)) t.push(pending);
-    const out = { showInPlaza: !!document.getElementById("pf-plaza")?.checked, nickname: v("pf-nickname"), birth: v("pf-birth"), weight: v("pf-weight").replace(/kg$/i, "").trim(), likes: v("pf-likes"), tags: t };
+    const plaza = document.getElementById("pf-plaza");
+    const out = { ...(plaza ? { showInPlaza: plaza.checked } : {}), nickname: v("pf-nickname"), birth: v("pf-birth"), weight: v("pf-weight").replace(/kg$/i, "").trim(), likes: v("pf-likes"), tags: t };
     if (document.getElementById("pf-passed")) out.passed = v("pf-passed");
     return out;
   }

@@ -181,7 +181,7 @@ function closeSheet(){$('#sheet').classList.remove('on');$('#scrim').classList.r
 $('#scrim').onclick=closeSheet;
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#sheet').classList.contains('on'))closeSheet()});
 function petals(){const box=$('#petals');for(let i=0;i<14;i++){const p=document.createElement('span');p.className='petal';p.textContent=['❀','✿','❁'][i%3];p.style.left=Math.random()*100+'%';p.style.color=['#F3C6CF','#FFFFFF','#E7C77B'][i%3];p.style.animationDelay=(Math.random()*.6)+'s';box.appendChild(p);setTimeout(()=>p.remove(),3200)}}
-function go(screen,push=true){ if(push&&S.screen!==screen) S.history.push(S.screen); S.screen=screen; render(); }
+function go(screen,push=true){ if(LOVER()&&['enter','hall','visit','seat'].includes(screen)) screen='love'; if(push&&S.screen!==screen) S.history.push(S.screen); S.screen=screen; render(); }
 function back(){ S.screen=S.history.pop()||'home'; render(); }
 const LOVER=()=>MODE==='real'&&P&&P.petStatus!=='먼저 떠났어요';
 const TABS_ANGEL=[['home','오늘',I.home],['hall','천사 곁',I.hall],['record','추억 남기기',I.plus],['plaza','별빛 광장',I.star],['keep','우리 아이',I.pet]];
@@ -212,7 +212,7 @@ R.login=()=>`<section class="screen lg" data-testid="screen-login" style="backgr
   <div class="scroll" style="padding:24px 20px 28px">
     <div><span class="logo" style="display:inline-flex;align-items:center;gap:7px"><svg class="logo-mark" width="24" height="24" viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M18 50V31a14 14 0 0 1 28 0v19" stroke="#E7C77B" stroke-width="3" stroke-linecap="round"/><path d="M11 50h42" stroke="#E7C77B" stroke-width="3" stroke-linecap="round"/><path d="M32 24.5c.6 3.3 1.7 4.4 5 5-3.3.6-4.4 1.7-5 5-.6-3.3-1.7-4.4-5-5 3.3-.6 4.4-1.7 5-5z" fill="#E7C77B"/></svg><span style="font-family:'Noto Serif KR',serif;font-weight:700;font-size:17px;letter-spacing:.02em;color:#F3EBD8">기억의 집</span></span></div>
     <h1 class="serif" style="font-size:28px;line-height:1.35;margin:8px 0 6px">우리 아이가<br>기다리고 있어요</h1>
-    <p style="font-size:14px;color:#AEB5C6;line-height:1.6">아이의 별을 남길 때 쓴 휴대폰 번호와 비밀번호를 넣어 주세요.</p>
+    <p style="font-size:14px;color:#AEB5C6;line-height:1.6">처음 함께할 때 쓴 휴대폰 번호와 비밀번호를 넣어 주세요.</p>
     <form onsubmit="event.preventDefault();login()" novalidate>
       <label for="lg-phone">휴대폰 번호</label><input class="in" id="lg-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000" data-testid="lg-phone">
       <label for="lg-pw">비밀번호</label><input class="in" id="lg-pw" type="password" autocomplete="current-password" data-testid="lg-pw">
@@ -220,7 +220,7 @@ R.login=()=>`<section class="screen lg" data-testid="screen-login" style="backgr
       <button class="cta white" type="submit" style="margin-top:8px" data-testid="lg-submit">만나러 가기</button>
     </form>
     <div style="margin-top:28px;padding-top:20px;border-top:1px solid rgba(255,255,255,.1);font-size:14px;line-height:2.2;color:#AEB5C6">
-      아직 아이의 별이 없으신가요? <a href="/" data-testid="lg-guest"><b>아이의 별 남기기</b></a><br>
+      처음이신가요? <a href="/" data-testid="lg-guest"><b>기억의 집과 함께하기</b></a><br>
       <button onclick="startDemo()" data-testid="lg-demo" style="color:#AEB5C6;text-decoration:underline;min-height:44px">예시 메모리얼(보리) 둘러보기</button>
     </div>
   </div></section>`;
@@ -245,7 +245,7 @@ function upcoming(){ const out=[], now=new Date(); now.setHours(0,0,0,0); const 
     [[48,'49재'],[99,'100일']].forEach(([n,l])=>{const d=add(pd,n); if(d>=now) out.push({label:l,d});});
     const k=nextYearly(P.passed.slice(5)); const yrs=k.getFullYear()-pd.getFullYear(); if(yrs>=1) out.push({label:yrs===1?'첫 기일':`${yrs}번째 기일`,d:k}); }
   return out.map(u=>({...u,date:fmt(u.d),days:Math.round((u.d-now)/864e5)})).filter(u=>u.days<=365).sort((a,b)=>a.days-b.days).slice(0,3); }
-async function shareMemorial(){ const url=location.origin+'/m/'+P.id, title=`${P.name}의 메모리얼`;
+async function shareMemorial(){ const url=location.origin+'/m/'+P.id, title=`${P.name}의 ${LOVER()?'사랑 저장소':'메모리얼'}`;
   try{ if(navigator.share){ await navigator.share({title,text:'꽃 한 송이, 한 마디를 남겨 주세요.',url}); return; } await navigator.clipboard.writeText(url); toast('링크를 복사했어요. 가족에게 보내 주세요'); }
   catch(e){ if(e&&e.name==='AbortError') return; prompt('이 링크를 복사해 보내 주세요',url); } }
 function startReal(p){
@@ -311,12 +311,12 @@ R.home=()=>`<section class="screen" data-testid="screen-home">
     ${deleteBanner()}
     ${MODE==='real'&&ME&&ME.pets.length>1?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 14px" role="group" aria-label="아이 바꾸기">${ME.pets.map(x=>`<button onclick="switchPet('${x.id}')" aria-pressed="${x.id===P.id}" style="height:40px;padding:0 14px;border-radius:999px;font-size:13px;font-weight:700;border:1.5px solid ${x.id===P.id?'var(--navy)':'var(--line)'};background:${x.id===P.id?'var(--navy)':'#fff'};color:${x.id===P.id?'#fff':'var(--ink)'}">${esc(x.name)}</button>`).join('')}</div>`:''}
     ${upcoming().length?`<div style="background:#fff;border-radius:18px;padding:14px 16px;margin-bottom:14px" data-testid="upcoming"><b style="font-size:15px">다가오는 날</b>${upcoming().map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 0;font-size:14px"><span>${u.label} <span style="color:var(--sub);font-size:12px">${u.date}</span></span><b style="color:${u.days===0?'#C2475A':'var(--navy)'};font-size:13px">${u.days===0?'오늘':`${u.days}일 남음`}</b></div>`).join('')}</div>`:''}
-    ${MODE==='real'?`<button class="row" style="margin-bottom:14px" data-testid="share-family" onclick="shareMemorial()">${I.people}<span style="flex:1"><b style="font-size:15px">가족과 함께 기억하기</b><br><span style="font-size:12px;color:var(--sub)">${LOVER()?'링크를 받은 사람은 응원의 한 마디를 남길 수 있어요':'링크를 받은 사람은 꽃과 한 마디를 남길 수 있어요'}</span></span>${I.chev}</button>`:''}
+    ${MODE==='real'?`<button class="row" style="margin-bottom:14px" data-testid="share-family" onclick="shareMemorial()">${I.people}<span style="flex:1"><b style="font-size:15px">${LOVER()?'가족과 함께 나누기':'가족과 함께 기억하기'}</b><br><span style="font-size:12px;color:var(--sub)">${LOVER()?'링크를 받은 사람은 응원의 한 마디를 남길 수 있어요':'링크를 받은 사람은 꽃과 한 마디를 남길 수 있어요'}</span></span>${I.chev}</button>`:''}
     <div data-testid="feed">${S.feed.length?'':`<div style="background:#fff;border-radius:18px;padding:28px 20px;text-align:center" data-testid="feed-empty"><b style="font-size:16px">아직 남긴 추억이 없어요</b><p style="font-size:14px;color:var(--sub);margin:6px 0 16px;line-height:1.6">${LOVER()?`오늘 ${N()}의 사진 한 장, 한 줄을 담아 보세요.`:`${N()}의 사진이나 떠오르는 한 줄을 남겨 주세요.`}<br>가족 피드에 올라가요.</p><button class="cta navy" style="height:48px" onclick="openRecord()">첫 추억 남기기</button></div>`}${S.feed.map((f,i)=>`<article class="feedcard" data-testid="feed-item">
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px">${f.av?`<span class="av" style="background-image:url(${IMG[f.av]})"></span>`:`<span class="av" style="background:var(--cream);display:grid;place-items:center;font-size:13px;font-weight:700;color:#8A6D2C">${esc(f.who[0])}</span>`}<b style="font-size:14px">${esc(f.who)}</b><span style="font-size:12px;color:var(--sub);margin-left:auto">${esc(f.when)}</span></div>
       ${f.img?`<div style="aspect-ratio:1;background:url('${IMG[f.img]||f.img}') center/cover"></div>`:''}
       <div style="padding:12px 14px 14px;font-size:14px;line-height:1.6">${esc(f.text)}</div>
-      <div style="padding:0 8px 8px"><button data-testid="feed-like" onclick="like(${i})" aria-pressed="${!!f.liked}" style="min-height:40px;padding:0 8px;font-size:13px;color:${f.liked?'#C2475A':'var(--sub)'};font-weight:700">${f.liked?'♥':'♡'} 그리워요 ${f.likes}</button></div>
+      <div style="padding:0 8px 8px"><button data-testid="feed-like" onclick="like(${i})" aria-pressed="${!!f.liked}" style="min-height:40px;padding:0 8px;font-size:13px;color:${f.liked?'#C2475A':'var(--sub)'};font-weight:700">${f.liked?'♥':'♡'} ${LOVER()?'사랑해요':'그리워요'} ${f.likes}</button></div>
     </article>`).join('')}</div>
   </div>${tabbar()}</section>`;
 function like(i){const f=S.feed[i];f.liked=!f.liked;f.likes+=f.liked?1:-1;render()}
@@ -420,7 +420,7 @@ async function sendAngelDay(keep){
 }
 function openWithdraw(){
   openSheet(`<h3 id="sheetTitle">탈퇴하기</h3><p>탈퇴하면 기억의 집의 모든 서비스가 사라져요.</p>
-  <div style="background:#FBEDEA;color:#7A2E25;border-radius:12px;padding:12px 14px;margin-top:12px;font-size:13px;line-height:1.7"><b>사라지는 것</b><br>· ${(ME&&ME.pets||[]).map(x=>esc(x.name)).join(', ')}의 메모리얼과 자리<br>· 사진, 기록, 방명록, 꽃과 촛불<br>· 계정과 휴대폰 번호<br><b>30일 뒤 자동으로 지워져요.</b> 그 전에 마음이 바뀌면 로그인해서 탈퇴를 취소할 수 있어요.</div>
+  <div style="background:#FBEDEA;color:#7A2E25;border-radius:12px;padding:12px 14px;margin-top:12px;font-size:13px;line-height:1.7"><b>사라지는 것</b><br>${(ME&&ME.pets||[]).map(x=>`· ${esc(x.name)}의 ${x.petStatus==='먼저 떠났어요'?'메모리얼과 자리':'사랑 저장소'}<br>`).join('')}· 사진, 기록, 편지${(ME&&ME.pets||[]).some(x=>x.petStatus==='먼저 떠났어요')?', 꽃과 촛불':''}<br>· 계정과 휴대폰 번호<br><b>30일 뒤 자동으로 지워져요.</b> 그 전에 마음이 바뀌면 로그인해서 탈퇴를 취소할 수 있어요.</div>
   <label style="display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:14px;cursor:pointer"><input type="checkbox" id="wagree" data-testid="withdraw-agree" style="width:20px;height:20px;flex:none;margin-top:1px;accent-color:var(--navy)"><span>모든 서비스가 사라지는 데 동의해요</span></label>
   <label class="fl" for="wpw">비밀번호 확인</label><input id="wpw" type="password" autocomplete="current-password" class="pwin" data-testid="withdraw-pw">
   <div id="werr" role="alert" style="color:#B2453A;font-size:13px;margin-top:6px;min-height:18px"></div><button class="cta" style="margin-top:8px;background:#A63D33;color:#fff" data-testid="withdraw-send" onclick="sendWithdraw()">30일 뒤 탈퇴하기</button>`,'withdraw')}
@@ -500,16 +500,16 @@ R.love=()=>{const pics=S.feed.filter(f=>f.img), notes=S.feed.filter(f=>!f.img&&f
   </div>${tabbar()}</section>`};
 R.keep=()=>`<section class="screen" data-testid="screen-keep">
   ${status()}
-  <div class="topbar"><button class="iconbtn" aria-label="입장 화면으로" data-testid="keep-back" onclick="go('entry')">${I.back}</button><span class="title">${N()}의 기억 지키기</span></div>
+  <div class="topbar"><button class="iconbtn" aria-label="입장 화면으로" data-testid="keep-back" onclick="go('entry')">${I.back}</button><span class="title">${N()}의 ${LOVER()?'사랑':'기억'} 지키기</span></div>
   <div class="scroll" style="padding:0 16px 16px">
-    <div style="background:var(--night);border-radius:20px;padding:20px 16px;color:#fff;margin-bottom:12px"><span style="color:var(--gold)">${I.shield}</span><h2 class="serif" style="font-size:22px;line-height:1.4;margin:10px 0 4px">${N()}의 기억은 영원히 보관됩니다</h2><div style="font-size:12px;color:#B9C0D0">마지막 백업 · 오늘 오전 4시</div>
+    <div style="background:var(--night);border-radius:20px;padding:20px 16px;color:#fff;margin-bottom:12px"><span style="color:var(--gold)">${I.shield}</span><h2 class="serif" style="font-size:22px;line-height:1.4;margin:10px 0 4px">${LOVER()?`${N()}와의 모든 순간이 안전하게 보관돼요`:`${N()}의 기억은 영원히 보관됩니다`}</h2><div style="font-size:12px;color:#B9C0D0">마지막 백업 · 오늘 오전 4시</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:14px">${(MODE==='real'?[[S.feed.filter(f=>f.img).length+(P.photo?1:0),'사진'],[0,'영상'],[S.guest.length,'편지'],[0,'목소리']]:[[248+S.feed.length-2,'사진'],[12,'영상'],[31+S.guest.length-1,'편지'],[2,'목소리']]).map(([n,l])=>`<div style="background:rgba(255,255,255,.08);border-radius:12px;padding:10px 0;text-align:center"><b style="font-size:17px">${n}</b><div style="font-size:11px;color:#B9C0D0">${l}</div></div>`).join('')}</div></div>
     ${[
       ['backup',I.copy,'세 곳에 나눠 지켜요','사진 한 장도 잃지 않도록 원본 그대로',S.backup?'켜짐':'꺼짐'],
       ['heir',I.people,'이 마음을 이어 갈 가족',S.heir?`보호자가 떠난 뒤에도 ${esc(S.heir)}가 이어서 기억해요`:'언젠가 이 마음을 이어 갈 가족을 정해 두세요',S.heir?'지정됨':'정하기'],
       ['download',I.down,'모든 추억 간직하기','사진·영상·편지를 한 번에 내 곁으로',S.downloaded?'완료':'받기'],
       ['terms',I.lock,'영원히 지키겠다는 약속','어떤 일이 있어도 기억은 다른 곳으로 옮겨 지켜요','읽어 보기'],
-    ...(MODE==='real'?[['share',I.people,'가족과 함께 기억하기',LOVER()?'링크로 응원의 한 마디를 받을 수 있어요':'링크로 꽃과 한 마디를 받을 수 있어요','보내기'],['view',I.star,'가족이 보는 '+N()+'의 공간','링크를 받은 가족에게 이렇게 보여요','보기'],['edit',I.pen,N()+' 이야기 다듬기','사진, 태어난 날, 좋아하던 것','다듬기'],...(!P.dayLocked&&P.petStatus!=='먼저 떠났어요'?[['angelday',I.star,'아이가 천사를 만났다면','그날의 천사 곁으로 데려다줄게요','알려 주기']]:[]),['password',I.lock,'비밀번호 바꾸기','임시 비밀번호를 받았다면 꼭 바꿔 주세요','바꾸기'],ME&&ME.account.deleteAt?['withdrawcancel',I.lock,'탈퇴 취소하기',dday(ME.account.deleteAt),'취소']:['withdraw',I.lock,'기억의 집 떠나기','탈퇴하면 30일 뒤 모든 기억이 사라져요','떠나기'],['logout',I.lock,'잠시 나가기',ME?`${esc(ME.account.owner)} · ${esc(ME.account.phone)}`:'','나가기']]:[]),
+    ...(MODE==='real'?[['share',I.people,LOVER()?'가족과 함께 나누기':'가족과 함께 기억하기',LOVER()?'링크로 응원의 한 마디를 받을 수 있어요':'링크로 꽃과 한 마디를 받을 수 있어요','보내기'],['view',I.star,'가족이 보는 '+N()+'의 공간','링크를 받은 가족에게 이렇게 보여요','보기'],['edit',I.pen,N()+' 이야기 다듬기','사진, 태어난 날, 좋아하던 것','다듬기'],...(!P.dayLocked&&P.petStatus!=='먼저 떠났어요'?[['angelday',I.star,'아이가 천사를 만났다면','그날의 천사 곁으로 데려다줄게요','알려 주기']]:[]),['password',I.lock,'비밀번호 바꾸기','임시 비밀번호를 받았다면 꼭 바꿔 주세요','바꾸기'],ME&&ME.account.deleteAt?['withdrawcancel',I.lock,'탈퇴 취소하기',dday(ME.account.deleteAt),'취소']:['withdraw',I.lock,'회원 탈퇴','탈퇴하면 30일 뒤 모든 기록이 사라져요','탈퇴'],['logout',I.lock,'잠시 나가기',ME?`${esc(ME.account.owner)} · ${esc(ME.account.phone)}`:'','나가기']]:[]),
     ].map(([k,ic,t,d,a])=>`<button class="row" data-testid="keep-${k}" onclick="keep('${k}')" style="margin-bottom:10px">${ic}<span style="flex:1"><b style="font-size:15px">${t}</b><br><span style="font-size:12px;color:var(--sub)" data-testid="keep-${k}-desc">${d}</span></span><b style="font-size:13px;color:${a==='꺼짐'?'#B2453A':'var(--navy)'}" data-testid="keep-${k}-state">${a}</b></button>`).join('')}
   </div>${tabbar()}</section>`;
 function keep(k){
