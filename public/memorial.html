@@ -6,10 +6,11 @@
 <!--OG-->
 <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 :root{--night:#0E1220;--navy:#2E4374;--gold:#E7C77B;--gold2:#C9A24E;--cream:#F7F1E3;--ink:#1D2130;--sub:#6B7080;--line:#E6E3DD;--bg:#F6F5F2;--err:#B2453A;
-  --sans:'Noto Sans KR',system-ui,sans-serif;--serif:'Noto Serif KR',serif;--ease:cubic-bezier(.2,.8,.2,1)}
+  --sans:'Pretendard Variable',Pretendard,system-ui,sans-serif;--serif:'Gowun Batang',serif;--ease:cubic-bezier(.2,.8,.2,1)}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:#0A0D18}
 body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;display:flex;justify-content:center;min-height:100vh}
@@ -99,7 +100,7 @@ function render(){
   $('#app').innerHTML=`
   <section class="hero" aria-label="${N}의 ${LOVER?'사랑 저장소':'메모리얼'}">
     ${P.photo?`<div class="bg" style="background-image:url('${P.photo}')" role="img" aria-label="${N}의 사진"></div>`:''}<div class="shade"></div>
-    <div class="top"><span class="logo" style="display:inline-flex;align-items:center;gap:7px"><svg class="logo-mark" width="24" height="24" viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M18 50V31a14 14 0 0 1 28 0v19" stroke="#E7C77B" stroke-width="3" stroke-linecap="round"/><path d="M11 50h42" stroke="#E7C77B" stroke-width="3" stroke-linecap="round"/><path d="M32 24.5c.6 3.3 1.7 4.4 5 5-3.3.6-4.4 1.7-5 5-.6-3.3-1.7-4.4-5-5 3.3-.6 4.4-1.7 5-5z" fill="#E7C77B"/></svg><span style="font-family:'Noto Serif KR',serif;font-weight:700;font-size:17px;letter-spacing:.02em;color:#fff">기억의 집</span></span><button class="chipbtn" data-testid="share" onclick="share()">${I.share}가족에게 보내기</button></div>
+    <div class="top"><span class="logo" style="display:inline-flex;align-items:center;gap:7px"><svg class="logo-mark" width="24" height="24" viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M18 50V31a14 14 0 0 1 28 0v19" stroke="#E7C77B" stroke-width="3" stroke-linecap="round"/><path d="M11 50h42" stroke="#E7C77B" stroke-width="3" stroke-linecap="round"/><path d="M32 24.5c.6 3.3 1.7 4.4 5 5-3.3.6-4.4 1.7-5 5-.6-3.3-1.7-4.4-5-5 3.3-.6 4.4-1.7 5-5z" fill="#E7C77B"/></svg><span style="font-family:'Gowun Batang',serif;font-weight:700;font-size:17px;letter-spacing:.02em;color:#fff">기억의 집</span></span><button class="chipbtn" data-testid="share" onclick="share()">${I.share}가족에게 보내기</button></div>
     <div class="in">
       ${days()?`<div style="color:var(--gold);font-size:14px;font-weight:500">${days()}</div>`:''}
       <h1 class="serif" style="font-size:46px;line-height:1.1;margin:2px 0 6px" data-testid="m-name">${N}</h1>

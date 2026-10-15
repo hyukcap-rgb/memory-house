@@ -7,14 +7,15 @@
 <meta name="theme-color" content="#0E1220">
 <link rel="apple-touch-icon" href="/static/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 :root{
   --night:#1A2238; --navy:#2E4374; --gold:#E7C77B; --cream:#F7F1E3;
   --ink:#1D2130; --sub:#6B7080; --line:#E6E3DD; --bg:#F6F5F2; --card:#FFFFFF;
   --ok:#2F6B4F; --stage:#E9E7E2;
-  --sans:'Noto Sans KR','Noto Sans CJK KR',system-ui,sans-serif;
-  --serif:'Noto Serif KR','Noto Serif CJK KR',serif;
+  --sans:'Pretendard Variable',Pretendard,system-ui,sans-serif;
+  --serif:'Gowun Batang',serif;
   --ease:cubic-bezier(.2,.8,.2,1);
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --stage:#12141B; } }
@@ -213,7 +214,7 @@ R.loading=()=>`<section class="screen" style="background:#0E1220;align-items:cen
 R.login=()=>`<section class="screen lg" data-testid="screen-login" style="background:radial-gradient(120% 70% at 50% 0%,#1E2440 0%,#0E1220 60%);color:#fff">
   ${status()}
   <div class="scroll" style="padding:24px 20px 28px">
-    <div><span class="logo" style="display:inline-flex;align-items:center;gap:7px"><svg class="logo-mark" width="24" height="24" viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M18 50V31a14 14 0 0 1 28 0v19" stroke="#E7C77B" stroke-width="3" stroke-linecap="round"/><path d="M11 50h42" stroke="#E7C77B" stroke-width="3" stroke-linecap="round"/><path d="M32 24.5c.6 3.3 1.7 4.4 5 5-3.3.6-4.4 1.7-5 5-.6-3.3-1.7-4.4-5-5 3.3-.6 4.4-1.7 5-5z" fill="#E7C77B"/></svg><span style="font-family:'Noto Serif KR',serif;font-weight:700;font-size:17px;letter-spacing:.02em;color:#F3EBD8">기억의 집</span></span></div>
+    <div><span class="logo" style="display:inline-flex;align-items:center;gap:7px"><svg class="logo-mark" width="24" height="24" viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M18 50V31a14 14 0 0 1 28 0v19" stroke="#E7C77B" stroke-width="3" stroke-linecap="round"/><path d="M11 50h42" stroke="#E7C77B" stroke-width="3" stroke-linecap="round"/><path d="M32 24.5c.6 3.3 1.7 4.4 5 5-3.3.6-4.4 1.7-5 5-.6-3.3-1.7-4.4-5-5 3.3-.6 4.4-1.7 5-5z" fill="#E7C77B"/></svg><span style="font-family:'Gowun Batang',serif;font-weight:700;font-size:17px;letter-spacing:.02em;color:#F3EBD8">기억의 집</span></span></div>
     <h1 class="serif" style="font-size:28px;line-height:1.35;margin:8px 0 6px">우리 아이가<br>기다리고 있어요</h1>
     <p style="font-size:14px;color:#AEB5C6;line-height:1.6">처음 함께할 때 쓴 휴대폰 번호와 비밀번호를 넣어 주세요.</p>
     <form onsubmit="event.preventDefault();login()" novalidate>
@@ -280,7 +281,7 @@ async function saveEdit(){
 R.entry=()=>`<section class="screen" data-testid="screen-entry" style="background:#0E1220">
   <div class="bgimg ${P.photo?'':'ph-none'}" style="${P.photo?`background-image:url('${P.photo}')`:''}"></div><div class="shade-t"></div><div class="shade-b"></div>
   ${status(true)}
-  <div class="topbar light" style="justify-content:space-between"><span class="title" style="display:inline-flex;align-items:center;gap:8px"><span class="logo" style="display:inline-flex;align-items:center;gap:7px"><svg class="logo-mark" width="22" height="22" viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M18 50V31a14 14 0 0 1 28 0v19" stroke="#E7C77B" stroke-width="3" stroke-linecap="round"/><path d="M11 50h42" stroke="#E7C77B" stroke-width="3" stroke-linecap="round"/><path d="M32 24.5c.6 3.3 1.7 4.4 5 5-3.3.6-4.4 1.7-5 5-.6-3.3-1.7-4.4-5-5 3.3-.6 4.4-1.7 5-5z" fill="#E7C77B"/></svg><span style="font-family:'Noto Serif KR',serif;font-weight:700;font-size:16px;letter-spacing:.02em;color:#fff">기억의 집</span></span>${MODE==='demo'?' <span class="chip glass" style="height:24px;font-size:11px;vertical-align:middle">예시</span>':''}</span><span style="display:flex;gap:4px">${MODE==='real'?`<button data-testid="entry-edit" onclick="openEdit()" style="font-size:14px;font-weight:500;min-height:44px;padding:0 8px">이야기 다듬기</button>`:''}<button data-testid="entry-feed" onclick="S.history=[];go('home',false)" style="font-size:14px;font-weight:500;min-height:44px;padding:0 4px">오늘의 이야기</button></span></div>
+  <div class="topbar light" style="justify-content:space-between"><span class="title" style="display:inline-flex;align-items:center;gap:8px"><span class="logo" style="display:inline-flex;align-items:center;gap:7px"><svg class="logo-mark" width="22" height="22" viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M18 50V31a14 14 0 0 1 28 0v19" stroke="#E7C77B" stroke-width="3" stroke-linecap="round"/><path d="M11 50h42" stroke="#E7C77B" stroke-width="3" stroke-linecap="round"/><path d="M32 24.5c.6 3.3 1.7 4.4 5 5-3.3.6-4.4 1.7-5 5-.6-3.3-1.7-4.4-5-5 3.3-.6 4.4-1.7 5-5z" fill="#E7C77B"/></svg><span style="font-family:'Gowun Batang',serif;font-weight:700;font-size:16px;letter-spacing:.02em;color:#fff">기억의 집</span></span>${MODE==='demo'?' <span class="chip glass" style="height:24px;font-size:11px;vertical-align:middle">예시</span>':''}</span><span style="display:flex;gap:4px">${MODE==='real'?`<button data-testid="entry-edit" onclick="openEdit()" style="font-size:14px;font-weight:500;min-height:44px;padding:0 8px">이야기 다듬기</button>`:''}<button data-testid="entry-feed" onclick="S.history=[];go('home',false)" style="font-size:14px;font-weight:500;min-height:44px;padding:0 4px">오늘의 이야기</button></span></div>
   <div style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;z-index:2">${!P.photo&&MODE==='real'?`<button class="chip glass" style="height:44px;padding:0 18px;color:#fff;font-size:14px" data-testid="entry-addphoto" onclick="openEdit()">가장 예쁜 사진 걸기</button>`:''}</div>
   <div style="position:relative;z-index:2;padding:0 16px 34px;color:#fff">
     ${daysText()?`<div style="color:var(--gold);font-size:14px;font-weight:500">${daysText()}</div>`:''}
@@ -306,7 +307,7 @@ R.enter=()=>`<section class="screen" data-testid="screen-enter" style="backgroun
 
 R.home=()=>`<section class="screen" data-testid="screen-home">
   ${status()}
-  <div class="topbar" style="justify-content:space-between"><span class="logo" style="display:inline-flex;align-items:center;gap:7px"><svg class="logo-mark" width="24" height="24" viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M18 50V31a14 14 0 0 1 28 0v19" stroke="#B8913F" stroke-width="3" stroke-linecap="round"/><path d="M11 50h42" stroke="#B8913F" stroke-width="3" stroke-linecap="round"/><path d="M32 24.5c.6 3.3 1.7 4.4 5 5-3.3.6-4.4 1.7-5 5-.6-3.3-1.7-4.4-5-5 3.3-.6 4.4-1.7 5-5z" fill="#B8913F"/></svg><span style="font-family:'Noto Serif KR',serif;font-weight:700;font-size:17px;letter-spacing:.02em;color:#1D2130">기억의 집</span></span><button class="chip" style="background:#fff;border:1px solid var(--line);height:44px;padding:0 14px;font-size:13px" data-testid="home-entry" onclick="go('entry')">${N()} 만나기</button></div>
+  <div class="topbar" style="justify-content:space-between"><span class="logo" style="display:inline-flex;align-items:center;gap:7px"><svg class="logo-mark" width="24" height="24" viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M18 50V31a14 14 0 0 1 28 0v19" stroke="#B8913F" stroke-width="3" stroke-linecap="round"/><path d="M11 50h42" stroke="#B8913F" stroke-width="3" stroke-linecap="round"/><path d="M32 24.5c.6 3.3 1.7 4.4 5 5-3.3.6-4.4 1.7-5 5-.6-3.3-1.7-4.4-5-5 3.3-.6 4.4-1.7 5-5z" fill="#B8913F"/></svg><span style="font-family:'Gowun Batang',serif;font-weight:700;font-size:17px;letter-spacing:.02em;color:#1D2130">기억의 집</span></span><button class="chip" style="background:#fff;border:1px solid var(--line);height:44px;padding:0 14px;font-size:13px" data-testid="home-entry" onclick="go('entry')">${N()} 만나기</button></div>
   <div class="scroll" style="padding:0 16px 20px">
     <button class="row" data-testid="home-profile" onclick="go('entry')" style="margin-bottom:14px">
       ${avatar(52)}
