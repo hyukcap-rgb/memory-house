@@ -60,6 +60,9 @@ input.in:focus,textarea.in:focus{outline:2px solid var(--navy);border-color:tran
 .skel{height:540px;background:linear-gradient(90deg,#161B2E,#1E2440,#161B2E);background-size:200% 100%;animation:sk 1.2s linear infinite}
 @keyframes sk{to{background-position:-200% 0}}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+/* 휴대폰처럼: 화면 안 스크롤바는 숨긴다 (스크롤은 그대로 됨) */
+*{scrollbar-width:none;-ms-overflow-style:none}
+*::-webkit-scrollbar{display:none;width:0;height:0}
 </style>
 </head>
 <body>

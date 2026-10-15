@@ -111,6 +111,9 @@ input[aria-invalid="true"]{border-color:var(--err)}
 .skeleton{background:linear-gradient(90deg,#ECE9E2 0%,#F4F2EE 50%,#ECE9E2 100%);background-size:200% 100%;animation:sk 1.2s linear infinite;border-radius:20px;height:127px;margin-bottom:10px}
 @keyframes sk{to{background-position:-200% 0}}
 @media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
+/* 휴대폰처럼: 화면 안 스크롤바는 숨긴다 (스크롤은 그대로 됨) */
+*{scrollbar-width:none;-ms-overflow-style:none}
+*::-webkit-scrollbar{display:none;width:0;height:0}
 </style>
 </head>
 <body>
