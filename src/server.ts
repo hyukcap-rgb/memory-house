@@ -106,7 +106,6 @@ function revertTransfer(t: Transfer): string | null {
 async function erasePet(p: Pet) {
   const s = state!;
   await storage.remove(`photos/${p.id}.jpg`);
-  await storage.remove(`proofs/${p.id}.jpg`);
   for (const f of s.feed.filter((f) => f.petId === p.id)) if (f.photoV) await storage.remove(`photos/${f.id}.jpg`);
   s.feed = s.feed.filter((f) => f.petId !== p.id);
   s.guestbook = s.guestbook.filter((g) => g.pet !== p.id);
@@ -464,29 +463,13 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
       await save();
       return json({ ok: true });
     }
-    // 천사를 만난 날 증빙 올리기 (먼저 떠난 아이). 운영팀이 확인한다
-    m = path.match(/^\/api\/me\/pets\/([\w-]+)\/proof$/);
-    if (req.method === "PUT" && m) {
-      const pet = mine.find((p) => p.id === m![1]);
-      if (!pet) return bad("아이를 찾을 수 없어요", 404);
-      if (pet.petStatus !== "먼저 떠났어요") return bad("천사를 만난 날을 먼저 알려 주세요");
-      if (pet.proof?.status === "ok") return bad("이미 확인이 끝났어요", 409);
-      const b = await body(req);
-      const bytes = decodeJpeg(b.image);
-      if (typeof bytes === "string") return bad(bytes);
-      await storage.writeBytes(`proofs/${pet.id}.jpg`, bytes, "image/jpeg");
-      pet.proof = { status: "pending", at: new Date().toISOString(), v: Date.now(), doc: clean(b.doc, 30) };
-      await save();
-      return json({ pet: petView(pet) });
-    }
-    // 미리 들어온 아이가 떠났을 때: 증빙과 함께 천사를 만난 날을 알린다. 딱 한 번 옮길 수 있고,
-    // 그날이 다 찼으면 옮길 수 없다(처음 날에 남기는 됨). 운영팀이 증빙을 확인하면 옮겨진다
+    // 미리 들어온 아이가 떠났을 때: 천사를 만난 날로 딱 한 번 옮긴다.
+    // 그날이 다 찼으면 옮길 수 없다(처음 날에 남기는 됨)
     m = path.match(/^\/api\/me\/pets\/([\w-]+)\/angel-day$/);
     if (req.method === "POST" && m) {
       const pet = mine.find((p) => p.id === m![1]);
       if (!pet) return bad("아이를 찾을 수 없어요", 404);
       if (pet.dayLocked) return bad("천사를 만난 날이 이미 정해졌어요. 날짜는 한 번만 바꿀 수 있어요", 409);
-      if (pet.dayRequest) return bad("알려 주신 날을 확인하고 있어요. 조금만 기다려 주세요", 409);
       if (a.deleteAt || pet.deleteAt) return bad("탈퇴·양도 중에는 날짜를 바꿀 수 없어요", 409);
       if (s.transfers.some((t) => t.petId === pet.id && t.status === "pending")) return bad("양도 확인 중에는 날짜를 바꿀 수 없어요. 양도를 먼저 취소해 주세요", 409);
       const b = await body(req);
@@ -494,8 +477,6 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
       if (!passed || !isDate(passed)) return bad("천사를 만난 날을 골라 주세요");
       if (passed > kstDay()) return bad("천사를 만난 날은 오늘보다 앞이어야 해요");
       if (pet.birth && passed < pet.birth) return bad("천사를 만난 날이 생일보다 앞설 수 없어요");
-      const bytes = decodeJpeg(b.image);
-      if (typeof bytes === "string") return bad(b.image ? bytes : "장례·화장 확인서 같은 증빙 사진을 올려 주세요");
       const from = pet.hall, to = dayOf(passed);
       const target = HALLS.find((h) => h.id === to)!;
       const keep = b.keep === true || to === from;
@@ -509,11 +490,10 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
         let next = 1;
         seats = seats.map((n) => { if (n) return n; while (used.has(next)) next++; used.add(next); return next; });
       }
-      await storage.writeBytes(`proofs/${pet.id}.jpg`, bytes, "image/jpeg");
-      pet.proof = { status: "pending", at: new Date().toISOString(), v: Date.now(), doc: clean(b.doc, 30) };
       pet.dayRequest = { at: new Date().toISOString(), passed, from, to, seats, keep };
+      applyDayRequest(pet);
       await save();
-      return json({ pending: true, pet: petView(pet) });
+      return json({ moved: !keep, pet: petView(pet) });
     }
     m = path.match(/^\/api\/me\/pets\/([\w-]+)(\/photo|\/feed)?$/);
     const pet = m && mine.find((p) => p.id === m![1]);
@@ -647,8 +627,7 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
         reservations: s.reservations, transfers: s.transfers,
         guestbook: s.guestbook.map((g) => ({ ...g, pet: g.pet.startsWith("P-") ? petName(g.pet) : g.pet })),
         pets: s.pets.map(petView), accounts: s.accounts.length,
-        members: s.accounts.map((a) => ({ id: a.id, at: a.at, owner: a.owner, phone: a.phone, agreedAt: a.agreedAt || "", deleteAt: a.deleteAt || "", pets: s.pets.filter((p) => p.accountId === a.id).map((p) => ({ id: p.id, name: p.name, hallName: HALLS.find((h) => h.id === p.hall)?.name || "", seats: p.seats, deleteAt: p.deleteAt || "", deleteReason: p.deleteReason || "", dayChange: p.dayChange || null, waiting: !p.dayLocked && p.petStatus !== "먼저 떠났어요" && !p.dayRequest })) })),
-        proofs: s.pets.filter((p) => p.petStatus === "먼저 떠났어요" || p.dayRequest).map((p) => { const a = s.accounts.find((x) => x.id === p.accountId); return { id: p.id, name: p.name, owner: a?.owner || "", hall: p.hall, hallName: HALLS.find((h) => h.id === p.hall)?.name || "", passed: p.dayRequest?.passed || p.passed, at: p.at, proof: p.proof || null, dayRequest: p.dayRequest ? { ...p.dayRequest, toName: HALLS.find((h) => h.id === p.dayRequest!.to)?.name || "", fromName: HALLS.find((h) => h.id === p.dayRequest!.from)?.name || "" } : null }; }),
+        members: s.accounts.map((a) => ({ id: a.id, at: a.at, owner: a.owner, phone: a.phone, agreedAt: a.agreedAt || "", deleteAt: a.deleteAt || "", pets: s.pets.filter((p) => p.accountId === a.id).map((p) => ({ id: p.id, name: p.name, hallName: HALLS.find((h) => h.id === p.hall)?.name || "", seats: p.seats, deleteAt: p.deleteAt || "", deleteReason: p.deleteReason || "", dayChange: p.dayChange || null, waiting: !p.dayLocked && p.petStatus !== "먼저 떠났어요" })) })),
         graceDays: Math.round(GRACE_MS / 864e5),
       });
     }
@@ -692,29 +671,6 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
       t.decidedAt = new Date().toISOString();
       await save();
       return json({ transfer: t });
-    }
-    m = path.match(/^\/api\/admin\/proofs\/([\w-]+)\.jpg$/);
-    if (req.method === "GET" && m) {
-      const bytes = await storage.readBytes(`proofs/${m[1]}.jpg`);
-      if (!bytes) return bad("증빙 사진이 없어요", 404);
-      return new Response(bytes, { headers: { "content-type": "image/jpeg", "cache-control": "private, no-store" } });
-    }
-    m = path.match(/^\/api\/admin\/pets\/([\w-]+)\/proof$/);
-    if (req.method === "POST" && m) {
-      const pet = s.pets.find((p) => p.id === m![1]);
-      if (!pet || !pet.proof) return bad("확인할 증빙이 없어요", 404);
-      const b = await body(req);
-      if (b.action === "approve") {
-        if (pet.dayRequest) applyDayRequest(pet);
-        pet.proof.status = "ok";
-        delete pet.proof.note;
-      } else if (b.action === "reject") {
-        pet.proof.status = "rejected";
-        pet.proof.note = clean(b.note, 80) || "증빙에서 날짜를 확인하기 어려워요. 다시 올려 주세요";
-        delete pet.dayRequest; // 신청이 반려되면 날짜 변경 기회는 그대로 남는다
-      } else return bad("approve 또는 reject를 골라 주세요");
-      await save();
-      return json({ pet: petView(pet) });
     }
     if (req.method === "POST" && path === "/api/admin/purge") return json(await purge());
     m = path.match(/^\/api\/admin\/guestbook\/([\w-]+)$/);

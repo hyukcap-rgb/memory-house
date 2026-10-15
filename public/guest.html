@@ -163,11 +163,10 @@ const todayISO=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.get
 function chooserHTML(lockDay){ const c=S.chosen; const chip=(v,l)=>`<button type="button" class="chipbtn" data-testid="cs-${v}" aria-pressed="${c.status===v}" onclick="S.chosen.status='${v}';S.dayMsg='';render()">${l}</button>`;
   return `<div class="chooser" data-testid="chooser">
     <span class="fl" style="margin-top:0">아이는 지금</span><div class="chips">${chip('passed','먼저 떠났어요')}${chip('alive','아직 곁에 있어요')}</div>
-    ${c.status?`${c.status==='passed'?'<p class="comfort" data-testid="comfort-passed">많이 아프셨죠. 그 아이는 마지막까지 보호자님의 사랑을 알고 갔을 거예요.<br>그날을 알려 주시면, 같은 날 하늘로 간 아이들 곁에 별을 남겨 드릴게요.</p>':'<p class="comfort" data-testid="comfort-alive">지금 곁에 있는 아이를 이렇게 아끼는 마음이, 이곳에 남아 그 아이와 다른 분들께도 전해질 거예요.</p>'}
+    ${c.status?`${c.status==='passed'?'<p class="comfort" data-testid="comfort-passed">많이 아프셨죠. 그 아이는 마지막까지 보호자님의 사랑을 알고 갔을 거예요.<br>그날을 알려 주시면, 천사 곁에 아이의 별을 남겨 드릴게요.</p>':'<p class="comfort" data-testid="comfort-alive">지금 곁에 있는 아이를 이렇게 아끼는 마음이, 이곳에 남아 그 아이와 다른 분들께도 전해질 거예요.</p>'}
     <label class="fl" for="cs-date">${c.status==='passed'?'아이가 천사를 만난 날':'아이와의 특별한 날'}</label>
     <input type="date" id="cs-date" data-testid="cs-date" max="${todayISO()}" value="${esc(c.date)}" oninput="S.chosen.date=this.value">
     ${c.status==='alive'?'<p style="font-size:12px;color:var(--sub);margin-top:6px;line-height:1.6;word-break:keep-all">처음 만난 날이나 생일처럼 아이와 함께한 특별한 날을 골라 주세요.<br>먼 훗날 아이가 천사를 만나면, 그날의 천사 곁으로 한 번 옮겨 드려요.</p>':''}
-    ${c.status==='passed'?'<p style="font-size:12px;color:var(--sub);margin-top:6px;line-height:1.6;word-break:keep-all">날짜는 장례·화장 확인서 같은 서류로 확인해요. 마음이 조금 추스러진 뒤에 천천히 올려 주셔도 괜찮아요.</p>':''}
     <button class="cta navy" style="margin-top:14px" data-testid="cs-go" onclick="findDay(${lockDay?`'${lockDay}'`:'null'})">${lockDay?'맞아요, 이어서 할게요':c.status==='alive'?'이 날에 아이의 별 남기기':'그날의 천사에게 가기'}</button>`:''}
     ${S.dayMsg||''}</div>`; }
 R.home=()=>{return `<section class="screen" data-testid="screen-home">
@@ -182,9 +181,9 @@ R.home=()=>{return `<section class="screen" data-testid="screen-home">
     </div>
     <div class="sheet" id="day">
       <h2 class="h2">우리 아이 이야기를 들려주세요</h2>
-      <p class="lede">같은 날 하늘로 간 아이들이 모여 하나의 천사가 돼요. 곁에 있는 아이를 아끼는 마음도 이곳에서 함께 빛나요.</p>
+      <p class="lede">곁을 떠난 아이도, 지금 곁에 있는 아이도. 아이를 사랑하는 마음은 이곳에서 별이 되어 빛나요.</p>
       ${chooserHTML(null)}
-      <div class="note" style="margin-top:22px">${I.heart}<div><b>혼자가 아니에요</b><p>같은 날 아이를 보낸 보호자들이 이곳에서 함께 기억하고 있어요.</p></div></div>
+      <div class="note" style="margin-top:22px">${I.heart}<div><b>혼자가 아니에요</b><p>아이를 사랑하는 많은 보호자들이 이곳에서 함께 기억하고 있어요.</p></div></div>
       <div class="note">${I.lock}<div><b>보고 싶을 때 언제든</b><p>찾아갈 장소가 없어도 괜찮아요. 꽃 한 송이, 한 마디를 아이에게 남길 수 있어요.</p></div></div>
       <div class="note">${I.hand}<div><b>가족과 함께</b><p>링크를 보내면 가족과 친구도 아이에게 마음을 남길 수 있어요.</p></div></div>
       <a href="/member" data-testid="to-member" style="display:block;text-align:center;font-size:14px;color:var(--sub);margin-top:22px;padding:12px">이미 아이의 별이 있으신가요? <b style="color:var(--navy)">아이에게 가기</b></a>
@@ -203,7 +202,7 @@ R.enter=()=>{const h=S.hall;return `<section class="screen" data-testid="screen-
   ${status()}
   <div class="top light"><button class="iconbtn" aria-label="뒤로" data-testid="back" onclick="back()">${I.back}</button><span class="serif" style="font-size:17px;font-weight:700">${h.name}의 천사</span></div>
   <div class="stage"><canvas id="enterAngel" data-testid="enter-angel" aria-label="${h.name}의 1004개의 별로 이루어진 천사"></canvas></div>
-  <div class="caption hide" id="cap"><h1>1004의 별이 모여<br>하나의 빛이 됩니다</h1><p>${h.name}, 같은 날 하늘로 간 아이들이 함께 빛나고 있어요</p></div>
+  <div class="caption hide" id="cap"><h1>1004의 별이 모여<br>하나의 빛이 됩니다</h1><p>${h.name}의 천사 곁에서 아이들이 함께 빛나고 있어요</p></div>
   <div class="dock">${h.left===0?`<button class="cta" disabled style="background:rgba(255,255,255,.08);color:#AEB5C6" data-testid="enter-full">이 날의 천사 곁은 가득 찼어요</button>`:`<button class="cta gold" data-testid="enter-pick" onclick="startPick()">이 곁에 우리 아이 별 두기</button>`}</div>
 </section>`};
 
@@ -264,7 +263,6 @@ R.profile=()=>{const p=S.pet;return `<section class="screen" data-testid="screen
   <div class="scroll" style="padding:0 16px 20px">
     <div style="background:var(--night);color:#fff;border-radius:18px;padding:14px 16px;margin-bottom:6px"><div style="font-size:12px;color:var(--gold)">${S.hall.name}의 천사 곁에 ${esc(p.name)}의 별이 생겼어요</div><p style="font-size:14px;line-height:1.6;margin-top:4px;color:#DDE2EC">${esc(p.name)}의 얼굴과 이야기를 남겨 주세요. 지금 다 채우지 않아도 괜찮아요. 생각날 때마다 천천히 더해 주세요.</p></div>
     ${PetForm.html(p, p.petStatus==='먼저 떠났어요')}
-    ${p.petStatus==='먼저 떠났어요'?Proof.html('천사를 만난 날을 확인하는 데만 써요. 운영팀만 보고, 어디에도 공개되지 않아요. 지금 없어도 괜찮아요.'):''}
     <div class="err" data-testid="e-profile" role="alert" style="margin-top:12px">${S.errors.profile||''}</div>
   </div>
   <div class="dock" style="display:flex;flex-direction:column;gap:6px;background:var(--bg);padding-top:10px"><button class="cta navy" data-testid="pf-save" ${S.sending?'disabled':''} onclick="saveProfile()">${S.sending?'저장하는 중…':'저장하고 계속'}</button><button class="cta" style="height:48px;color:var(--sub);font-weight:500;font-size:15px" data-testid="pf-later" onclick="S.history=[];S.screen='done';render()">나중에 할게요</button></div>
@@ -272,7 +270,7 @@ R.profile=()=>{const p=S.pet;return `<section class="screen" data-testid="screen
 async function saveProfile(){
   const d=PetForm.read(); if(!PetForm.validate(d)) return;
   S.sending=true;delete S.errors.profile;$('[data-testid=pf-save]').disabled=true;$('[data-testid=pf-save]').textContent='저장하는 중…';
-  try{ S.pet=await PetForm.save(S.pet.id,d); await Proof.save(S.pet.id).then(np=>{if(np)S.pet=np}); S.sending=false; S.history=[]; S.screen='done'; render(); toast(`${S.pet.name}의 이야기를 담았어요`); }
+  try{ S.pet=await PetForm.save(S.pet.id,d); S.sending=false; S.history=[]; S.screen='done'; render(); toast(`${S.pet.name}의 이야기를 담았어요`); }
   catch(e){ S.sending=false; const el=$('[data-testid=e-profile]'); if(el) el.textContent=e.message; const b=$('[data-testid=pf-save]'); if(b){b.disabled=false;b.textContent='저장하고 계속'} }
 }
 R.done=()=>{const r=S.result,h=S.hall;return `<section class="screen" data-testid="screen-done" style="background:radial-gradient(120% 70% at 50% 18%,#1E2440 0%,var(--night) 60%)">
@@ -360,7 +358,7 @@ function afterRender(){
     mounted.push(m);
   }
   if(S.screen==='form'){const cv=$('#miniAngel');if(cv)mounted.push(Angel.mount(cv,{taken:S.taken,mine:[S.pick],photos:PHOTOS}))}
-  if(S.screen==='profile'){PetForm.bind();Proof.bind();}
+  if(S.screen==='profile') PetForm.bind();
   if(S.screen==='done'){const cv=$('#doneAngel');if(cv){const m=Angel.mount(cv,{taken:S.taken,mine:[S.result.seat],picked:[S.result.seat],photos:PHOTOS});mounted.push(m)}}
 }
 function render(){ const sc=$('.scroll'),keep=sc&&S._last===S.screen?sc.scrollTop:0; $('#view').innerHTML=R[S.screen](); const n=$('.scroll'); if(n&&keep) n.scrollTop=keep; S._last=S.screen; afterRender(); }

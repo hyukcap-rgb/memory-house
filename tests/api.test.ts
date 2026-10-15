@@ -255,9 +255,7 @@ describe("양도·탈퇴와 30일 보관 후 삭제", () => {
   });
 });
 
-describe("미리 들어온 아이의 날짜 변경 (한 번, 서류 확인 후)", () => {
-  const h = { "x-admin-code": CODE };
-  const IMG = "data:image/jpeg;base64," + Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0]).toString("base64");
+describe("미리 들어온 아이의 날짜 변경 (한 번)", () => {
   const signup = async (phone: string, pet: string, hall = "04-11") => {
     const d = await (await fetch(`${BASE}/api/halls/${hall}/seats`)).json();
     const taken = new Set(d.taken); let n = 1; while (taken.has(n)) n++;
@@ -270,86 +268,43 @@ describe("미리 들어온 아이의 날짜 변경 (한 번, 서류 확인 후)"
 
   test("정보 고치기로는 떠났다고 바꿀 수 없음", async () => {
     const A = await signup("01040000001", "구름");
-    const r = await as(A.cookie)(`/api/me/pets/${A.pet.id}`, { petStatus: "먼저 떠났어요", passed: "2025-06-01" }, "PUT");
-    expect(r.status).toBe(400);
+    expect((await as(A.cookie)(`/api/me/pets/${A.pet.id}`, { petStatus: "먼저 떠났어요", passed: "2025-06-01" }, "PUT")).status).toBe(400);
   });
 
-  test("서류 없으면 불가, 가득 찬 날 불가, 확인되면 한 번만 옮김", async () => {
+  test("가득 찬 날로는 못 옮기고, 빈 날로는 한 번만 옮김", async () => {
     const A = await signup("01040000002", "달이");
     const send = as(A.cookie);
-    expect((await send(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-06-03" })).status).toBe(400);
-    const full = await send(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-12-25", image: IMG });
+    const full = await send(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-12-25" });
     expect(full.status).toBe(409);
     expect((await full.json()).full).toBe(true);
-
     const before = await (await fetch(`${BASE}/api/halls/06-03/seats`)).json();
-    const req = await send(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-06-03", image: IMG, doc: "장례·화장 확인서" });
-    expect(req.status).toBe(200);
-    const d = await req.json();
-    expect(d.pending).toBe(true);
-    expect(d.pet.hall).toBe("04-11"); // 확인 전에는 그대로
-    const held = await (await fetch(`${BASE}/api/halls/06-03/seats`)).json();
-    expect(held.left).toBe(before.left - 1); // 자리는 잡아 둠
-    expect((await send(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-06-04", image: IMG })).status).toBe(409);
-
-    // 서류 사진은 공개 경로로 볼 수 없고 관리자만 봄
-    expect((await fetch(`${BASE}/photo/proof-${A.pet.id}.jpg`)).status).toBe(404);
-    expect((await fetch(`${BASE}/api/admin/proofs/${A.pet.id}.jpg`)).status).toBe(401);
-    expect((await fetch(`${BASE}/api/admin/proofs/${A.pet.id}.jpg`, { headers: h })).status).toBe(200);
-
-    const ok = await post(`/api/admin/pets/${A.pet.id}/proof`, { action: "approve" }, h);
+    const ok = await send(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-06-03" });
     expect(ok.status).toBe(200);
-    const me = await (await fetch(BASE + "/api/me", { headers: { cookie: A.cookie } })).json();
-    const p = me.pets[0];
-    expect(p.hall).toBe("06-03");
-    expect(p.dayLocked).toBe(true);
-    expect(p.petStatus).toBe("먼저 떠났어요");
-    expect(p.proof.status).toBe("ok");
+    const d = await ok.json();
+    expect(d.moved).toBe(true);
+    expect(d.pet.hall).toBe("06-03");
+    expect(d.pet.dayLocked).toBe(true);
+    expect(d.pet.petStatus).toBe("먼저 떠났어요");
     const after = await (await fetch(`${BASE}/api/halls/06-03/seats`)).json();
     expect(after.left).toBe(before.left - 1);
     const old = await (await fetch(`${BASE}/api/halls/04-11/seats`)).json();
     expect(old.taken).not.toContain(A.seat);
-
-    expect((await send(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-06-04", image: IMG })).status).toBe(409);
+    expect((await send(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-06-04" })).status).toBe(409);
     expect((await send(`/api/me/pets/${A.pet.id}`, { passed: "2025-06-04" }, "PUT")).status).toBe(400);
     expect((await send(`/api/me/pets/${A.pet.id}`, { weight: "4.1" }, "PUT")).status).toBe(200);
   });
 
-  test("다시 요청되면 자리를 놓고 기회는 남음", async () => {
-    const A = await signup("01040000005", "별님");
-    const send = as(A.cookie);
-    const before = await (await fetch(`${BASE}/api/halls/06-07/seats`)).json();
-    expect((await send(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-06-07", image: IMG })).status).toBe(200);
-    expect((await post(`/api/admin/pets/${A.pet.id}/proof`, { action: "reject", note: "날짜가 안 보여요" }, h)).status).toBe(200);
-    const after = await (await fetch(`${BASE}/api/halls/06-07/seats`)).json();
-    expect(after.left).toBe(before.left);
-    expect((await send(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-06-07", image: IMG })).status).toBe(200);
-  });
-
   test("가득 찬 날이면 처음 날에 그대로 남기", async () => {
     const A = await signup("01040000003", "솜이");
-    const send = as(A.cookie);
-    expect((await send(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-12-25", keep: true, image: IMG })).status).toBe(200);
-    await post(`/api/admin/pets/${A.pet.id}/proof`, { action: "approve" }, h);
-    const me = await (await fetch(BASE + "/api/me", { headers: { cookie: A.cookie } })).json();
-    expect(me.pets[0].hall).toBe("04-11");
-    expect(me.pets[0].dayChange.kept).toBe(true);
-  });
-
-  test("먼저 떠난 아이는 서류를 나중에 올림", async () => {
-    const d = await (await fetch(`${BASE}/api/halls/03-03/seats`)).json();
-    const taken = new Set(d.taken); let n = 1; while (taken.has(n)) n++;
-    const r = await post("/api/reserve", { hall: "03-03", seats: [n], pet: "초코", kind: "강아지", petStatus: "먼저 떠났어요", passed: "2025-03-03", owner: "초코보호자", phone: "01040000006", password: "pass1234", agree: true });
+    const r = await as(A.cookie)(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2025-12-25", keep: true });
     expect(r.status).toBe(200);
-    const { pet } = await r.json();
-    const cookie = (r.headers.get("set-cookie") || "").split(";")[0];
-    const up = await as(cookie)(`/api/me/pets/${pet.id}/proof`, { image: IMG, doc: "동물등록 말소 확인서" }, "PUT");
-    expect(up.status).toBe(200);
-    expect((await up.json()).pet.proof.status).toBe("pending");
+    const d = await r.json();
+    expect(d.pet.hall).toBe("04-11");
+    expect(d.pet.dayChange.kept).toBe(true);
   });
 
   test("미래 날짜 불가", async () => {
     const A = await signup("01040000004", "하늘");
-    expect((await as(A.cookie)(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2099-01-01", image: IMG })).status).toBe(400);
+    expect((await as(A.cookie)(`/api/me/pets/${A.pet.id}/angel-day`, { passed: "2099-01-01" })).status).toBe(400);
   });
 });
