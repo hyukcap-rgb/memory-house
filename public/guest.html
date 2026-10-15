@@ -233,9 +233,6 @@ return `<section class="screen" data-testid="screen-form" style="background:var(
       <label class="fl" for="f-pet">아이 이름</label>
       <input id="f-pet" type="text" maxlength="20" autocomplete="off" data-testid="f-pet" value="${esc(f.pet)}" oninput="S.form.pet=this.value;clearErr('pet',this)" onblur="checkF('pet')" aria-invalid="${!!e.pet}" aria-describedby="e-pet">
       <div class="err" id="e-pet">${e.pet||''}</div>
-      <span class="fl" id="l-kind">어떤 아이인가요</span>
-      <div class="chips" role="group" aria-labelledby="l-kind">${chip('kind','강아지')}${chip('kind','고양이')}${chip('kind','특별한 아이')}</div>
-      <div class="err" data-testid="e-kind">${e.kind||''}</div>
       <span class="fl">아이는 지금</span>
       <div style="display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:15px"><span data-testid="f-status">${S.chosen.status==='passed'?`먼저 떠났어요 · 천사를 만난 날 ${S.chosen.date.replace(/-/g,'.')}`:`아직 곁에 있어요 · 기억할 날 ${dayName(h.id)}`}</span><button type="button" class="linkbtn" onclick="go('day')">바꾸기</button></div>
       <label class="fl" for="f-owner">보호자 이름</label>
@@ -311,7 +308,6 @@ const RULES={
   pet:v=>v.trim()?'':'아이 이름을 적어 주세요.',
   owner:v=>v.trim()?'':'보호자 이름을 적어 주세요.',
   phone:v=>/^01\d{8,9}$/.test(v.replace(/\D/g,''))?'':'휴대폰 번호 10~11자리를 확인해 주세요.',
-  kind:v=>v?'':'어떤 아이인지 골라 주세요.',
   password:v=>v.length>=6?'':'비밀번호를 6자 이상으로 정해 주세요.',
   agree:v=>v?'':'개인정보 수집·이용에 동의해 주셔야 예약할 수 있어요.',
 };
