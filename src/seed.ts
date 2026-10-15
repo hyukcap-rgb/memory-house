@@ -28,10 +28,6 @@ export type Pet = {
   photoV: number; hall: string; seats: number[];
   deleteAt?: string; deleteReason?: "withdraw" | "transfer";
   dayLocked?: boolean;
-  // 미리 들어온 아이가 떠난 뒤 딱 한 번 날짜를 정한 기록 (kept: 그날이 다 차서 처음 날에 남음)
-  dayChange?: { at: string; from: string; to: string; kept: boolean };
-  // 날짜 변경을 처리하는 동안만 쓰는 값
-  dayRequest?: { at: string; passed: string; from: string; to: string; seats: number[]; keep: boolean };
   showInPlaza?: boolean; flowerDay?: string; flowersToday?: number; flowersTotal?: number; candleUntil?: number; lastActive?: string;
 };
 export type FeedItem = { id: string; at: string; petId: string; who: string; text: string; photoV: number };
@@ -84,8 +80,8 @@ export function seedState(): State {
     reservations: [
       { id: "R-0091", at: ago(52), hall: "09-21", seats: [15], pet: "보리", kind: "말티즈", petStatus: "먼저 떠났어요", owner: "김지현", phone: "01023457788", source: "seed", status: "active" },
       { id: "R-0092", at: ago(30), hall: "03-14", seats: [212], pet: "콩이", kind: "비숑", petStatus: "먼저 떠났어요", owner: "이수민", phone: "01088123344", source: "seed", status: "active" },
-      { id: "R-0093", at: ago(20), hall: "07-07", seats: [87], pet: "나비", kind: "코리안숏헤어", petStatus: "함께 살고 있어요", owner: "박은정", phone: "01077651200", source: "seed", status: "active" },
-      { id: "R-0094", at: ago(9), hall: "11-02", seats: [433, 434], pet: "모모·두리", kind: "포메라니안", petStatus: "함께 살고 있어요", owner: "정해원", phone: "01031119090", source: "seed", status: "active" },
+      { id: "R-0093", at: ago(20), hall: "07-07", seats: [87], pet: "나비", kind: "코리안숏헤어", petStatus: "먼저 떠났어요", owner: "박은정", phone: "01077651200", source: "seed", status: "active" },
+      { id: "R-0094", at: ago(9), hall: "11-02", seats: [433, 434], pet: "모모·두리", kind: "포메라니안", petStatus: "먼저 떠났어요", owner: "정해원", phone: "01031119090", source: "seed", status: "active" },
       { id: "R-0095", at: ago(3), hall: "05-20", seats: [301], pet: "두부", kind: "말티즈", petStatus: "먼저 떠났어요", owner: "최현우", phone: "01055443322", source: "seed", status: "active" },
     ],
     transfers: [

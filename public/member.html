@@ -105,6 +105,7 @@ label.fl{display:block;font-size:13px;font-weight:700;margin:14px 0 6px}
 <script>
 const IMG={portrait:'/img/portrait.jpg',hall:'/img/hall.jpg',niche:'/img/niche.jpg',room:'/img/room.jpg',me:'/img/me.jpg',p1:'/img/p1.jpg',p2:'/img/p2.jpg',p3:'/img/p3.jpg',p4:'/img/p4.jpg',p5:'/img/p5.jpg',p6:'/img/p6.jpg',p7:'/img/p7.jpg'};
 const I={
+ heart:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></svg>',
  back:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
  home:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 10.5L12 4l8 6.5V20H4z"/><path d="M10 20v-5h4v5"/></svg>',
  hall:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 9l9-5 9 5"/><path d="M5 9v9M9.5 9v9M14.5 9v9M19 9v9M3 20h18"/></svg>',
@@ -182,10 +183,12 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#sheet').classLi
 function petals(){const box=$('#petals');for(let i=0;i<14;i++){const p=document.createElement('span');p.className='petal';p.textContent=['❀','✿','❁'][i%3];p.style.left=Math.random()*100+'%';p.style.color=['#F3C6CF','#FFFFFF','#E7C77B'][i%3];p.style.animationDelay=(Math.random()*.6)+'s';box.appendChild(p);setTimeout(()=>p.remove(),3200)}}
 function go(screen,push=true){ if(push&&S.screen!==screen) S.history.push(S.screen); S.screen=screen; render(); }
 function back(){ S.screen=S.history.pop()||'home'; render(); }
-const TABS=[['home','오늘',I.home],['hall','천사 곁',I.hall],['record','추억 남기기',I.plus],['plaza','별빛 광장',I.star],['keep','우리 아이',I.pet]];
-const TAB_OF={enter:'hall',home:'home',hall:'hall',seat:'hall',visit:'hall',plaza:'plaza',keep:'keep'};
-function tabbar(){const cur=TAB_OF[S.screen];return `<nav class="tabbar" aria-label="하단 메뉴">${TABS.map(([k,l,ic])=>`<button data-testid="tab-${k}" ${cur===k?'aria-current="page"':''} onclick="tab('${k}')">${ic}<span>${l}</span></button>`).join('')}</nav>`}
-function tab(k){ if(k==='record'){ openRecord(); return; } if(k==='plaza'&&MODE==='real') loadPlaza(); S.history=[]; if(k==='hall'&&TAB_OF[S.screen]!=='hall'){ go('enter',false); return; } go(k,false); }
+const LOVER=()=>MODE==='real'&&P&&P.petStatus!=='먼저 떠났어요';
+const TABS_ANGEL=[['home','오늘',I.home],['hall','천사 곁',I.hall],['record','추억 남기기',I.plus],['plaza','별빛 광장',I.star],['keep','우리 아이',I.pet]];
+const TABS_LOVER=[['home','오늘',I.home],['love','사랑 저장소',I.heart],['record','사랑 담기',I.plus],['plaza','별빛 광장',I.star],['keep','우리 아이',I.pet]];
+const TAB_OF={enter:'hall',home:'home',hall:'hall',seat:'hall',visit:'hall',plaza:'plaza',keep:'keep',love:'love'};
+function tabbar(){const cur=TAB_OF[S.screen];return `<nav class="tabbar" aria-label="하단 메뉴">${(LOVER()?TABS_LOVER:TABS_ANGEL).map(([k,l,ic])=>`<button data-testid="tab-${k}" ${cur===k?'aria-current="page"':''} onclick="tab('${k}')">${ic}<span>${l}</span></button>`).join('')}</nav>`}
+function tab(k){ if(k==='record'){ openRecord(); return; } if(k==='plaza'&&MODE==='real') loadPlaza(); S.history=[]; if(k==='love'){ loadFeed(); go('love',false); return; } if(k==='hall'&&TAB_OF[S.screen]!=='hall'){ go('enter',false); return; } go(k,false); }
 function status(){return `<div aria-hidden="true" style="height:calc(14px + env(safe-area-inset-top,0px));flex:none"></div>`}
 // ---------- 아이 정보 ----------
 const DEMO={id:'demo',name:'보리',kind:'강아지',breed:'',nickname:'보보',birth:'2012-04-03',passed:'2026-09-21',petStatus:'먼저 떠났어요',weight:'3.2',likes:'산책 · 창가 낮잠',tags:['겁 많고 다정함','닭가슴살 마니아','현관에서 기다림'],photo:IMG.portrait,hall:'09-21',hallName:'9월 21일',seats:[15]};
@@ -195,10 +198,10 @@ const J=(w,a,b)=>w+(hasB(w)?a:b);
 const N=()=>esc(P.name), ga=()=>J(N(),'이','가'), ya=()=>J(N(),'아','야'), ye=()=>J(N(),'이에요','예요');
 const dot=d=>d?d.replace(/-/g,'.'):'';
 const MYSEAT=()=>(P.seats&&P.seats[0])||0;
-function seatText(){ const n=MYSEAT(); return n?`${P.hallName}의 천사 · ${Angel.ZONES[Angel.zoneOf(n)]}`:(P.hallName?`${P.hallName}의 천사`:''); }
+function seatText(){ if(LOVER()) return '준비된 사랑꾼'; const n=MYSEAT(); return n?`${P.hallName}의 천사 · ${Angel.ZONES[Angel.zoneOf(n)]}`:(P.hallName?`${P.hallName}의 천사`:''); }
 function daysText(){ if(!P.birth) return ''; const end=P.passed?new Date(P.passed):new Date(); const n=Math.floor((end-new Date(P.birth))/864e5)+1; if(n<1) return ''; return P.passed?`함께한 ${n.toLocaleString('ko-KR')}일`:`함께한 지 ${n.toLocaleString('ko-KR')}일째`; }
 function birthday(){ if(!P.birth) return ''; const [y,m,d]=P.birth.split('-').map(Number); return `${m}월 ${d}일`; }
-function subline(){ return [esc(P.breed||(P.kind&&P.kind!=='-'?P.kind:'')), P.nickname?`별명 ${esc(P.nickname)}`:'', (P.birth||P.passed)?`${dot(P.birth)||'?'} ~ ${dot(P.passed)}`.trim():''].filter(Boolean).join(' · '); }
+function subline(){ return [esc(P.breed||(P.kind&&P.kind!=='-'?P.kind:'')), P.nickname?`별명 ${esc(P.nickname)}`:'', P.passed?`${dot(P.birth)||'?'} ~ ${dot(P.passed)}`:(P.birth?`${dot(P.birth)} 태어남`:'')].filter(Boolean).join(' · '); }
 function avatar(size){ return P.photo?`<span class="av" style="width:${size}px;height:${size}px;background-image:url('${P.photo}')"></span>`:`<span class="av" style="width:${size}px;height:${size}px;background:var(--cream);display:grid;place-items:center;font-weight:700;color:#8A6D2C;font-size:${Math.round(size/2.6)}px">${esc(P.name[0]||'')}</span>`; }
 // ---------- screens ----------
 const R={};
@@ -251,7 +254,7 @@ function startReal(p){
   render(); refreshAll(); loadGuestbook(); loadFeed();
 }
 function loadGuestbook(){ api('/api/guestbook?pet='+encodeURIComponent(MODE==='real'?P.id:'보리')).then(list=>{ if(MODE==='real'||list.length){ S.guest=list.map(g=>({who:g.who,when:relTime(g.at),text:g.text,at:g.at})); if(MODE==='real') S.todayVisitors=[...new Set(list.filter(g=>new Date(g.at).toDateString()===new Date().toDateString()).map(g=>g.who))]; if(['visit','keep','room'].includes(S.screen)) render(); } }).catch(()=>{}); }
-function loadFeed(){ api(`/api/me/pets/${P.id}/feed`).then(list=>{ S.feed=list.map(f=>({who:f.who,av:null,img:f.photo||null,text:f.text,when:relTime(f.at),likes:0})); if(S.screen==='home') render(); }).catch(()=>{}); }
+function loadFeed(){ api(`/api/me/pets/${P.id}/feed`).then(list=>{ S.feed=list.map(f=>({who:f.who,av:null,img:f.photo||null,text:f.text,when:relTime(f.at),likes:0})); if(['home','love'].includes(S.screen)) render(); }).catch(()=>{}); }
 function refreshAll(){ return Promise.all([P.hall].filter(Boolean).map(refreshSeats)).then(()=>{ if(['hall','seat','enter'].includes(S.screen)) render(); }); }
 function openEdit(){
   const st=P.petStatus==='먼저 떠났어요';
@@ -281,7 +284,7 @@ R.entry=()=>`<section class="screen" data-testid="screen-entry" style="backgroun
     <h1 class="serif" style="font-size:48px;line-height:1.1;margin:2px 0 6px" data-testid="entry-name">${N()}</h1>
     <div style="font-size:14px;color:#E3E6EE;margin-bottom:14px" data-testid="entry-sub">${subline()}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      ${[['태어난 날',birthday()],['품에 안긴 무게',P.weight?esc(P.weight)+'kg':''],[P.petStatus==='먼저 떠났어요'?'좋아하던 것':'좋아하는 것',esc(P.likes||'')],['아이의 별',seatText()]].map(([k,v])=>`<div class="glass" style="border-radius:14px;padding:10px 14px" data-testid="info-${k}"><div style="font-size:12px;color:#C9CFDC">${k}</div><div style="font-size:15px;font-weight:700;${v?'':'color:#9AA2B5;font-weight:500'}">${v||'아직 비어 있어요'}</div></div>`).join('')}
+      ${[['태어난 날',birthday()],['품에 안긴 무게',P.weight?esc(P.weight)+'kg':''],[P.petStatus==='먼저 떠났어요'?'좋아하던 것':'좋아하는 것',esc(P.likes||'')],[LOVER()?'지금':'아이의 별',seatText()]].map(([k,v])=>`<div class="glass" style="border-radius:14px;padding:10px 14px" data-testid="info-${k}"><div style="font-size:12px;color:#C9CFDC">${k}</div><div style="font-size:15px;font-weight:700;${v?'':'color:#9AA2B5;font-weight:500'}">${v||'아직 비어 있어요'}</div></div>`).join('')}
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">${(P.tags||[]).map(t=>`<span class="chip glass">${esc(t)}</span>`).join('')}</div>
     <button class="cta white" data-testid="entry-meet" onclick="go('room')">${N()} 만나러 가기</button>
@@ -304,12 +307,12 @@ R.home=()=>`<section class="screen" data-testid="screen-home">
   <div class="scroll" style="padding:0 16px 20px">
     <button class="row" data-testid="home-profile" onclick="go('entry')" style="margin-bottom:14px">
       ${avatar(52)}
-      <span style="flex:1"><b style="font-size:16px" class="serif">${N()}</b><br><span style="font-size:13px;color:var(--sub)">${seatText()} · 오늘 꽃 <span data-testid="home-flowers">${S.flowers}</span>송이</span></span>${I.chev}</button>
+      <span style="flex:1"><b style="font-size:16px" class="serif">${N()}</b><br><span style="font-size:13px;color:var(--sub)">${seatText()}${LOVER()?'':` · 오늘 꽃 <span data-testid="home-flowers">${S.flowers}</span>송이`}</span></span>${I.chev}</button>
     ${deleteBanner()}
     ${MODE==='real'&&ME&&ME.pets.length>1?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 14px" role="group" aria-label="아이 바꾸기">${ME.pets.map(x=>`<button onclick="switchPet('${x.id}')" aria-pressed="${x.id===P.id}" style="height:40px;padding:0 14px;border-radius:999px;font-size:13px;font-weight:700;border:1.5px solid ${x.id===P.id?'var(--navy)':'var(--line)'};background:${x.id===P.id?'var(--navy)':'#fff'};color:${x.id===P.id?'#fff':'var(--ink)'}">${esc(x.name)}</button>`).join('')}</div>`:''}
     ${upcoming().length?`<div style="background:#fff;border-radius:18px;padding:14px 16px;margin-bottom:14px" data-testid="upcoming"><b style="font-size:15px">다가오는 날</b>${upcoming().map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 0;font-size:14px"><span>${u.label} <span style="color:var(--sub);font-size:12px">${u.date}</span></span><b style="color:${u.days===0?'#C2475A':'var(--navy)'};font-size:13px">${u.days===0?'오늘':`${u.days}일 남음`}</b></div>`).join('')}</div>`:''}
-    ${MODE==='real'?`<button class="row" style="margin-bottom:14px" data-testid="share-family" onclick="shareMemorial()">${I.people}<span style="flex:1"><b style="font-size:15px">가족과 함께 기억하기</b><br><span style="font-size:12px;color:var(--sub)">링크를 받은 사람은 꽃과 한 마디를 남길 수 있어요</span></span>${I.chev}</button>`:''}
-    <div data-testid="feed">${S.feed.length?'':`<div style="background:#fff;border-radius:18px;padding:28px 20px;text-align:center" data-testid="feed-empty"><b style="font-size:16px">아직 남긴 추억이 없어요</b><p style="font-size:14px;color:var(--sub);margin:6px 0 16px;line-height:1.6">${N()}의 사진이나 떠오르는 한 줄을 남겨 주세요.<br>가족 피드에 올라가요.</p><button class="cta navy" style="height:48px" onclick="openRecord()">첫 추억 남기기</button></div>`}${S.feed.map((f,i)=>`<article class="feedcard" data-testid="feed-item">
+    ${MODE==='real'?`<button class="row" style="margin-bottom:14px" data-testid="share-family" onclick="shareMemorial()">${I.people}<span style="flex:1"><b style="font-size:15px">가족과 함께 기억하기</b><br><span style="font-size:12px;color:var(--sub)">${LOVER()?'링크를 받은 사람은 응원의 한 마디를 남길 수 있어요':'링크를 받은 사람은 꽃과 한 마디를 남길 수 있어요'}</span></span>${I.chev}</button>`:''}
+    <div data-testid="feed">${S.feed.length?'':`<div style="background:#fff;border-radius:18px;padding:28px 20px;text-align:center" data-testid="feed-empty"><b style="font-size:16px">아직 남긴 추억이 없어요</b><p style="font-size:14px;color:var(--sub);margin:6px 0 16px;line-height:1.6">${LOVER()?`오늘 ${N()}의 사진 한 장, 한 줄을 담아 보세요.`:`${N()}의 사진이나 떠오르는 한 줄을 남겨 주세요.`}<br>가족 피드에 올라가요.</p><button class="cta navy" style="height:48px" onclick="openRecord()">첫 추억 남기기</button></div>`}${S.feed.map((f,i)=>`<article class="feedcard" data-testid="feed-item">
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px">${f.av?`<span class="av" style="background-image:url(${IMG[f.av]})"></span>`:`<span class="av" style="background:var(--cream);display:grid;place-items:center;font-size:13px;font-weight:700;color:#8A6D2C">${esc(f.who[0])}</span>`}<b style="font-size:14px">${esc(f.who)}</b><span style="font-size:12px;color:var(--sub);margin-left:auto">${esc(f.when)}</span></div>
       ${f.img?`<div style="aspect-ratio:1;background:url('${IMG[f.img]||f.img}') center/cover"></div>`:''}
       <div style="padding:12px 14px 14px;font-size:14px;line-height:1.6">${esc(f.text)}</div>
@@ -326,7 +329,7 @@ R.hall=()=>`<section class="screen" data-testid="screen-hall" style="background:
   <div style="position:relative;z-index:2;padding:0 16px 14px;display:flex;flex-direction:column;gap:8px">
     <div class="glass" style="border-radius:16px;padding:14px 16px;color:#fff" data-testid="my-day">
       <div style="display:flex;justify-content:space-between;align-items:baseline"><b class="serif" style="font-size:18px">${P.hallName}</b></div>
-      <div style="font-size:13px;color:#D5DAE5;margin-top:4px">${MYSEAT()?`${ga()} 이 날의 천사 안에 있어요 · ${seatText()}`:'아직 이 날에 자리가 없어요'}</div>${P.dayChange?`<div style="font-size:12px;color:var(--gold);margin-top:6px" data-testid="day-change-note">${P.dayChange.kept?`천사를 만난 날은 ${dayName(P.dayChange.to)} · 처음 고른 날에 그대로 남았어요`:P.dayChange.from===P.dayChange.to?'천사를 만난 날과 같은 날이에요':`${dayName(P.dayChange.from)}에서 천사를 만난 날로 옮겨 왔어요`}</div>`:''}${MODE==='real'&&!P.dayLocked&&P.petStatus!=='먼저 떠났어요'?`<button onclick="openAngelDay()" data-testid="hall-angelday" style="margin-top:8px;min-height:40px;padding:0 12px;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;font-size:13px;font-weight:700">아이가 천사를 만났다면</button>`:''}
+      <div style="font-size:13px;color:#D5DAE5;margin-top:4px">${MYSEAT()?`${ga()} 이 날의 천사 안에 있어요 · ${seatText()}`:'아직 이 날에 자리가 없어요'}</div>
     </div>
     ${hallOf(P.hall).left===0?'':`<button class="glass" data-testid="hall-more" onclick="S.hall=P.hall;S.seat=null;go('seat');if(!SRV[P.hall])refreshSeats(P.hall).then(render)" style="border-radius:16px;padding:14px 16px;display:flex;align-items:center;text-align:left;color:#fff;min-height:56px"><span style="flex:1"><b style="font-size:15px">함께 지낸 다른 아이도 곁에</b><br><span style="font-size:12px;color:#D5DAE5">${P.hallName}의 천사 곁에 별 하나 더 남기기</span></span>${I.chev}</button>`}
     <button class="cta white" data-testid="hall-visit" onclick="go('visit')" style="margin-top:4px">${I.door}${N()}에게 가기</button>
@@ -398,10 +401,9 @@ async function angelPreview(){
   const send=`<button class="cta navy" style="margin-top:4px" data-testid="angelday-send" onclick="sendAngelDay(false)">그날의 천사 곁으로</button>`;
   if(!v){info.textContent='';btns.innerHTML=send;return}
   const day=v.slice(5), name=dayName(day);
-  if(day===P.hall){ info.innerHTML=`${J(N(),'은','는')} 이미 ${name}의 천사 곁에 있어요. 자리는 그대로예요.`; btns.innerHTML=send; return }
   await refreshSeats(day); if($('#ad-date').value!==v) return;
-  const left=hallOf(day).left, need=Math.max(1,(P.seats||[]).length);
-  if(left!=null&&left<need){ info.innerHTML=`<span data-testid="angelday-full">${name}의 천사 곁은 이미 가득 차 있어서, 그날로는 데려가지 못해요. 정말 미안해요.<br>지금 있는 ${esc(P.hallName)}의 천사 곁에서 ${J(N(),'을','를')} 계속 지켜 드릴게요.</span>`; btns.innerHTML=`<button class="cta navy" style="margin-top:4px" data-testid="angelday-keep" onclick="sendAngelDay(true)">${esc(P.hallName)}의 천사 곁에 있을게요</button>`; return }
+  const left=hallOf(day).left, need=1;
+  if(left!=null&&left<need){ info.innerHTML=`<span data-testid="angelday-full">${name}의 천사 곁은 이미 가득 차 있어서, 그날로는 데려가지 못해요. 정말 미안해요.<br>${J(N(),'은','는')} 이곳 사랑 저장소에서 언제까지나 지켜 드릴게요.</span>`; btns.innerHTML=''; return }
   info.innerHTML=`${name}의 천사 곁으로 데려다줄게요.`; btns.innerHTML=send;
 }
 async function sendAngelDay(keep){
@@ -409,11 +411,11 @@ async function sendAngelDay(keep){
   if(!v){err.textContent='아이가 천사를 만난 날을 골라 주세요.';return}
   document.querySelectorAll('#ad-btns button').forEach(b=>b.disabled=true);
   try{
-    const r=await fetch(`/api/me/pets/${P.id}/angel-day`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({passed:v,keep})});
+    const r=await fetch(`/api/me/pets/${P.id}/angel-day`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({passed:v})});
     const d=await r.json().catch(()=>({}));
     if(!r.ok){ err.textContent=d.error||'잠시 후 다시 시도해 주세요'; if(d.full) angelPreview(); else document.querySelectorAll('#ad-btns button').forEach(b=>b.disabled=false); return }
     P=d.pet; closeSheet(); S.hall=P.hall; await reloadMe(); refreshAll();
-    toast(d.moved?`${P.hallName}의 천사 곁으로 왔어요`:`${P.hallName}의 천사 곁에 있어요`);
+    S.history=[]; go('enter',false); toast(`${P.hallName}의 천사 곁으로 왔어요`);
   }catch(e){ err.textContent='잠시 후 다시 시도해 주세요'; document.querySelectorAll('#ad-btns button').forEach(b=>b.disabled=false); }
 }
 function openWithdraw(){
@@ -477,7 +479,7 @@ R.room=()=>`<section class="screen" data-testid="screen-room" style="background:
   <div style="position:absolute;right:20px;top:400px;z-index:2"><div class="bubble pop" data-testid="reaction">${S.reaction}</div></div>
   <div style="flex:1"></div>
   <div class="glass-dark" style="position:relative;z-index:2;margin:0 12px 24px;border-radius:22px;padding:14px 8px;display:grid;grid-template-columns:repeat(4,1fr)">
-    ${[['call','이름 부르기',I.mic],['treat','간식 주기',I.treat],['pet','쓰다듬기',I.hand],['flower','꽃 놓기',I.flower]].map(([k,l,ic])=>`<button data-testid="act-${k}" onclick="act('${k}')" style="display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff;font-size:12px;font-weight:500;min-height:64px"><span style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.16);display:grid;place-items:center">${ic}</span>${l}</button>`).join('')}
+    ${[['call','이름 부르기',I.mic],['treat','간식 주기',I.treat],['pet','쓰다듬기',I.hand],...(LOVER()?[]:[['flower','꽃 놓기',I.flower]])].map(([k,l,ic])=>`<button data-testid="act-${k}" onclick="act('${k}')" style="display:flex;flex-direction:column;align-items:center;gap:8px;color:#fff;font-size:12px;font-weight:500;min-height:64px"><span style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.16);display:grid;place-items:center">${ic}</span>${l}</button>`).join('')}
   </div></section>`;
 function act(k){S.reaction=REACT(k);if(k==='flower'){putFlower();return}render()}
 function openHot(k){const h=hots()[k];
@@ -485,6 +487,17 @@ function openHot(k){const h=hots()[k];
   openSheet(`<h3 id="sheetTitle">추억 상자 · 편지 ${L.length}</h3>${L.length?'':`<p>아직 편지가 없어요. 방명록에 남긴 말이 이곳에 모여요.</p>`}${L.map(([w,d,t])=>`<div data-testid="letter" style="background:var(--cream);border-radius:14px;padding:14px;margin-top:10px"><div style="font-size:12px;color:#8A6D2C">${w}의 편지 · ${d}</div><div class="serif" style="font-size:15px;line-height:1.7;margin-top:4px">${t}</div></div>`).join('')}<button class="cta soft" style="margin-top:16px" onclick="closeSheet()">상자 닫기</button>`,'hot-box');return}
   const im=h.photo||IMG[h.img];openSheet(`${im?`<div style="aspect-ratio:16/10;border-radius:16px;background:url('${im}') center/cover;margin-bottom:14px"></div>`:''}<h3 id="sheetTitle" class="serif">${h.title}</h3><p>${h.body}</p><button class="cta soft" style="margin-top:16px" onclick="closeSheet()">닫기</button>`,'hot-'+k)}
 
+R.love=()=>{const pics=S.feed.filter(f=>f.img), notes=S.feed.filter(f=>!f.img&&f.text);return `<section class="screen" data-testid="screen-love" style="background:#F7F2EC">
+  ${status()}
+  <div class="scroll" style="padding:4px 16px 20px">
+    <div style="padding:18px 4px 6px"><div style="font-size:12px;color:#B0705E;font-weight:700;letter-spacing:.04em">준비된 사랑꾼</div>
+      <h1 class="serif" style="font-size:26px;line-height:1.35;margin:6px 0 8px">${N()}의 사랑 저장소</h1>
+      <p style="font-size:14px;color:var(--sub);line-height:1.7">${ga()} 받는 사랑을 이곳에 차곡차곡 담아 두세요.<br>언젠가 천사 곁에 갈 때, 이 사랑을 모두 함께 가져가요.</p></div>
+    <button class="cta navy" style="margin:14px 0 18px" data-testid="love-add" onclick="openRecord()">오늘의 ${N()} 담기</button>
+    ${pics.length?`<div data-testid="love-photos" style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:18px">${pics.map(f=>`<div style="aspect-ratio:1;background:url('${f.img}') center/cover;border-radius:6px" role="img" aria-label="${esc(f.text||N()+' 사진')}"></div>`).join('')}</div>`:''}
+    ${notes.length?`<div data-testid="love-notes">${notes.map(f=>`<div style="padding:14px 4px;border-top:1px solid #E6DED4"><div style="font-size:12px;color:var(--sub)">${esc(f.who)} · ${esc(f.when)}</div><div style="font-size:15px;line-height:1.65;margin-top:4px">${esc(f.text)}</div></div>`).join('')}</div>`:''}
+    ${!S.feed.length?`<div data-testid="love-empty" style="text-align:center;padding:30px 10px;color:var(--sub);font-size:14px;line-height:1.8">아직 담긴 사랑이 없어요.<br>오늘 ${N()}의 사진 한 장으로 시작해 보세요.</div>`:''}
+  </div>${tabbar()}</section>`};
 R.keep=()=>`<section class="screen" data-testid="screen-keep">
   ${status()}
   <div class="topbar"><button class="iconbtn" aria-label="입장 화면으로" data-testid="keep-back" onclick="go('entry')">${I.back}</button><span class="title">${N()}의 기억 지키기</span></div>
@@ -496,7 +509,7 @@ R.keep=()=>`<section class="screen" data-testid="screen-keep">
       ['heir',I.people,'이 마음을 이어 갈 가족',S.heir?`보호자가 떠난 뒤에도 ${esc(S.heir)}가 이어서 기억해요`:'언젠가 이 마음을 이어 갈 가족을 정해 두세요',S.heir?'지정됨':'정하기'],
       ['download',I.down,'모든 추억 간직하기','사진·영상·편지를 한 번에 내 곁으로',S.downloaded?'완료':'받기'],
       ['terms',I.lock,'영원히 지키겠다는 약속','어떤 일이 있어도 기억은 다른 곳으로 옮겨 지켜요','읽어 보기'],
-    ...(MODE==='real'?[['share',I.people,'가족과 함께 기억하기','링크로 꽃과 한 마디를 받을 수 있어요','보내기'],['view',I.star,'가족이 보는 '+N()+'의 공간','링크를 받은 가족에게 이렇게 보여요','보기'],['edit',I.pen,N()+' 이야기 다듬기','사진, 태어난 날, 좋아하던 것','다듬기'],...(!P.dayLocked&&P.petStatus!=='먼저 떠났어요'?[['angelday',I.star,'아이가 천사를 만났다면','그날의 천사 곁으로 데려다줄게요','알려 주기']]:[]),['password',I.lock,'비밀번호 바꾸기','임시 비밀번호를 받았다면 꼭 바꿔 주세요','바꾸기'],ME&&ME.account.deleteAt?['withdrawcancel',I.lock,'탈퇴 취소하기',dday(ME.account.deleteAt),'취소']:['withdraw',I.lock,'기억의 집 떠나기','탈퇴하면 30일 뒤 모든 기억이 사라져요','떠나기'],['logout',I.lock,'잠시 나가기',ME?`${esc(ME.account.owner)} · ${esc(ME.account.phone)}`:'','나가기']]:[]),
+    ...(MODE==='real'?[['share',I.people,'가족과 함께 기억하기',LOVER()?'링크로 응원의 한 마디를 받을 수 있어요':'링크로 꽃과 한 마디를 받을 수 있어요','보내기'],['view',I.star,'가족이 보는 '+N()+'의 공간','링크를 받은 가족에게 이렇게 보여요','보기'],['edit',I.pen,N()+' 이야기 다듬기','사진, 태어난 날, 좋아하던 것','다듬기'],...(!P.dayLocked&&P.petStatus!=='먼저 떠났어요'?[['angelday',I.star,'아이가 천사를 만났다면','그날의 천사 곁으로 데려다줄게요','알려 주기']]:[]),['password',I.lock,'비밀번호 바꾸기','임시 비밀번호를 받았다면 꼭 바꿔 주세요','바꾸기'],ME&&ME.account.deleteAt?['withdrawcancel',I.lock,'탈퇴 취소하기',dday(ME.account.deleteAt),'취소']:['withdraw',I.lock,'기억의 집 떠나기','탈퇴하면 30일 뒤 모든 기억이 사라져요','떠나기'],['logout',I.lock,'잠시 나가기',ME?`${esc(ME.account.owner)} · ${esc(ME.account.phone)}`:'','나가기']]:[]),
     ].map(([k,ic,t,d,a])=>`<button class="row" data-testid="keep-${k}" onclick="keep('${k}')" style="margin-bottom:10px">${ic}<span style="flex:1"><b style="font-size:15px">${t}</b><br><span style="font-size:12px;color:var(--sub)" data-testid="keep-${k}-desc">${d}</span></span><b style="font-size:13px;color:${a==='꺼짐'?'#B2453A':'var(--navy)'}" data-testid="keep-${k}-state">${a}</b></button>`).join('')}
   </div>${tabbar()}</section>`;
 function keep(k){
@@ -528,7 +541,7 @@ R.plaza=()=>{const list=MODE==='real'?(S.plazaReal||null):S.plaza;return `<secti
 function plazaFlower(i){ const list=MODE==='real'?S.plazaReal:S.plaza; const p=list[i]; S.plazaFlowered[p.id||i]=true; render(); toast(`${p.name}에게 꽃을 놓았어요`); if(p.id) api(`/api/pets/${p.id}/flower`,{method:'POST',body:'{}'}).catch(()=>{}); }
 function loadPlaza(){ api('/api/plaza').then(l=>{ S.plazaReal=l; if(S.screen==='plaza') render(); }).catch(()=>{ S.plazaReal=[]; if(S.screen==='plaza') render(); }); }
 
-function openRecord(){ if(MODE==='real'){ openRealRecord(); return; } openSheet(`<h3 id="sheetTitle">${N()} 기록하기</h3><p>사진과 한 줄이면 충분해요. 가족 피드에 올라가요.</p><label class="fl">사진</label><div style="display:flex;gap:8px">${['p2','p5','p7'].map((k,i)=>`<button data-testid="rec-photo-${i}" aria-pressed="false" onclick="this.parentNode.querySelectorAll('button').forEach(b=>{b.setAttribute('aria-pressed','false');b.style.outline=''});this.setAttribute('aria-pressed','true');this.style.outline='3px solid var(--navy)';window._recImg='${k}'" style="width:72px;height:72px;border-radius:12px;background:url(${IMG[k]}) center/cover"></button>`).join('')}</div><label class="fl" for="rtext">한 줄 기록</label><textarea id="rtext" rows="3" data-testid="rec-text" maxlength="300" placeholder="오늘 떠오른 ${N()}의 모습"></textarea><div data-testid="rec-err" style="color:#B2453A;font-size:13px;margin-top:6px;min-height:18px"></div><button class="cta navy" style="margin-top:8px" data-testid="rec-save" onclick="saveRecord()">피드에 올리기</button>`,'record');window._recImg=null}
+function openRecord(){ if(MODE==='real'){ openRealRecord(); return; } openSheet(`<h3 id="sheetTitle">${LOVER()?`오늘의 ${N()} 담기`:`${N()} 기록하기`}</h3><p>${LOVER()?'사진 한 장, 한 줄이면 충분해요. 사랑 저장소에 차곡차곡 쌓여요.':'사진과 한 줄이면 충분해요. 가족 피드에 올라가요.'}</p><label class="fl">사진</label><div style="display:flex;gap:8px">${['p2','p5','p7'].map((k,i)=>`<button data-testid="rec-photo-${i}" aria-pressed="false" onclick="this.parentNode.querySelectorAll('button').forEach(b=>{b.setAttribute('aria-pressed','false');b.style.outline=''});this.setAttribute('aria-pressed','true');this.style.outline='3px solid var(--navy)';window._recImg='${k}'" style="width:72px;height:72px;border-radius:12px;background:url(${IMG[k]}) center/cover"></button>`).join('')}</div><label class="fl" for="rtext">한 줄 기록</label><textarea id="rtext" rows="3" data-testid="rec-text" maxlength="300" placeholder="${LOVER()?`오늘 ${N()}와 있었던 일`:`오늘 떠오른 ${N()}의 모습`}"></textarea><div data-testid="rec-err" style="color:#B2453A;font-size:13px;margin-top:6px;min-height:18px"></div><button class="cta navy" style="margin-top:8px" data-testid="rec-save" onclick="saveRecord()">${LOVER()?'사랑 저장소에 담기':'피드에 올리기'}</button>`,'record');window._recImg=null}
 function openRealRecord(){ window._recData=null; openSheet(`<h3 id="sheetTitle">${N()} 기록하기</h3><p>사진과 한 줄이면 충분해요. 가족 피드에 올라가요.</p>
   <label class="fl" for="rfile">사진</label><div style="display:flex;align-items:center;gap:12px"><span id="rpic" style="width:72px;height:72px;border-radius:12px;background:#EDEBE6 center/cover;flex:none"></span><input type="file" id="rfile" accept="image/*" data-testid="rec-file" style="font-size:14px"></div>
   <label class="fl" for="rtext">한 줄 기록</label><textarea id="rtext" rows="3" data-testid="rec-text" maxlength="300" placeholder="오늘 떠오른 ${N()}의 모습"></textarea>
