@@ -110,7 +110,7 @@ function render(){
     <button class="act" data-testid="m-candle" aria-pressed="${P.candle}" onclick="candle()">${I.candle}${P.candle?'촛불 켜짐':'촛불 켜기'}<small>${P.candle?'오늘 밤까지':'함께 밝혀요'}</small></button>
     <button class="act" data-testid="m-write" onclick="document.getElementById('g-text').focus()">${I.pen}한 마디<small>방명록 ${G.length}</small></button>
   </div></div>
-  <div class="sec"><div class="angelbox"><canvas id="angel" aria-hidden="true"></canvas><div><div style="font-size:12px;color:var(--gold)">${esc(P.hallName)}</div><b class="serif" style="font-size:17px;line-height:1.5;display:block;margin-top:2px">1004의 별이 모여<br>하나의 빛이 됩니다</b><p style="font-size:13px;color:#AEB5C6;margin-top:6px">반짝이는 별이 ${J(N,'이에요','예요')}</p></div></div></div>
+  <div class="sec"><div class="angelbox"><canvas id="angel" aria-hidden="true"></canvas><div><div style="font-size:12px;color:var(--gold)">${esc(P.hallName)}의 천사</div><b class="serif" style="font-size:17px;line-height:1.5;display:block;margin-top:2px">1004의 별이 모여<br>하나의 빛이 됩니다</b><p style="font-size:13px;color:#AEB5C6;margin-top:6px">반짝이는 별이 ${J(N,'이에요','예요')}</p></div></div></div>
   <div class="sec"><div class="card">
     <h2 class="serif" style="font-size:18px;margin-bottom:12px">${N}에게 남긴 말</h2>
     <div data-testid="m-guestbook">${G.length?G.map(g=>`<div class="gb"><div class="w">${esc(g.who)} · ${rel(g.at)}</div><p>${esc(g.text)}</p></div>`).join(''):`<p style="font-size:14px;color:var(--sub)">아직 남긴 말이 없어요. 첫 한 마디를 남겨 주세요.</p>`}</div>

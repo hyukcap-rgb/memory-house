@@ -78,6 +78,15 @@ main{min-width:0;padding:24px 32px 48px}
 .zones{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .zones span{font-size:12px;background:var(--bg);border-radius:6px;padding:3px 8px;color:var(--sub)}
 .zones b{color:var(--ink);font-weight:700}
+.cal{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.cal .mo b{display:block;font-size:12px;margin-bottom:6px;color:var(--sub)}
+.cal .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal .d{aspect-ratio:1;border-radius:4px;border:0;padding:0;font-size:9px;color:transparent;cursor:pointer;min-width:0}
+.cal .d:hover,.cal .d.sel{outline:2px solid var(--navy);outline-offset:1px}
+.cal .d.l0{background:#ECE8DE}.cal .d.l1{background:#E3CF9F}.cal .d.l2{background:#D2AE5C}.cal .d.l3{background:#A9813A}
+.cal .d.full{background:var(--night);box-shadow:inset 0 0 0 1.5px var(--gold)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin-top:10px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px}
 .feed{list-style:none}
 .feed li{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line);align-items:flex-start}
 .feed li:first-child{border-top:0;padding-top:0}
@@ -231,27 +240,25 @@ P.dash=()=>{const d=A.data,c=counts();
   ].sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,8);
   return head('대시보드','오늘 기억의 집 상황이에요')+`
   <div class="kpis">
-    <div class="card kpi"><div class="l">채워진 별</div><div class="v" data-testid="kpi-taken">${fmt(c.taken)}<small>/ ${fmt(c.total)}</small></div><div class="d">메모리얼 ${d.halls.length}곳 · 각 1004자리 · 회원 ${fmt(d.accounts||0)}명</div></div>
+    <div class="card kpi"><div class="l">채워진 별</div><div class="v" data-testid="kpi-taken">${fmt(c.taken)}<small>/ ${fmt(c.total)}</small></div><div class="d">366일 · 날마다 1004자리 · 회원 ${fmt(d.accounts||0)}명</div></div>
     <div class="card kpi"><div class="l">남은 자리</div><div class="v">${fmt(c.total-c.taken)}</div><div class="d">증설 없음</div></div>
     <div class="card kpi"><div class="l">최근 24시간 예약</div><div class="v" data-testid="kpi-today">${fmt(c.today)}</div><div class="d">비회원·회원 합계</div></div>
     <div class="card kpi ${c.pending?'attn':''}"><div class="l">양도 대기</div><div class="v" data-testid="kpi-pending">${c.pending}</div><div class="d">${c.pending?'승인이 필요해요':'처리할 요청이 없어요'}</div></div>
     <div class="card kpi ${c.reported?'attn':''}"><div class="l">신고된 방명록</div><div class="v">${c.reported}</div><div class="d">${c.reported?'확인이 필요해요':'깨끗해요'}</div></div>
   </div>
   <div class="grid2">
-    <div class="card sec"><h2>메모리얼별 채움<button class="more" onclick="goPage('halls')">자세히</button></h2><div class="halls">${d.halls.map(hallCard).join('')}</div></div>
+    <div class="card sec"><h2>날짜별 채움 <span style="font-weight:500;color:var(--sub);font-size:13px">가득 찬 날 ${d.halls.filter(h=>!h.left).length}일 · 20자리 이하 남은 날 ${d.halls.filter(h=>h.left&&h.left<=20).length}일</span><button class="more" onclick="goPage('halls')">자세히</button></h2>${calendar(d.halls,null,"A.day=this.dataset.k;goPage('halls')")}</div>
     <div class="card sec"><h2>최근 활동</h2>${acts.length?`<ul class="feed">${acts.map(a=>`<li><span class="dot" style="background:${a.color}"></span><span style="line-height:1.6">${a.html}</span><span class="t">${when(a.at)}</span></li>`).join('')}</ul>`:'<div class="empty"><b>아직 활동이 없어요</b>예약이나 방명록이 생기면 여기에 보여요.</div>'}</div>
   </div>`};
-function hallCard(h){const z=Angel.zoneStats(h.takenSeats);return `<div class="hall"><div class="pic"><canvas data-angel="${h.id}" aria-label="${h.name} 채움 모습"></canvas></div><div class="meta"><b class="serif" style="font-size:16px">${h.name}</b> <span style="color:var(--sub);font-size:12px">${esc(h.desc)}</span>
-  <div class="bar"><i style="width:${(h.taken/h.total*100).toFixed(1)}%"></i></div>
-  <div style="display:flex;justify-content:space-between;font-size:13px"><span>${fmt(h.taken)} / 1004</span><b style="color:${h.left<=20?'var(--err)':'var(--gold2)'}">남은 ${fmt(h.left)}</b></div>
-  <div class="zones">${['halo','wing','robe'].map(k=>`<span>${Angel.ZONES[k]} <b>${z[k].left}</b></span>`).join('')}</div></div></div>`}
+function calendar(H,sel,onclick){ return `<div class="cal" data-testid="admin-cal">${[...Array(12)].map((_,m)=>{const days=H.filter(h=>+h.id.slice(0,2)===m+1);const first=new Date(2024,m,1).getDay();return `<div class="mo"><b>${m+1}월</b><div class="grid">${'<span></span>'.repeat(first)}${days.map(h=>{const r=h.taken/h.total;const cls=!h.left?'full':r>.85?'l3':r>.6?'l2':r>.35?'l1':'l0';return `<button class="d ${cls} ${sel===h.id?'sel':''}" data-k="${h.id}" title="${h.name} · ${h.left?`남은 ${fmt(h.left)}자리`:'가득'}" aria-label="${h.name}, ${h.left?`남은 ${h.left}자리`:'가득'}" onclick="${onclick}">${+h.id.slice(3)}</button>`}).join('')}</div></div>`}).join('')}</div>
+  <div class="legend"><span><i style="background:#ECE8DE"></i>여유</span><span><i style="background:#E3CF9F"></i>35% 이상</span><span><i style="background:#D2AE5C"></i>60% 이상</span><span><i style="background:#A9813A"></i>85% 이상</span><span><i style="background:var(--night);box-shadow:inset 0 0 0 1.5px var(--gold)"></i>가득</span></div>`; }
 
 P.res=()=>{const d=A.data,f=A.f;const q=f.q.trim().toLowerCase();
   const rows=d.reservations.filter(r=>(!f.hall||r.hall===f.hall)&&(!f.src||r.source===f.src)&&(!f.st||r.status===f.st)&&(!q||[r.id,r.pet,r.owner,r.phone,r.kind].join(' ').toLowerCase().includes(q)));
   return head('자리 예약',`전체 ${d.reservations.length}건 · 비회원·회원 화면에서 들어온 예약이 바로 보여요`)+`
   <div class="filters">
     <div class="f"><label for="fq">검색</label><input id="fq" class="input" style="width:240px" placeholder="예약번호, 아이·보호자 이름" value="${esc(f.q)}" oninput="A.f.q=this.value;renderKeep('fq')"></div>
-    <div class="f"><label for="fh">메모리얼</label><select id="fh" onchange="A.f.hall=this.value;render()"><option value="">전체</option>${d.halls.map(h=>`<option value="${h.id}" ${f.hall===h.id?'selected':''}>${h.name}</option>`).join('')}</select></div>
+    <div class="f"><label for="fh">날짜</label><select id="fh" onchange="A.f.hall=this.value;render()"><option value="">전체</option>${d.halls.filter(h=>d.reservations.some(r=>r.hall===h.id)).map(h=>`<option value="${h.id}" ${f.hall===h.id?'selected':''}>${h.name}</option>`).join('')}</select></div>
     <div class="f"><label for="fs">경로</label><select id="fs" onchange="A.f.src=this.value;render()"><option value="">전체</option>${Object.entries(SRC).map(([k,[l]])=>`<option value="${k}" ${f.src===k?'selected':''}>${l}</option>`).join('')}</select></div>
     <div class="f"><label for="ft">상태</label><select id="ft" onchange="A.f.st=this.value;render()"><option value="active" ${f.st==='active'?'selected':''}>유지 중</option><option value="cancelled" ${f.st==='cancelled'?'selected':''}>취소됨</option><option value="" ${f.st===''?'selected':''}>전체</option></select></div>
   </div>
@@ -264,12 +271,13 @@ P.res=()=>{const d=A.data,f=A.f;const q=f.q.trim().toLowerCase();
   </tbody></table>`:`<div class="empty"><b>맞는 예약이 없어요</b>검색어나 필터를 바꿔 보세요. <div style="margin-top:12px"><button class="btn line sm" onclick="A.f={q:'',hall:'',src:'',st:''};render()">필터 모두 풀기</button></div></div>`}</div>`};
 
 function petTag(r){const p=r.petId&&(A.data.pets||[]).find(x=>x.id===r.petId);if(!p)return '';const filled=p.photo||p.birth||p.weight||p.likes;return ` <span class="tag ${filled?'ok':'wait'}" title="회원 화면 아이 정보">${filled?'정보 입력됨':'정보 미입력'}</span>`}
-function tTag(t){return t.status==='pending'?'<span class="tag wait">대기</span>':t.status==='approved'?'<span class="tag ok">승인</span>':'<span class="tag err">거절</span>'}
+function tTag(t){return {pending:'<span class="tag wait">대기</span>',approved:'<span class="tag ok">승인</span>',rejected:'<span class="tag err">거절</span>',cancelled:'<span class="tag mute">보낸 분이 취소</span>',reverted:'<span class="tag mute">되돌림</span>'}[t.status]||''}
+const left=iso=>Math.max(0,Math.ceil((new Date(iso)-Date.now())/864e5));
 P.tr=()=>{const d=A.data;const list=[...d.transfers].sort((a,b)=>(a.status==='pending'?0:1)-(b.status==='pending'?0:1)||new Date(b.at)-new Date(a.at));
-  return head('양도 요청','매매는 없어요. 조건은 두 보호자가 정하고, 운영자는 본인 확인 후 명의만 바꿔요')+`
+  return head('양도 요청','받는 분이 회원일 때만 요청할 수 있어요. 승인하면 자리가 바로 옮겨지고, 보낸 분 메모리얼은 30일 뒤 자동 삭제돼요')+`
   <div class="card tablewrap">${list.length?`<table><thead><tr><th>요청번호</th><th>요청 시각</th><th>자리</th><th>보내는 분</th><th>받는 분 연락처</th><th>상태</th><th></th></tr></thead><tbody>
   ${list.map(t=>`<tr data-testid="tr-row"><td><b>${esc(t.id)}</b></td><td>${when(t.at)}</td><td>${esc(t.seatLabel)}</td><td>${esc(t.fromName)}</td><td><span id="ph-${t.id}">${maskPhone(t.toPhone)}</span><button class="linklike" onclick="showPhone('${t.id}')" aria-label="받는 분 연락처 전체 보기">보기</button></td><td>${tTag(t)}${t.decidedAt?`<div style="font-size:12px;color:var(--sub);margin-top:2px">${when(t.decidedAt)} 처리</div>`:''}</td>
-    <td style="text-align:right;white-space:nowrap">${t.status==='pending'?`<button class="btn line sm" onclick="askReject('${t.id}')">양도 거절</button> <button class="btn primary sm" data-testid="tr-approve" onclick="decide('${t.id}','approve')">양도 승인</button>`:''}</td></tr>`).join('')}
+    <td style="text-align:right;white-space:nowrap">${t.status==='pending'?`<button class="btn line sm" onclick="askReject('${t.id}')">양도 거절</button> <button class="btn primary sm" data-testid="tr-approve" onclick="askApprove('${t.id}')">양도 승인</button>`:t.status==='approved'&&t.accountId&&t.deleteAt&&left(t.deleteAt)>0?`<span style="font-size:12px;color:var(--sub);margin-right:6px">보낸 분 메모리얼 ${left(t.deleteAt)}일 뒤 삭제</span><button class="btn line sm" data-testid="tr-revert" onclick="askRevert('${t.id}')">되돌리기</button>`:''}</td></tr>`).join('')}
   </tbody></table>`:'<div class="empty"><b>양도 요청이 없어요</b>회원 화면에서 요청이 들어오면 여기에 보여요.</div>'}</div>`};
 
 P.gb=()=>{const d=A.data;const list=d.guestbook.filter(g=>!A.gbOnlyReported||g.reports>0);
@@ -278,21 +286,26 @@ P.gb=()=>{const d=A.data;const list=d.guestbook.filter(g=>!A.gbOnlyReported||g.r
   <div class="card sec">${list.length?list.map(g=>`<div class="gb ${g.hidden?'hidden':''}" data-testid="gb-row"><div class="txt"><div><b>${esc(g.who)}</b> <span style="color:var(--sub);font-size:12px">→ ${esc(g.pet)} · ${when(g.at)}</span> ${g.reports?`<span class="tag err">신고 ${g.reports}</span>`:''} ${g.hidden?'<span class="tag mute">숨김</span>':''}</div><p>${esc(g.text)}</p></div>
     <div><button class="btn ${g.hidden?'line':'line'} sm" data-testid="gb-toggle" onclick="toggleGb('${g.id}',${!g.hidden})">${g.hidden?'다시 보이기':'숨기기'}</button></div></div>`).join(''):'<div class="empty"><b>보여줄 글이 없어요</b>신고된 글이 없어요.</div>'}</div>`};
 
-P.halls=()=>{const d=A.data;return head('메모리얼','메모리얼마다 1004자리, 증설 없음. 자리 번호는 후광에서 가까운 순서예요')+`
-  <div class="halls" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">${d.halls.map(h=>{const z=Angel.zoneStats(h.takenSeats);return `<div class="card hall"><div class="pic" style="padding:20px 0"><canvas data-angel="${h.id}" aria-label="${h.name} 채움 모습" style="width:min(220px,80%)"></canvas></div><div class="meta">
-    <b class="serif" style="font-size:18px">${h.name}</b> <span style="color:var(--sub);font-size:13px">${esc(h.desc)}</span>
-    <div class="bar"><i style="width:${(h.taken/h.total*100).toFixed(1)}%"></i></div>
-    <div style="display:flex;justify-content:space-between"><span>${fmt(h.taken)}개의 별이 빛나요</span><b style="color:${h.left<=20?'var(--err)':'var(--gold2)'}">남은 ${fmt(h.left)}자리</b></div>
-    <table style="min-width:0;margin-top:12px"><thead><tr><th>구역</th><th>전체</th><th>남음</th><th>예시가</th></tr></thead><tbody>${[['halo',180],['wing',140],['robe',120]].map(([k,p])=>`<tr><td>${Angel.ZONES[k]}</td><td>${z[k].total}</td><td><b>${z[k].left}</b></td><td>${p}만원</td></tr>`).join('')}</tbody></table>
-  </div></div>`}).join('')}</div>
+P.halls=()=>{const d=A.data;const k=A.day||(()=>{const t=new Date();return `${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`})();A.day=k;const h=d.halls.find(x=>x.id===k);const z=A.daySeats&&A.daySeats.id===k?Angel.zoneStats(A.daySeats.taken):null;const here=d.reservations.filter(r=>r.hall===k);
+  return head('메모리얼','아이가 천사를 만난 날마다 1004자리, 증설 없음. 그날이 다 차면 다른 날이 비어 있어도 들어갈 수 없어요')+`
+  <div class="grid2" style="align-items:start">
+    <div class="card sec"><h2>366일</h2>${calendar(d.halls,k,"A.day=this.dataset.k;A.daySeats=null;render()")}</div>
+    <div class="card hall" data-testid="day-detail"><div class="pic" style="padding:20px 0"><canvas data-day="${k}" aria-label="${h.name}의 천사" style="width:min(200px,80%)"></canvas></div><div class="meta">
+      <b class="serif" style="font-size:18px">${h.name}의 천사</b>
+      <div class="bar"><i style="width:${(h.taken/h.total*100).toFixed(1)}%"></i></div>
+      <div style="display:flex;justify-content:space-between"><span>${fmt(h.taken)}개의 별</span><b style="color:${h.left<=20?'var(--err)':'var(--gold2)'}">${h.left?`남은 ${fmt(h.left)}자리`:'가득 찼어요'}</b></div>
+      ${z?`<table style="min-width:0;margin-top:12px"><thead><tr><th>구역</th><th>전체</th><th>남음</th><th>예시가</th></tr></thead><tbody>${[['halo',180],['wing',140],['robe',120]].map(([q,pr])=>`<tr><td>${Angel.ZONES[q]}</td><td>${z[q].total}</td><td><b>${z[q].left}</b></td><td>${pr}만원</td></tr>`).join('')}</tbody></table>`:'<p style="color:var(--sub);font-size:13px;margin-top:10px">구역별 현황을 불러오는 중…</p>'}
+      <p style="font-size:13px;color:var(--sub);margin-top:12px">이 날 예약 ${here.length}건${here.length?': '+here.slice(0,5).map(r=>esc(r.pet)).join(', '):''}</p>
+    </div></div>
+  </div>
   <div class="card sec" style="margin-top:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap"><div style="flex:1;min-width:220px"><b>예시 데이터로 되돌리기</b><div class="sub" style="color:var(--sub);font-size:13px;margin-top:2px">시연 전에 테스트로 들어간 예약·양도·방명록을 지우고 처음 상태로 돌려요.</div></div><button class="btn line" data-testid="reset-open" onclick="askReset()">예시 데이터로 되돌리기</button></div>`};
 
 P.mem=()=>{const d=A.data;const q=(A.mq||'').trim().toLowerCase();const list=(d.members||[]).filter(m=>!q||[m.owner,m.phone,...m.pets.map(p=>p.name)].join(' ').toLowerCase().includes(q));
   return head('회원·아이',`가입한 보호자 ${(d.members||[]).length}명 · 비밀번호를 잊은 분은 여기서 임시 비밀번호를 만들어 드려요`)+`
   <div class="filters"><div class="f"><label for="mq">검색</label><input id="mq" class="input" style="width:260px" placeholder="보호자·아이 이름, 번호" value="${esc(A.mq||'')}" oninput="A.mq=this.value;renderKeep('mq')"></div></div>
   <div class="card tablewrap">${list.length?`<table><thead><tr><th>가입</th><th>보호자</th><th>연락처</th><th>아이</th><th>동의</th><th></th></tr></thead><tbody>
-  ${list.map(m=>`<tr data-testid="mem-row"><td>${when(m.at)}</td><td><b>${esc(m.owner)}</b></td><td><span id="ph-${m.id}">${maskPhone(m.phone)}</span><button class="linklike" onclick="document.getElementById('ph-${m.id}').textContent='${fullPhone(m.phone)}';this.remove()">보기</button></td>
-    <td>${m.pets.map(p=>`<a href="/m/${esc(p.id)}" target="_blank" rel="noopener" style="color:var(--navy);font-weight:700">${esc(p.name)}</a> <span style="color:var(--sub);font-size:12px">${esc(p.hallName)} ${p.seats.map(pad).join('·')}번</span>`).join('<br>')||'<span style="color:var(--sub)">-</span>'}</td>
+  ${list.map(m=>`<tr data-testid="mem-row"><td>${when(m.at)}</td><td><b>${esc(m.owner)}</b>${m.deleteAt?`<br><span class="tag err" title="탈퇴 신청">탈퇴 예정 · ${left(m.deleteAt)}일 뒤 삭제</span>`:''}</td><td><span id="ph-${m.id}">${maskPhone(m.phone)}</span><button class="linklike" onclick="document.getElementById('ph-${m.id}').textContent='${fullPhone(m.phone)}';this.remove()">보기</button></td>
+    <td>${m.pets.map(p=>`<a href="/m/${esc(p.id)}" target="_blank" rel="noopener" style="color:var(--navy);font-weight:700">${esc(p.name)}</a> <span style="color:var(--sub);font-size:12px">${esc(p.hallName)} ${p.seats.map(pad).join('·')}번</span>${p.deleteAt&&!m.deleteAt?` <span class="tag err">${left(p.deleteAt)}일 뒤 삭제</span>`:''}`).join('<br>')||'<span style="color:var(--sub)">-</span>'}</td>
     <td>${m.agreedAt?'<span class="tag ok">동의함</span>':'<span class="tag mute">기록 없음</span>'}</td>
     <td style="text-align:right"><button class="btn line sm" data-testid="mem-reset" onclick="askPw('${m.id}')">임시 비밀번호</button></td></tr>`).join('')}
   </tbody></table>`:'<div class="empty"><b>아직 가입한 보호자가 없어요</b>비회원 화면에서 자리를 예약하면 회원이 돼요.</div>'}</div>`};
@@ -313,9 +326,13 @@ function askCancel(id){const r=A.data.reservations.find(x=>x.id===id);
   openDialog(`<h3 id="dlgTitle">${esc(r.pet)}의 자리 예약을 취소할까요?</h3><p>${esc(r.id)} · ${seatText(r)}<br>${esc(r.owner)}님께는 실제 서비스에서 따로 안내가 나가요. 취소한 뒤에도 '되돌리기'로 살릴 수 있어요.</p><div class="row"><button class="btn line" data-focus onclick="closeDialog()">그대로 두기</button><button class="btn danger" data-testid="confirm-cancel" onclick="doRes('${id}','cancel')">예약 취소하기</button></div>`)}
 async function doRes(id,action){A.busy=true;try{await api('/api/admin/reservations/'+id,{method:'POST',body:JSON.stringify({action})});closeDialog();await refresh(true);toast(action==='cancel'?'예약을 취소했어요':'예약을 되돌렸어요')}catch(e){closeDialog();toast(e.message)}A.busy=false}
 const restoreRes=id=>doRes(id,'restore');
+function askApprove(id){const t=A.data.transfers.find(x=>x.id===id);
+  openDialog(`<h3 id="dlgTitle">${esc(t.seatLabel)} 양도를 승인할까요?</h3><p>${t.accountId?`받는 분(${maskPhone(t.toPhone)}) 계정으로 자리가 바로 옮겨지고, ${esc(t.fromName)}님 쪽 메모리얼은 30일 뒤 자동으로 지워져요. 30일 안에는 되돌릴 수 있어요.`:'예전 방식의 요청이라 승인 표시만 남아요.'}${t.consentAt?`<br>보낸 분 동의: ${when(t.consentAt)}`:''}</p><div class="row"><button class="btn line" data-focus onclick="closeDialog()">돌아가기</button><button class="btn primary" data-testid="tr-approve-confirm" onclick="decide('${id}','approve')">양도 승인하기</button></div>`)}
+function askRevert(id){const t=A.data.transfers.find(x=>x.id===id);
+  openDialog(`<h3 id="dlgTitle">${esc(t.seatLabel)} 양도를 되돌릴까요?</h3><p>자리를 ${esc(t.fromName)}님에게 돌려주고, 삭제 예정이던 메모리얼을 그대로 살려요. 받는 분 쪽에 새로 생긴 빈 메모리얼은 정리돼요.</p><div class="row"><button class="btn line" data-focus onclick="closeDialog()">그만두기</button><button class="btn danger" onclick="decide('${id}','revert')">되돌리기</button></div>`)}
 function askReject(id){const t=A.data.transfers.find(x=>x.id===id);
   openDialog(`<h3 id="dlgTitle">${esc(t.seatLabel)} 양도를 거절할까요?</h3><p>${esc(t.fromName)}님의 요청이에요. 거절하면 자리는 지금 보호자에게 그대로 남아요.</p><div class="row"><button class="btn line" data-focus onclick="closeDialog()">돌아가기</button><button class="btn danger" onclick="decide('${id}','reject')">양도 거절하기</button></div>`)}
-async function decide(id,action){try{await api('/api/admin/transfers/'+id,{method:'POST',body:JSON.stringify({action})});closeDialog();await refresh(true);toast(action==='approve'?'양도를 승인했어요':'양도를 거절했어요')}catch(e){closeDialog();toast(e.message)}}
+async function decide(id,action){try{await api('/api/admin/transfers/'+id,{method:'POST',body:JSON.stringify({action})});closeDialog();await refresh(true);toast({approve:'양도를 승인했어요',reject:'양도를 거절했어요',revert:'양도를 되돌렸어요'}[action])}catch(e){closeDialog();toast(e.message)}}
 function askReset(){openDialog(`<h3 id="dlgTitle">예시 데이터로 되돌릴까요?</h3><p>지금까지 들어온 예약, 양도 요청, 방명록이 모두 지워지고 처음 예시 상태로 돌아가요. 되돌릴 수 없어요.</p><div class="row"><button class="btn line" data-focus onclick="closeDialog()">그대로 두기</button><button class="btn danger" data-testid="reset-confirm" onclick="doReset()">모두 지우고 되돌리기</button></div>`)}
 async function doReset(){try{await api('/api/admin/reset',{method:'POST',body:'{}'});closeDialog();await refresh(true);toast('예시 데이터로 되돌렸어요')}catch(e){closeDialog();toast(e.message)}}
 async function toggleGb(id,hidden){try{await api('/api/admin/guestbook/'+id,{method:'POST',body:JSON.stringify({hidden})});await refresh(true);toast(hidden?'글을 숨겼어요. 회원 화면에서 보이지 않아요':'글을 다시 보이게 했어요')}catch(e){toast(e.message)}}
@@ -324,7 +341,10 @@ async function toggleGb(id,hidden){try{await api('/api/admin/guestbook/'+id,{met
 function render(){
   views.forEach(v=>v.destroy());views=[];
   nav(); $('#main').innerHTML=P[A.page]();
-  document.querySelectorAll('canvas[data-angel]').forEach(cv=>{const h=A.data.halls.find(x=>x.id===cv.dataset.angel);views.push(Angel.mount(cv,{taken:h.takenSeats,photos:PHOTOS}))});
+  document.querySelectorAll('canvas[data-day]').forEach(cv=>{const k=cv.dataset.day;
+    const mount=t=>{if(cv.isConnected)views.push(Angel.mount(cv,{taken:t,photos:PHOTOS}))};
+    if(A.daySeats&&A.daySeats.id===k) mount(A.daySeats.taken);
+    else fetch(`/api/halls/${k}/seats`).then(r=>r.json()).then(dd=>{A.daySeats={id:k,taken:dd.taken};if(A.page==='halls'&&A.day===k)render()}).catch(()=>{});});
 }
 function renderKeep(id){const el=document.getElementById(id);const pos=el.selectionStart;render();const n=document.getElementById(id);n.focus();n.setSelectionRange(pos,pos)}
 setInterval(()=>{if(A.code&&!$('#scrim').classList.contains('on')&&document.activeElement?.tagName!=='INPUT')refresh(true)},20000);

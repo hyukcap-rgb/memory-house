@@ -8,6 +8,7 @@ export interface Storage {
   write(key: string, value: string): Promise<void>;
   readBytes(key: string): Promise<Uint8Array | null>;
   writeBytes(key: string, value: Uint8Array, type: string): Promise<void>;
+  remove(key: string): Promise<void>;
 }
 
 export function createStorage(env = Bun.env): Storage {
@@ -36,6 +37,9 @@ export function createStorage(env = Bun.env): Storage {
       async writeBytes(key, value, type) {
         await s3.file(key).write(value, { type });
       },
+      async remove(key) {
+        try { await s3.file(key).delete(); } catch {}
+      },
     };
   }
   const dir = env.DATA_DIR || "./.data";
@@ -54,6 +58,9 @@ export function createStorage(env = Bun.env): Storage {
     },
     async writeBytes(key, value) {
       await Bun.write(`${dir}/${key}`, value);
+    },
+    async remove(key) {
+      try { const { unlink } = await import("node:fs/promises"); await unlink(`${dir}/${key}`); } catch {}
     },
   };
 }

@@ -2,7 +2,7 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { join, normalize } from "node:path";
 import {
-  BASE, HALLS, TOTAL, seedState,
+  baseOf, dayOf, HALLS, TOTAL, seedState,
   type Account, type FeedItem, type Guest, type Hall, type Pet, type Reservation, type State, type Transfer,
 } from "./seed";
 import { createStorage } from "./storage";
@@ -43,15 +43,112 @@ function save() {
 }
 const nextId = (p: string) => `${p}-${String(++state!.seq).padStart(4, "0")}`;
 
+// ---------- 탈퇴·양도 후 정리 ----------
+// 탈퇴하거나 자리를 양도하면 그 메모리얼은 모두 사라진다. 다만 마음이 바뀌거나 양도가 잘못될 수 있어
+// 30일(GRACE_MS) 동안 보관했다가 자동으로 지운다. 그 사이에는 취소·되돌리기가 된다.
+const GRACE_MS = Number(Bun.env.GRACE_MS) || 30 * 864e5;
+const graceEnd = () => new Date(Date.now() + GRACE_MS).toISOString();
+const activeRes = (accountId: string | undefined, hall: string, seat: number) =>
+  state!.reservations.find((r) => r.status === "active" && r.hall === hall && r.seats.includes(seat) && (!accountId || r.accountId === accountId));
+
+function moveSeat(r: Reservation, seat: number, to: { accountId: string; owner: string; phone: string; petId: string; pet: string; kind: string; petStatus: string }) {
+  if (r.seats.length === 1) {
+    Object.assign(r, { accountId: to.accountId, owner: to.owner, phone: to.phone, petId: to.petId, pet: to.pet, kind: to.kind, petStatus: to.petStatus });
+    return r.id;
+  }
+  r.seats = r.seats.filter((n) => n !== seat);
+  const nr: Reservation = { id: nextId("R"), at: new Date().toISOString(), hall: r.hall, seats: [seat], pet: to.pet, kind: to.kind, petStatus: to.petStatus, owner: to.owner, phone: to.phone, source: "member", status: "active", accountId: to.accountId, petId: to.petId };
+  state!.reservations.unshift(nr);
+  return nr.id;
+}
+
+async function approveTransfer(t: Transfer): Promise<string | null> {
+  const s = state!;
+  const from = s.accounts.find((a) => a.id === t.accountId);
+  const to = s.accounts.find((a) => a.id === t.toAccountId);
+  const pet = s.pets.find((p) => p.id === t.petId);
+  if (!from || !pet || t.seat === undefined || !t.hall) return "양도할 자리 정보가 없어요";
+  if (!to || to.deleteAt) return "받는 분이 회원이 아니거나 탈퇴 중이에요";
+  const r = activeRes(from.id, t.hall, t.seat);
+  if (!r || !pet.seats.includes(t.seat)) return "이미 정리된 자리예요";
+  // 받는 분에게는 이 자리를 가진 새 아이 메모리얼이 생기고, 이름·정보는 받는 분이 채운다
+  const np: Pet = {
+    id: nextId("P"), accountId: to.id, at: new Date().toISOString(), name: "새 아이", kind: "-", breed: "", petStatus: "-",
+    nickname: "", birth: "", passed: "", weight: "", likes: "", tags: [], photoV: 0, hall: t.hall, seats: [t.seat], showInPlaza: true, lastActive: new Date().toISOString(),
+  };
+  s.pets.push(np);
+  t.reservationId = moveSeat(r, t.seat, { accountId: to.id, owner: to.owner, phone: to.phone, petId: np.id, pet: np.name, kind: "-", petStatus: "-" });
+  pet.seats = pet.seats.filter((n) => n !== t.seat);
+  if (!pet.seats.length) { pet.deleteAt = graceEnd(); pet.deleteReason = "transfer"; }
+  t.toPetId = np.id;
+  t.deleteAt = pet.deleteAt;
+  return null;
+}
+
+function revertTransfer(t: Transfer): string | null {
+  const s = state!;
+  const pet = s.pets.find((p) => p.id === t.petId);
+  const from = s.accounts.find((a) => a.id === t.accountId);
+  const np = s.pets.find((p) => p.id === t.toPetId);
+  if (!pet || !from || t.seat === undefined || !t.hall) return "보관 기간이 지나 되돌릴 수 없어요";
+  const r = activeRes(t.toAccountId, t.hall, t.seat);
+  if (!r) return "받는 분 쪽 자리를 찾을 수 없어요";
+  moveSeat(r, t.seat, { accountId: from.id, owner: from.owner, phone: from.phone, petId: pet.id, pet: pet.name, kind: pet.kind, petStatus: pet.petStatus });
+  pet.seats.push(t.seat);
+  if (pet.deleteReason === "transfer") { delete pet.deleteAt; delete pet.deleteReason; }
+  if (np) {
+    np.seats = np.seats.filter((n) => n !== t.seat);
+    if (!np.seats.length && np.name === "새 아이" && !np.photoV) s.pets = s.pets.filter((p) => p.id !== np.id);
+  }
+  return null;
+}
+
+async function erasePet(p: Pet) {
+  const s = state!;
+  await storage.remove(`photos/${p.id}.jpg`);
+  for (const f of s.feed.filter((f) => f.petId === p.id)) if (f.photoV) await storage.remove(`photos/${f.id}.jpg`);
+  s.feed = s.feed.filter((f) => f.petId !== p.id);
+  s.guestbook = s.guestbook.filter((g) => g.pet !== p.id);
+  for (const r of s.reservations) {
+    if (r.petId !== p.id) continue;
+    r.status = "cancelled";
+    r.pet = "(삭제됨)"; r.owner = "(삭제됨)"; r.phone = "";
+    delete r.petId;
+  }
+  s.pets = s.pets.filter((x) => x.id !== p.id);
+}
+
+// 보관 기간이 끝난 메모리얼과 계정을 지운다
+async function purge(): Promise<{ pets: number; accounts: number }> {
+  await load();
+  const s = state!;
+  const now = new Date().toISOString();
+  let pets = 0, accounts = 0;
+  for (const p of s.pets.filter((p) => p.deleteAt && p.deleteAt <= now)) { await erasePet(p); pets++; }
+  for (const a of s.accounts.filter((a) => a.deleteAt && a.deleteAt <= now)) {
+    for (const p of s.pets.filter((p) => p.accountId === a.id)) { await erasePet(p); pets++; }
+    for (const r of s.reservations) if (r.accountId === a.id) { r.status = "cancelled"; r.owner = "(탈퇴)"; r.phone = ""; delete r.accountId; }
+    for (const t of s.transfers) { if (t.accountId === a.id || t.toAccountId === a.id) { t.toPhone = ""; t.fromName = t.accountId === a.id ? "(탈퇴)" : t.fromName; } }
+    for (const [k, ss] of Object.entries(s.sessions)) if (ss.accountId === a.id) delete s.sessions[k];
+    s.accounts = s.accounts.filter((x) => x.id !== a.id);
+    accounts++;
+  }
+  if (pets || accounts) { await save(); console.log(`정리 완료 · 메모리얼 ${pets} · 계정 ${accounts}`); }
+  return { pets, accounts };
+}
+setInterval(() => { purge().catch((e) => console.error("정리 실패", String(e))); }, Math.min(10 * 60_000, Math.max(1000, GRACE_MS / 2)));
+
 function takenFor(hallId: string): Set<number> {
-  const set = new Set(BASE[hallId]);
+  const set = new Set(baseOf(hallId));
   for (const r of state!.reservations) {
     if (r.hall === hallId && r.source !== "seed" && r.status === "active") r.seats.forEach((n) => set.add(n));
   }
   return set;
 }
 const hallSummary = (h: Hall) => {
-  const taken = takenFor(h.id).size;
+  let taken = baseOf(h.id).size;
+  const base = baseOf(h.id);
+  for (const r of state!.reservations) if (r.hall === h.id && r.source !== "seed" && r.status === "active") for (const n of r.seats) if (!base.has(n)) taken++;
   return { id: h.id, name: h.name, desc: h.desc, total: TOTAL, taken, left: TOTAL - taken };
 };
 
@@ -116,7 +213,8 @@ function accountOf(req: Request): Account | null {
 
 // ---------- pets ----------
 const PET_FIELDS = { nickname: 20, birth: 10, passed: 10, weight: 10, likes: 60, breed: 30, kind: 20, petStatus: 20, name: 20 } as const;
-function applyPetFields(p: Pet, b: any): string | null {
+function applyPetFields(target: Pet, b: any): string | null {
+  const p: Pet = { ...target, tags: [...(target.tags || [])] };
   for (const [k, max] of Object.entries(PET_FIELDS)) {
     if (b[k] === undefined) continue;
     const v = clean(b[k], max);
@@ -129,6 +227,12 @@ function applyPetFields(p: Pet, b: any): string | null {
   if (typeof b.showInPlaza === "boolean") p.showInPlaza = b.showInPlaza;
   if (Array.isArray(b.tags)) p.tags = b.tags.map((t: unknown) => clean(t, 16)).filter(Boolean).slice(0, 3);
   if (p.petStatus !== "먼저 떠났어요") p.passed = "";
+  // 천사를 만난 날로 들어온 메모리얼은 날짜를 바꿀 수 없다
+  if (p.dayLocked) {
+    const day = HALLS.find((h) => h.id === p.hall)?.name || "";
+    if (p.petStatus !== "먼저 떠났어요" || dayOf(p.passed) !== p.hall) return `떠난 날은 메모리얼 날짜(${day})와 같아야 해요. 잘못 들어갔다면 운영팀에 알려 주세요`;
+  }
+  Object.assign(target, p);
   return null;
 }
 const kstDay = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
@@ -197,7 +301,7 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
 
   if (req.method === "GET" && path === "/api/halls") return json(HALLS.map(hallSummary));
 
-  let m = path.match(/^\/api\/halls\/(\w+)\/seats$/);
+  let m = path.match(/^\/api\/halls\/([\d-]+)\/seats$/);
   if (req.method === "GET" && m) {
     const h = HALLS.find((x) => x.id === m![1]);
     if (!h) return bad("없는 메모리얼이에요", 404);
@@ -211,6 +315,7 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
     if (!h) return bad("메모리얼을 다시 골라 주세요");
     const seats: number[] = Array.isArray(b.seats) ? [...new Set<number>(b.seats.map(Number))].filter((n) => Number.isInteger(n) && n >= 1 && n <= TOTAL) : [];
     if (!seats.length || seats.length > 2) return bad("자리를 한두 곳 골라 주세요");
+    if (takenFor(h.id).size >= TOTAL) return bad(`${h.name}의 1004자리가 모두 찼어요. 다른 날로는 옮길 수 없어요`, 409);
     if (seats.some((n) => takenFor(h.id).has(n))) return bad("방금 다른 분이 고른 자리예요. 다른 자리를 골라 주세요", 409);
 
     // 시연용 '보리' 화면에서의 예약은 계정 없이 기록만 한다
@@ -222,12 +327,21 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
     }
 
     let account = accountOf(req);
+    if (account?.deleteAt) return bad("탈퇴 신청 중에는 자리를 예약할 수 없어요. 탈퇴를 취소하면 다시 예약할 수 있어요");
     let pet: Pet | undefined;
     let setCookie: string | undefined;
     if (account) {
       pet = s.pets.find((p) => p.accountId === account!.id && p.id === b.petId) || s.pets.find((p) => p.accountId === account!.id);
     }
+    if (pet && pet.hall && pet.hall !== h.id) return bad(`${pet.name}의 메모리얼은 ${HALLS.find((x) => x.id === pet!.hall)?.name}이에요. 그날에만 자리를 더 잡을 수 있어요`);
     if (!pet) {
+      // 먼저 떠난 아이는 천사를 만난 날(떠난 날)의 메모리얼에만 들어갈 수 있다
+      const passed = clean(b.passed, 10);
+      if (b.petStatus === "먼저 떠났어요") {
+        if (!isDate(passed) || !passed) return bad("아이가 천사를 만난 날을 알려 주세요");
+        if (passed > kstDay()) return bad("천사를 만난 날은 오늘보다 앞이어야 해요");
+        if (dayOf(passed) !== h.id) return bad(`천사를 만난 날(${passed.replace(/-/g, ".")})과 메모리얼 날짜(${h.name})가 달라요`);
+      }
       const name = clean(b.pet, 20), owner = clean(b.owner, 20), phone = digits(b.phone), password = String(b.password ?? "");
       if (!name || (!account && !owner)) return bad("아이 이름과 보호자 이름을 적어 주세요");
       if (!account) {
@@ -246,8 +360,8 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
       }
       pet = {
         id: nextId("P"), accountId: account.id, at: new Date().toISOString(), name, kind: clean(b.kind, 20) || "-", breed: "",
-        petStatus: clean(b.petStatus, 20) || "-", nickname: "", birth: "", passed: "", weight: "", likes: "", tags: [],
-        photoV: 0, hall: h.id, seats: [], showInPlaza: true, lastActive: new Date().toISOString(),
+        petStatus: clean(b.petStatus, 20) || "-", nickname: "", birth: "", passed: b.petStatus === "먼저 떠났어요" ? passed : "", weight: "", likes: "", tags: [],
+        photoV: 0, hall: h.id, seats: [], showInPlaza: true, lastActive: new Date().toISOString(), dayLocked: b.petStatus === "먼저 떠났어요",
       };
       s.pets.push(pet);
     }
@@ -284,7 +398,37 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
     if (!a) return bad("로그인이 필요해요", 401);
     const mine = s.pets.filter((p) => p.accountId === a.id);
     if (req.method === "GET" && path === "/api/me") {
-      return json({ account: { owner: a.owner, phone: a.phone.slice(0, 3) + "-****-" + a.phone.slice(-4) }, pets: mine.map(petView) });
+      const myTransfers = s.transfers.filter((t) => t.accountId === a.id && (t.status === "pending" || (t.status === "approved" && t.deleteAt && t.deleteAt > new Date().toISOString())))
+        .map((t) => ({ id: t.id, at: t.at, status: t.status, seatLabel: t.seatLabel, petId: t.petId, toPhone: t.toPhone.slice(0, 3) + "-****-" + t.toPhone.slice(-4), deleteAt: t.deleteAt || "" }));
+      return json({ account: { owner: a.owner, phone: a.phone.slice(0, 3) + "-****-" + a.phone.slice(-4), deleteAt: a.deleteAt || "" }, pets: mine.map(petView), transfers: myTransfers });
+    }
+    if (req.method === "POST" && path === "/api/me/withdraw") {
+      const b = await body(req);
+      if (b.agree !== true) return bad("모든 메모리얼이 사라진다는 데 동의해 주세요");
+      if (!(await Bun.password.verify(String(b.password ?? ""), a.pwHash))) return bad("비밀번호가 맞지 않아요");
+      a.deleteAt = graceEnd();
+      a.withdrawConsentAt = new Date().toISOString();
+      for (const p of mine) if (!p.deleteAt) { p.deleteAt = a.deleteAt; p.deleteReason = "withdraw"; }
+      for (const t of s.transfers) if (t.accountId === a.id && t.status === "pending") { t.status = "cancelled"; t.decidedAt = new Date().toISOString(); }
+      await save();
+      return json({ deleteAt: a.deleteAt });
+    }
+    if (req.method === "POST" && path === "/api/me/withdraw/cancel") {
+      if (!a.deleteAt) return bad("탈퇴 신청이 없어요");
+      delete a.deleteAt;
+      for (const p of mine) if (p.deleteReason === "withdraw") { delete p.deleteAt; delete p.deleteReason; }
+      await save();
+      return json({ ok: true });
+    }
+    m = path.match(/^\/api\/me\/transfers\/([\w-]+)\/cancel$/);
+    if (req.method === "POST" && m) {
+      const t = s.transfers.find((x) => x.id === m![1] && x.accountId === a.id);
+      if (!t) return bad("없는 요청이에요", 404);
+      if (t.status !== "pending") return bad("운영팀이 이미 처리한 요청이에요. 되돌리려면 운영팀에 알려 주세요", 409);
+      t.status = "cancelled";
+      t.decidedAt = new Date().toISOString();
+      await save();
+      return json({ ok: true });
     }
     if (req.method === "PUT" && path === "/api/me/password") {
       const b = await body(req);
@@ -374,13 +518,28 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
     return json(list);
   }
 
+  // 양도 요청: 로그인한 회원이, 회원인 받는 분에게, 동의와 비밀번호 확인 후 요청한다
   if (req.method === "POST" && path === "/api/transfer") {
     const b = await body(req);
+    const a = accountOf(req);
+    if (!a) return bad("로그인한 보호자만 양도할 수 있어요", 401);
+    if (a.deleteAt) return bad("탈퇴 신청 중에는 양도할 수 없어요");
+    const pet = s.pets.find((p) => p.accountId === a.id && p.id === b.petId);
+    const seat = Number(b.seat);
+    if (!pet || !pet.seats.includes(seat)) return bad("양도할 자리를 다시 골라 주세요");
     const toPhone = digits(b.toPhone);
     if (!isPhone(toPhone)) return bad("휴대폰 번호 10~11자리를 확인해 주세요");
-    const a = accountOf(req);
-    const ownPet = a ? s.pets.find((p) => p.accountId === a.id && p.id === b.petId) : undefined;
-    const t: Transfer = { id: nextId("T"), at: new Date().toISOString(), seatLabel: clean(b.seatLabel, 30) || "-", fromName: a?.owner || clean(b.fromName, 20) || "-", toPhone, status: "pending", accountId: a?.id, petId: ownPet?.id };
+    if (toPhone === a.phone) return bad("본인에게는 양도할 수 없어요");
+    const to = s.accounts.find((x) => x.phone === toPhone && !x.deleteAt);
+    if (!to) return bad("받는 분이 먼저 기억의 집 회원이어야 해요. 가입한 휴대폰 번호를 확인해 주세요");
+    if (b.agree !== true) return bad("양도하면 이 자리의 메모리얼이 사라진다는 데 동의해 주세요");
+    if (!(await Bun.password.verify(String(b.password ?? ""), a.pwHash))) return bad("비밀번호가 맞지 않아요");
+    if (s.transfers.some((t) => t.status === "pending" && t.petId === pet.id && t.seat === seat)) return bad("이 자리는 이미 양도를 요청했어요");
+    const hallName = HALLS.find((h) => h.id === pet.hall)?.name || "";
+    const t: Transfer = {
+      id: nextId("T"), at: new Date().toISOString(), seatLabel: `${hallName} #${String(seat).padStart(4, "0")}`, fromName: a.owner, toPhone, status: "pending",
+      accountId: a.id, petId: pet.id, hall: pet.hall, seat, toAccountId: to.id, consentAt: new Date().toISOString(),
+    };
     s.transfers.unshift(t);
     await save();
     return json({ transfer: { id: t.id, status: t.status } });
@@ -410,11 +569,12 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
     if (req.method === "GET" && path === "/api/admin/overview") {
       const petName = (id: string) => s.pets.find((p) => p.id === id)?.name || id;
       return json({
-        halls: HALLS.map((h) => ({ ...hallSummary(h), takenSeats: [...takenFor(h.id)] })),
+        halls: HALLS.map(hallSummary),
         reservations: s.reservations, transfers: s.transfers,
         guestbook: s.guestbook.map((g) => ({ ...g, pet: g.pet.startsWith("P-") ? petName(g.pet) : g.pet })),
         pets: s.pets.map(petView), accounts: s.accounts.length,
-        members: s.accounts.map((a) => ({ id: a.id, at: a.at, owner: a.owner, phone: a.phone, agreedAt: a.agreedAt || "", pets: s.pets.filter((p) => p.accountId === a.id).map((p) => ({ id: p.id, name: p.name, hallName: HALLS.find((h) => h.id === p.hall)?.name || "", seats: p.seats })) })),
+        members: s.accounts.map((a) => ({ id: a.id, at: a.at, owner: a.owner, phone: a.phone, agreedAt: a.agreedAt || "", deleteAt: a.deleteAt || "", pets: s.pets.filter((p) => p.accountId === a.id).map((p) => ({ id: p.id, name: p.name, hallName: HALLS.find((h) => h.id === p.hall)?.name || "", seats: p.seats, deleteAt: p.deleteAt || "", deleteReason: p.deleteReason || "" })) })),
+        graceDays: Math.round(GRACE_MS / 864e5),
       });
     }
     if (req.method === "POST" && path === "/api/admin/reset") {
@@ -437,13 +597,28 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
     if (req.method === "POST" && m) {
       const t = s.transfers.find((x) => x.id === m![1]);
       if (!t) return bad("없는 요청이에요", 404);
-      if (t.status !== "pending") return bad("이미 처리된 요청이에요", 409);
       const b = await body(req);
+      if (b.action === "revert") {
+        if (t.status !== "approved" || !t.accountId) return bad("되돌릴 수 있는 양도가 아니에요", 409);
+        if (t.deleteAt && t.deleteAt <= new Date().toISOString()) return bad("30일 보관 기간이 지나 되돌릴 수 없어요", 409);
+        const err = revertTransfer(t);
+        if (err) return bad(err, 409);
+        t.status = "reverted";
+        t.decidedAt = new Date().toISOString();
+        await save();
+        return json({ transfer: t });
+      }
+      if (t.status !== "pending") return bad("이미 처리된 요청이에요", 409);
+      if (b.action === "approve" && t.accountId) {
+        const err = await approveTransfer(t);
+        if (err) return bad(err, 409);
+      }
       t.status = b.action === "approve" ? "approved" : "rejected";
       t.decidedAt = new Date().toISOString();
       await save();
       return json({ transfer: t });
     }
+    if (req.method === "POST" && path === "/api/admin/purge") return json(await purge());
     m = path.match(/^\/api\/admin\/guestbook\/([\w-]+)$/);
     if (req.method === "POST" && m) {
       const g = s.guestbook.find((x) => x.id === m![1]);
@@ -480,7 +655,7 @@ const server = Bun.serve({
     if (path.startsWith("/api/")) {
       if (req.method !== "GET") {
         const ip = ipOf(req, srv);
-        if (limited(ip, 40) || (path === "/api/login" && limited("login:" + ip, 10))) return bad("요청이 너무 많아요. 잠시 후 다시 시도해 주세요", 429);
+        if (limited(ip, Number(Bun.env.RATE_LIMIT) || 40) || (path === "/api/login" && limited("login:" + ip, 10))) return bad("요청이 너무 많아요. 잠시 후 다시 시도해 주세요", 429);
       }
       try {
         return await api(req, url, path);
@@ -502,4 +677,5 @@ const server = Bun.serve({
   },
 });
 
+purge().catch(() => {});
 console.log(`기억의 집 서버 시작 · 포트 ${server.port} · 데이터 저장소: ${storage.kind}${Bun.env.ADMIN_CODE ? "" : " · 경고: ADMIN_CODE 없음(관리자 페이지 잠김)"}`);

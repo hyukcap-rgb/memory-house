@@ -11,7 +11,7 @@ let proc: ReturnType<typeof Bun.spawn>;
 
 beforeAll(async () => {
   proc = Bun.spawn(["bun", "run", "src/server.ts"], {
-    env: { ...process.env, PORT: String(PORT), DATA_DIR: dir, ADMIN_CODE: CODE, S3_ENDPOINT: "" },
+    env: { ...process.env, PORT: String(PORT), DATA_DIR: dir, ADMIN_CODE: CODE, S3_ENDPOINT: "", GRACE_MS: "1500", RATE_LIMIT: "1000" },
     stdout: "ignore", stderr: "inherit",
   });
   for (let i = 0; i < 50; i++) {
@@ -43,14 +43,31 @@ describe("예약·계정·아이 정보", () => {
     const taken = new Set(d.taken); let n = 1; while (taken.has(n)) n++; return { seat: n, left: d.left };
   };
 
-  test("메모리얼마다 1004자리", async () => {
+  test("366일, 날마다 1004자리", async () => {
     const halls = await (await fetch(BASE + "/api/halls")).json();
-    expect(halls.map((h: any) => h.total)).toEqual([1004, 1004, 1004]);
+    expect(halls.length).toBe(366);
+    expect(halls.every((h: any) => h.total === 1004)).toBe(true);
+    expect(halls.find((h: any) => h.id === "02-29").name).toBe("2월 29일");
+  });
+
+  test("그날의 1004자리가 다 차면 들어갈 수 없음", async () => {
+    const full = await (await fetch(BASE + "/api/halls/12-25/seats")).json();
+    expect(full.left).toBe(0);
+    const r = await post("/api/reserve", { hall: "12-25", seats: [1], pet: "눈", petStatus: "먼저 떠났어요", passed: "2025-12-25", owner: "a", phone: "01044443333", password: "secret12", agree: true });
+    expect(r.status).toBe(409);
+    expect((await r.json()).error).toContain("12월 25일의 1004자리가 모두 찼어요");
+  });
+
+  test("먼저 떠난 아이는 천사를 만난 날에만", async () => {
+    const { seat } = await freeSeat("06-15");
+    const base = { hall: "06-15", seats: [seat], pet: "솜", petStatus: "먼저 떠났어요", owner: "a", phone: "01044442222", password: "secret12", agree: true };
+    expect((await post("/api/reserve", base)).status).toBe(400); // 날짜 없음
+    expect((await post("/api/reserve", { ...base, passed: "2025-06-16" })).status).toBe(400); // 날짜 다름
   });
 
   test("비회원 예약 → 계정 생성·로그인 쿠키, 같은 자리 재예약 불가", async () => {
-    const { seat, left } = await freeSeat("star");
-    const body = { hall: "star", seats: [seat], pet: "하늘", kind: "강아지", petStatus: "먼저 떠났어요", owner: "테스트", phone: "010-1234-5678", password: "secret12", agree: true, source: "guest" };
+    const { seat, left } = await freeSeat("08-20");
+    const body = { hall: "08-20", seats: [seat], pet: "하늘", kind: "강아지", petStatus: "먼저 떠났어요", passed: "2026-08-20", owner: "테스트", phone: "010-1234-5678", password: "secret12", agree: true, source: "guest" };
     const res = await post("/api/reserve", body);
     expect(res.status).toBe(200);
     cookie = (res.headers.get("set-cookie") || "").split(";")[0];
@@ -62,8 +79,8 @@ describe("예약·계정·아이 정보", () => {
   });
 
   test("비밀번호 없거나 짧으면 막음, 가입된 번호에 틀린 비밀번호도 막음", async () => {
-    const { seat } = await freeSeat("spring");
-    const base = { hall: "spring", seats: [seat], pet: "a", owner: "b", phone: "01055556666" };
+    const { seat } = await freeSeat("07-01");
+    const base = { hall: "07-01", seats: [seat], pet: "a", owner: "b", phone: "01055556666" };
     expect((await post("/api/reserve", base)).status).toBe(400);
     expect((await post("/api/reserve", { ...base, password: "123", agree: true })).status).toBe(400);
     expect((await post("/api/reserve", { ...base, password: "secret12" })).status).toBe(400); // 동의 없음
@@ -72,12 +89,14 @@ describe("예약·계정·아이 정보", () => {
 
   test("아이 정보 입력·사진 저장", async () => {
     const put = (path: string, data: unknown) => fetch(BASE + path, { method: "PUT", headers: { "content-type": "application/json", cookie }, body: JSON.stringify(data) });
-    const r = await put(`/api/me/pets/${petId}`, { nickname: "하늘이", birth: "2014-05-01", passed: "2026-08-30", weight: "4.5", likes: "공놀이", tags: ["순둥이", "먹보", "겁쟁이", "넷째"] });
+    const r = await put(`/api/me/pets/${petId}`, { nickname: "하늘이", birth: "2014-05-01", passed: "2026-08-20", weight: "4.5", likes: "공놀이", tags: ["순둥이", "먹보", "겁쟁이", "넷째"] });
     expect(r.status).toBe(200);
     const pet = (await r.json()).pet;
     expect(pet.weight).toBe("4.5");
     expect(pet.tags).toEqual(["순둥이", "먹보", "겁쟁이"]);
     expect((await put(`/api/me/pets/${petId}`, { birth: "2020-01-01", passed: "2019-01-01" })).status).toBe(400);
+    expect((await put(`/api/me/pets/${petId}`, { passed: "2026-08-21" })).status).toBe(400); // 메모리얼 날짜와 다름
+    expect((await (await fetch(BASE + "/api/me", { headers: { cookie } })).json()).pets[0].birth).toBe("2014-05-01"); // 실패한 수정은 반영 안 됨
     expect((await put(`/api/me/pets/${petId}`, { weight: "많이" })).status).toBe(400);
 
     const jpeg = "data:image/jpeg;base64," + Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 0xff, 0xd9]).toString("base64");
@@ -136,7 +155,7 @@ describe("예약·계정·아이 정보", () => {
   });
 
   test("잘못된 입력은 막음", async () => {
-    expect((await post("/api/reserve", { hall: "star", seats: [5000], pet: "a", owner: "b", phone: "01012345678", password: "secret12" })).status).toBe(400);
+    expect((await post("/api/reserve", { hall: "08-20", seats: [5000], pet: "a", owner: "b", phone: "01012345678", password: "secret12" })).status).toBe(400);
     expect((await post("/api/guestbook", { text: "  " })).status).toBe(400);
   });
 });
@@ -157,16 +176,81 @@ describe("관리자", () => {
     expect((await post("/api/login", { phone: "01012345678", password: d.temp })).status).toBe(200);
   });
 
-  test("양도 요청 → 승인, 방명록 숨기기", async () => {
-    const t = await (await post("/api/transfer", { seatLabel: "별빛관 A-5", fromName: "김지현", toPhone: "01099998888" })).json();
+  test("방명록 숨기기", async () => {
     const h = { "x-admin-code": CODE };
-    const ok = await post(`/api/admin/transfers/${t.transfer.id}`, { action: "approve" }, h);
-    expect((await ok.json()).transfer.status).toBe("approved");
-    expect((await post(`/api/admin/transfers/${t.transfer.id}`, { action: "approve" }, h)).status).toBe(409);
-
     const g = await (await post("/api/guestbook", { pet: "보리", who: "나", text: "보고 싶어" })).json();
     await post(`/api/admin/guestbook/${g.entry.id}`, { hidden: true }, h);
     const list = await (await fetch(BASE + "/api/guestbook?pet=" + encodeURIComponent("보리"))).json();
     expect(list.find((x: any) => x.id === g.entry.id)).toBeUndefined();
+  });
+});
+
+describe("양도·탈퇴와 30일 보관 후 삭제", () => {
+  const h = { "x-admin-code": CODE };
+  const signup = async (phone: string, pet: string) => {
+    const d = await (await fetch(`${BASE}/api/halls/04-10/seats`)).json();
+    const taken = new Set(d.taken); let n = 1; while (taken.has(n)) n++;
+    const r = await post("/api/reserve", { hall: "04-10", seats: [n], pet, kind: "고양이", petStatus: "함께 살고 있어요", owner: pet + "보호자", phone, password: "pass1234", agree: true });
+    expect(r.status).toBe(200);
+    const body = await r.json();
+    return { cookie: (r.headers.get("set-cookie") || "").split(";")[0], pet: body.pet, seat: n };
+  };
+  const as = (cookie: string) => (path: string, data: unknown) => fetch(BASE + path, { method: "POST", headers: { "content-type": "application/json", cookie }, body: JSON.stringify(data) });
+
+  test("받는 분이 회원이 아니면 양도 불가, 동의·비밀번호 필수", async () => {
+    const A = await signup("01030000001", "나리");
+    const send = as(A.cookie);
+    const base = { petId: A.pet.id, seat: A.seat, password: "pass1234", agree: true };
+    expect((await send("/api/transfer", { ...base, toPhone: "01099990000" })).status).toBe(400);
+    const B = await signup("01030000002", "구름");
+    expect((await send("/api/transfer", { ...base, toPhone: "01030000002", agree: false })).status).toBe(400);
+    expect((await send("/api/transfer", { ...base, toPhone: "01030000002", password: "wrong" })).status).toBe(400);
+    expect((await fetch(BASE + "/api/transfer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...base, toPhone: "01030000002" }) })).status).toBe(401);
+    const ok = await send("/api/transfer", { ...base, toPhone: "01030000002" });
+    expect(ok.status).toBe(200);
+    const tid = (await ok.json()).transfer.id;
+
+    // 승인 → 자리가 받는 분에게, 보내는 분 메모리얼은 삭제 예정
+    const ap = await post(`/api/admin/transfers/${tid}`, { action: "approve" }, h);
+    expect(ap.status).toBe(200);
+    const meB = await (await fetch(BASE + "/api/me", { headers: { cookie: B.cookie } })).json();
+    expect(meB.pets.some((p: any) => p.seats.includes(A.seat))).toBe(true);
+    const meA = await (await fetch(BASE + "/api/me", { headers: { cookie: A.cookie } })).json();
+    expect(meA.pets[0].seats.length).toBe(0);
+    expect(meA.pets[0].deleteAt).toBeTruthy();
+
+    // 30일 안에는 되돌리기 가능
+    expect((await post(`/api/admin/transfers/${tid}`, { action: "revert" }, h)).status).toBe(200);
+    const meA2 = await (await fetch(BASE + "/api/me", { headers: { cookie: A.cookie } })).json();
+    expect(meA2.pets[0].seats).toEqual([A.seat]);
+    expect(meA2.pets[0].deleteAt).toBeFalsy();
+
+    // 다시 양도·승인 후 보관 기간이 지나면 보내는 분 메모리얼이 사라짐
+    const t2 = await (await send("/api/transfer", { ...base, toPhone: "01030000002" })).json();
+    await post(`/api/admin/transfers/${t2.transfer.id}`, { action: "approve" }, h);
+    await Bun.sleep(1700);
+    await post("/api/admin/purge", {}, h);
+    expect((await fetch(`${BASE}/api/pets/${A.pet.id}`)).status).toBe(404);
+    expect((await post(`/api/admin/transfers/${t2.transfer.id}`, { action: "revert" }, h)).status).toBe(409);
+  });
+
+  test("탈퇴: 동의 필수, 기간 안 취소 가능, 지나면 계정·메모리얼 삭제", async () => {
+    const C = await signup("01030000003", "별이");
+    const send = as(C.cookie);
+    expect((await send("/api/me/withdraw", { password: "pass1234" })).status).toBe(400);
+    expect((await send("/api/me/withdraw", { password: "pass1234", agree: true })).status).toBe(200);
+    expect((await send("/api/me/withdraw/cancel", {})).status).toBe(200);
+    const me = await (await fetch(BASE + "/api/me", { headers: { cookie: C.cookie } })).json();
+    expect(me.account.deleteAt).toBeFalsy();
+    expect(me.pets[0].deleteAt).toBeFalsy();
+
+    await send("/api/me/withdraw", { password: "pass1234", agree: true });
+    const seatsBefore = await (await fetch(`${BASE}/api/halls/04-10/seats`)).json();
+    await Bun.sleep(1700);
+    await post("/api/admin/purge", {}, h);
+    expect((await post("/api/login", { phone: "01030000003", password: "pass1234" })).status).toBe(401);
+    expect((await fetch(`${BASE}/api/pets/${C.pet.id}`)).status).toBe(404);
+    const seatsAfter = await (await fetch(`${BASE}/api/halls/04-10/seats`)).json();
+    expect(seatsAfter.left).toBe(seatsBefore.left + 1); // 자리가 다시 비었음
   });
 });
