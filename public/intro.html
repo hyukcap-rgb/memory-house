@@ -17,12 +17,13 @@
 <meta name="apple-mobile-web-app-title" content="기억의 집">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&family=Noto+Serif+KR:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 :root{
-  --night:#0E1220; --night2:#1A2038; --gold:#E7C77B; --gold2:#B38B3A; --starlight:#C9CFDC;
-  --paper:#F6F1E7; --paper2:#EFE8DA; --ink:#2A2620; --sub:#6F675B; --line:#DCD3C2;
-  --sans:'Noto Sans KR',system-ui,sans-serif; --serif:'Noto Serif KR',serif; --ease:cubic-bezier(.2,.8,.2,1);
+  --night:#0E1220; --night2:#1A2038; --gold:#E7C77B; --gold2:#B38B3A; --starlight:#D3D8E4;
+  --paper:#F6F1E7; --paper2:#EFE8DA; --ink:#2A2620; --sub:#575047; --line:#DCD3C2;
+  --sans:'Pretendard Variable',Pretendard,system-ui,sans-serif; --serif:'Gowun Batang',serif; --ease:cubic-bezier(.2,.8,.2,1);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{background:var(--night)}
@@ -39,7 +40,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offse
 .stars i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.5;animation:tw 4s ease-in-out infinite}
 @keyframes tw{50%{opacity:.12}}
 nav.top{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;height:64px}
-.brand{display:flex;align-items:center;gap:8px;text-decoration:none;font-family:var(--serif);font-size:17px;font-weight:500;letter-spacing:.02em}
+.brand{display:flex;align-items:center;gap:8px;text-decoration:none;font-family:var(--serif);font-size:18px;font-weight:700;letter-spacing:.02em}
 .brand img{width:26px;height:26px}
 .toplink{font-size:14px;color:var(--starlight);text-decoration:none;padding:10px 4px}
 .toplink:hover{color:#fff}
@@ -47,8 +48,8 @@ nav.top{position:relative;z-index:2;display:flex;align-items:center;justify-cont
 .hero canvas{display:block;width:min(78vw,330px);margin:0 auto}
 .hero .copy{text-align:center}
 .eyebrow{font-size:13px;color:var(--gold);letter-spacing:.06em}
-.hero h1{font-family:var(--serif);font-weight:500;font-size:clamp(28px,6.4vw,44px);line-height:1.38;margin:14px 0 18px}
-.hero p{font-size:16px;line-height:1.85;color:var(--starlight);font-weight:300}
+.hero h1{font-family:var(--serif);font-weight:400;font-size:clamp(28px,6.4vw,44px);line-height:1.38;margin:14px 0 18px}
+.hero p{font-size:16.5px;line-height:1.85;letter-spacing:-.01em;color:var(--starlight);font-weight:400}
 .actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:30px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 28px;border-radius:999px;font-size:16px;font-weight:500;text-decoration:none;transition:background .2s var(--ease),transform .15s var(--ease)}
 .btn:active{transform:scale(.98)}
@@ -70,8 +71,8 @@ nav.top{position:relative;z-index:2;display:flex;align-items:center;justify-cont
 .lead p{font-family:var(--serif);font-size:clamp(20px,4.6vw,26px);line-height:1.7;color:var(--ink)}
 .chapter{display:grid;gap:26px;align-items:center;padding:52px 0;border-top:1px solid var(--line)}
 .chapter .num{font-family:var(--serif);font-size:14px;color:var(--gold2)}
-.chapter h2{font-family:var(--serif);font-weight:500;font-size:clamp(22px,5vw,30px);line-height:1.5;margin:8px 0 14px}
-.chapter p{font-size:16px;line-height:1.9;color:var(--sub);font-weight:300}
+.chapter h2{font-family:var(--serif);font-weight:400;font-size:clamp(22px,5vw,30px);line-height:1.5;margin:8px 0 14px}
+.chapter p{font-size:16.5px;line-height:1.85;letter-spacing:-.01em;color:var(--sub);font-weight:400}
 .chapter p + p{margin-top:12px}
 .frame{justify-self:center;background:#fff;padding:12px 12px 40px;box-shadow:0 1px 2px rgba(60,45,20,.08),0 12px 30px rgba(60,45,20,.10);width:min(78vw,320px);transform:rotate(-2deg)}
 .frame.r{transform:rotate(1.6deg)}
@@ -85,19 +86,19 @@ nav.top{position:relative;z-index:2;display:flex;align-items:center;justify-cont
   .chapter.flip .frame{order:-1}
 }
 .promise{padding:60px 0 20px;border-top:1px solid var(--line)}
-.promise h2{font-family:var(--serif);font-weight:500;font-size:clamp(22px,5vw,30px);text-align:center}
+.promise h2{font-family:var(--serif);font-weight:400;font-size:clamp(22px,5vw,30px);text-align:center}
 .promise ol{list-style:none;max-width:640px;margin:34px auto 0}
 .promise li{display:grid;grid-template-columns:32px 1fr;gap:6px 14px;padding:20px 0;border-bottom:1px solid var(--line)}
 .promise li:last-child{border-bottom:0}
 .promise li span{font-family:var(--serif);color:var(--gold2);font-size:15px;padding-top:2px}
-.promise li b{font-weight:500;font-size:17px}
-.promise li p{grid-column:2;font-size:15px;line-height:1.8;color:var(--sub);font-weight:300}
+.promise li b{font-family:var(--serif);font-weight:700;font-size:18px}
+.promise li p{grid-column:2;font-size:15.5px;letter-spacing:-.01em;line-height:1.8;color:var(--sub);font-weight:400}
 
 /* 앱으로 두기 */
 .app{margin:60px 0 0;background:var(--paper2);border-radius:2px;padding:44px 22px;text-align:center}
 .app img.ic{width:72px;height:72px;border-radius:18px;box-shadow:0 8px 24px rgba(14,18,32,.18)}
-.app h2{font-family:var(--serif);font-weight:500;font-size:clamp(21px,4.8vw,27px);margin:18px 0 10px}
-.app > p{font-size:15px;line-height:1.8;color:var(--sub);font-weight:300}
+.app h2{font-family:var(--serif);font-weight:400;font-size:clamp(21px,4.8vw,27px);margin:18px 0 10px}
+.app > p{font-size:15px;line-height:1.8;color:var(--sub);font-weight:400}
 .app .btn{margin-top:22px;background:var(--night);color:#fff}
 .app .btn:hover{background:#1E2440}
 .app .btn[hidden]{display:none}
