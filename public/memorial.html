@@ -90,16 +90,16 @@ function petals(){const box=$('#petals');for(let i=0;i<14;i++){const p=document.
 async function api(path,opt){const r=await fetch(path,{...opt,headers:{'content-type':'application/json'}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'잠시 후 다시 시도해 주세요');return d}
 function rel(iso){const m=(Date.now()-new Date(iso))/6e4;if(m<2)return '방금';if(m<60)return `${Math.floor(m)}분 전`;if(m<1440)return `${Math.floor(m/60)}시간 전`;const d=Math.floor(m/1440);return d<7?`${d}일 전`:new Date(iso).toLocaleDateString('ko-KR')}
 function days(){if(!P.birth)return '';const end=P.passed?new Date(P.passed):new Date();const n=Math.floor((end-new Date(P.birth))/864e5)+1;if(n<1)return '';return P.passed?`함께한 ${n.toLocaleString('ko-KR')}일`:`함께한 지 ${n.toLocaleString('ko-KR')}일째`}
-function seat(){const n=P.seats&&P.seats[0];return n?`${P.hallName} ${Angel.ZONES[Angel.zoneOf(n)]} ${String(n).padStart(4,'0')}번`:P.hallName}
+function seat(){const n=P.seats&&P.seats[0];return n?`${P.hallName}의 천사 · ${Angel.ZONES[Angel.zoneOf(n)]}`:(P.hallName?`${P.hallName}의 천사`:'')}
 
 function render(){
   const N=esc(P.name);
   const sub=[esc(P.breed||(P.kind!=='-'?P.kind:'')),P.nickname?`별명 ${esc(P.nickname)}`:'',(P.birth||P.passed)?`${dot(P.birth)||'?'} ~ ${dot(P.passed)}`.trim():''].filter(Boolean).join(' · ');
-  const info=[['생일',P.birth?`${+P.birth.slice(5,7)}월 ${+P.birth.slice(8,10)}일`:''],['몸무게',P.weight?esc(P.weight)+'kg':''],['좋아한 것',esc(P.likes||'')],['자리',seat()]].filter(([,v])=>v);
+  const info=[['태어난 날',P.birth?`${+P.birth.slice(5,7)}월 ${+P.birth.slice(8,10)}일`:''],['품에 안긴 무게',P.weight?esc(P.weight)+'kg':''],[P.petStatus==='먼저 떠났어요'?'좋아하던 것':'좋아하는 것',esc(P.likes||'')],['아이의 별',seat()]].filter(([,v])=>v);
   $('#app').innerHTML=`
   <section class="hero" aria-label="${N}의 메모리얼">
     ${P.photo?`<div class="bg" style="background-image:url('${P.photo}')" role="img" aria-label="${N}의 사진"></div>`:''}<div class="shade"></div>
-    <div class="top"><span class="serif" style="font-weight:700;font-size:17px">기억의 집</span><button class="chipbtn" data-testid="share" onclick="share()">${I.share}링크 보내기</button></div>
+    <div class="top"><span class="serif" style="font-weight:700;font-size:17px">기억의 집</span><button class="chipbtn" data-testid="share" onclick="share()">${I.share}가족에게 보내기</button></div>
     <div class="in">
       ${days()?`<div style="color:var(--gold);font-size:14px;font-weight:500">${days()}</div>`:''}
       <h1 class="serif" style="font-size:46px;line-height:1.1;margin:2px 0 6px" data-testid="m-name">${N}</h1>
@@ -111,7 +111,7 @@ function render(){
   <div class="sec"><div class="acts">
     <button class="act" data-testid="m-flower" onclick="flower()">${I.flower}꽃 놓기<small data-testid="m-flowers">오늘 ${P.flowers.today}송이</small></button>
     <button class="act" data-testid="m-candle" aria-pressed="${P.candle}" onclick="candle()">${I.candle}${P.candle?'촛불 켜짐':'촛불 켜기'}<small>${P.candle?'오늘 밤까지':'함께 밝혀요'}</small></button>
-    <button class="act" data-testid="m-write" onclick="document.getElementById('g-text').focus()">${I.pen}한 마디<small>방명록 ${G.length}</small></button>
+    <button class="act" data-testid="m-write" onclick="document.getElementById('g-text').focus()">${I.pen}한 마디<small>편지 ${G.length}</small></button>
   </div></div>
   <div class="sec"><div class="angelbox"><canvas id="angel" aria-hidden="true"></canvas><div><div style="font-size:12px;color:var(--gold)">${esc(P.hallName)}의 천사</div><b class="serif" style="font-size:17px;line-height:1.5;display:block;margin-top:2px">1004의 별이 모여<br>하나의 빛이 됩니다</b><p style="font-size:13px;color:#AEB5C6;margin-top:6px">반짝이는 별이 ${J(N,'이에요','예요')}</p></div></div></div>
   <div class="sec"><div class="card">
@@ -121,12 +121,12 @@ function render(){
       <label class="fl" for="g-who">이름</label><input class="in" id="g-who" maxlength="20" autocomplete="name" placeholder="예: 지수" data-testid="g-who">
       <label class="fl" for="g-text">남길 말</label><textarea class="in" id="g-text" rows="3" maxlength="200" placeholder="${J(N,'아','야')}, " data-testid="g-text"></textarea>
       <div class="err" id="g-err" role="alert"></div>
-      <button class="cta navy" type="submit" style="margin-top:10px" data-testid="g-save">방명록 남기기</button>
+      <button class="cta navy" type="submit" style="margin-top:10px" data-testid="g-save">편지 남기기</button>
     </form>
   </div></div>
   <div class="foot">
-    <p style="font-size:14px;color:var(--sub);line-height:1.7">사랑한 아이를 영원히 기억하는 곳<br>메모리얼마다 1004자리만 있어요</p>
-    <a class="cta gold" href="/" style="margin-top:14px" data-testid="m-cta">우리 아이 자리 알아보기</a>
+    <p style="font-size:14px;color:var(--sub);line-height:1.7">사랑한 만큼, 오래 기억할 수 있도록</p>
+    <a class="cta gold" href="/" style="margin-top:14px" data-testid="m-cta">우리 아이의 별 남기기</a>
   </div>`;
   const n=P.seats&&P.seats[0];
   api(`/api/halls/${P.hall}/seats`).then(d=>{const cv=$('#angel');if(cv)Angel.mount(cv,{taken:d.taken,mine:n?[n]:[],picked:n?[n]:[],photos:PHOTOS})}).catch(()=>{});
@@ -139,7 +139,7 @@ async function sendNote(){
   if(!who){err.textContent='이름을 적어 주세요. 가족이 누가 남겼는지 알 수 있어요.';$('#g-who').focus();return}
   if(!text){err.textContent='남길 말을 한 글자 이상 적어 주세요.';$('#g-text').focus();return}
   sending=true;$('[data-testid=g-save]').disabled=true;
-  try{const d=await api('/api/guestbook',{method:'POST',body:JSON.stringify({pet:ID,who,text})});G.unshift(d.entry);sending=false;render();toast('방명록을 남겼어요')}
+  try{const d=await api('/api/guestbook',{method:'POST',body:JSON.stringify({pet:ID,who,text})});G.unshift(d.entry);sending=false;render();toast('마음을 전했어요')}
   catch(e){sending=false;err.textContent=e.message;$('[data-testid=g-save]').disabled=false}
 }
 async function share(){

@@ -44,22 +44,19 @@
     return `<div class="pf" id="pf">
   <div class="pf-photo">
     <span class="pf-pic" id="pf-pic" ${pic} aria-hidden="true">${p.photo ? "" : CAMERA}</span>
-    <div><label class="pf-pick" data-testid="pf-photo-btn">${p.photo ? "사진 바꾸기" : "대표 사진 고르기"}<input type="file" accept="image/*" id="pf-file" data-testid="pf-file"></label>
-    <div class="pf-hint" style="margin:6px 0 0">입장 화면 전체에 크게 보여요</div><div class="pf-err" id="pf-e-photo" role="alert"></div></div>
+    <div><label class="pf-pick" data-testid="pf-photo-btn">${p.photo ? "다른 사진으로 바꾸기" : "가장 예쁜 사진 고르기"}<input type="file" accept="image/*" id="pf-file" data-testid="pf-file"></label>
+    <div class="pf-hint" style="margin:6px 0 0">아이를 만나러 오면 가장 먼저 보여요</div><div class="pf-err" id="pf-e-photo" role="alert"></div></div>
   </div>
+  <label class="pf-l" for="pf-nickname">우리끼리 ${passedAway ? "부르던" : "부르는"} 이름</label><input class="pf-in" id="pf-nickname" maxlength="20" value="${esc(p.nickname)}" placeholder="예: 우리 강아지, 꼬맹이" data-testid="pf-nickname">
   <div class="pf-two">
-    <div><label class="pf-l" for="pf-breed">품종</label><input class="pf-in" id="pf-breed" maxlength="30" value="${esc(p.breed)}" placeholder="예: 말티즈" data-testid="pf-breed"></div>
-    <div><label class="pf-l" for="pf-nickname">별명</label><input class="pf-in" id="pf-nickname" maxlength="20" value="${esc(p.nickname)}" data-testid="pf-nickname"></div>
+    <div><label class="pf-l" for="pf-birth">태어난 날</label><input class="pf-in" type="date" id="pf-birth" max="${today()}" value="${esc(p.birth)}" data-testid="pf-birth"></div>
+    ${passedAway ? `<div><label class="pf-l" for="pf-passed">천사를 만난 날</label><input class="pf-in" type="date" id="pf-passed" max="${today()}" value="${esc(p.passed)}" data-testid="pf-passed"></div>` : `<div><label class="pf-l" for="pf-weight">품에 안긴 무게</label><div class="pf-unit"><input class="pf-in" id="pf-weight" inputmode="decimal" maxlength="6" value="${esc(p.weight)}" placeholder="3.2" data-testid="pf-weight"><span>kg</span></div></div>`}
   </div>
-  <div class="pf-two">
-    <div><label class="pf-l" for="pf-birth">생일</label><input class="pf-in" type="date" id="pf-birth" max="${today()}" value="${esc(p.birth)}" data-testid="pf-birth"></div>
-    ${passedAway ? `<div><label class="pf-l" for="pf-passed">떠난 날</label><input class="pf-in" type="date" id="pf-passed" max="${today()}" value="${esc(p.passed)}" data-testid="pf-passed"></div>` : `<div><label class="pf-l" for="pf-weight">몸무게</label><div class="pf-unit"><input class="pf-in" id="pf-weight" inputmode="decimal" maxlength="6" value="${esc(p.weight)}" placeholder="3.2" data-testid="pf-weight"><span>kg</span></div></div>`}
-  </div>
-  ${passedAway ? `<label class="pf-l" for="pf-weight">몸무게</label><div class="pf-unit"><input class="pf-in" id="pf-weight" inputmode="decimal" maxlength="6" value="${esc(p.weight)}" placeholder="3.2" data-testid="pf-weight"><span>kg</span></div>` : ""}
+  ${passedAway ? `<label class="pf-l" for="pf-weight">품에 안긴 무게</label><div class="pf-unit"><input class="pf-in" id="pf-weight" inputmode="decimal" maxlength="6" value="${esc(p.weight)}" placeholder="3.2" data-testid="pf-weight"><span>kg</span></div>` : ""}
   <div class="pf-err" id="pf-e-date" role="alert"></div>
-  <label class="pf-l" for="pf-likes">좋아한 것</label>
+  <label class="pf-l" for="pf-likes">${passedAway ? "좋아하던 것" : "좋아하는 것"}</label>
   <input class="pf-in" id="pf-likes" maxlength="60" value="${esc(p.likes)}" placeholder="예: 산책, 창가 낮잠" data-testid="pf-likes">
-  <label class="pf-l" for="pf-tagin">이런 아이였어요 <span class="pf-hint">3개까지</span></label>
+  <label class="pf-l" for="pf-tagin">${passedAway ? "이런 아이였어요" : "이런 아이예요"} <span class="pf-hint">3개까지</span></label>
   <div class="pf-tagrow"><input class="pf-in" id="pf-tagin" maxlength="16" placeholder="예: 겁 많고 다정함" data-testid="pf-tagin"><button type="button" class="pf-add" id="pf-addtag" data-testid="pf-addtag">추가</button></div>
   <div class="pf-tags" id="pf-tags" aria-live="polite"></div>
   <label style="display:flex;gap:10px;align-items:flex-start;margin-top:18px;font-size:14px;line-height:1.5;cursor:pointer"><input type="checkbox" id="pf-plaza" data-testid="pf-plaza" ${p.showInPlaza===false?'':'checked'} style="width:20px;height:20px;margin-top:1px;flex:none;accent-color:#2E4374"><span>별빛 광장에 보이기<br><span class="pf-hint" style="margin:0">다른 보호자들이 이름과 대표 사진을 보고 위로의 꽃을 놓을 수 있어요</span></span></label>
@@ -130,7 +127,7 @@
     const pending = v("pf-tagin");
     const t = tags.slice();
     if (pending && t.length < 3 && !t.includes(pending)) t.push(pending);
-    const out = { showInPlaza: !!document.getElementById("pf-plaza")?.checked, breed: v("pf-breed"), nickname: v("pf-nickname"), birth: v("pf-birth"), weight: v("pf-weight").replace(/kg$/i, "").trim(), likes: v("pf-likes"), tags: t };
+    const out = { showInPlaza: !!document.getElementById("pf-plaza")?.checked, nickname: v("pf-nickname"), birth: v("pf-birth"), weight: v("pf-weight").replace(/kg$/i, "").trim(), likes: v("pf-likes"), tags: t };
     if (document.getElementById("pf-passed")) out.passed = v("pf-passed");
     return out;
   }
@@ -139,9 +136,9 @@
     const err = document.getElementById("pf-e-date");
     const bad = (id, msg) => { document.getElementById(id)?.setAttribute("aria-invalid", "true"); err.textContent = msg; document.getElementById(id)?.focus(); return false; };
     if (d.birth && d.birth > today()) return bad("pf-birth", "생일은 오늘보다 앞이어야 해요");
-    if (d.passed && d.passed > today()) return bad("pf-passed", "떠난 날은 오늘보다 앞이어야 해요");
-    if (d.birth && d.passed && d.passed < d.birth) return bad("pf-passed", "떠난 날이 생일보다 앞설 수 없어요");
-    if (d.weight && !/^\d{1,3}(\.\d{1,2})?$/.test(d.weight)) return bad("pf-weight", "몸무게는 숫자로 적어 주세요 (예: 3.2)");
+    if (d.passed && d.passed > today()) return bad("pf-passed", "천사를 만난 날은 오늘보다 앞이어야 해요");
+    if (d.birth && d.passed && d.passed < d.birth) return bad("pf-passed", "천사를 만난 날이 태어난 날보다 앞설 수 없어요");
+    if (d.weight && !/^\d{1,3}(\.\d{1,2})?$/.test(d.weight)) return bad("pf-weight", "무게는 숫자로 적어 주세요 (예: 3.2)");
     return true;
   }
 

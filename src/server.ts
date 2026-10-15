@@ -240,8 +240,8 @@ function applyPetFields(target: Pet, b: any): string | null {
     if (k === "name" && !v) return "아이 이름을 적어 주세요";
     (p as any)[k] = v;
   }
-  if (p.birth && p.passed && p.passed < p.birth) return "떠난 날이 생일보다 앞설 수 없어요";
-  if (b.weight !== undefined && p.weight && !/^\d{1,3}(\.\d{1,2})?$/.test(p.weight)) return "몸무게는 숫자로 적어 주세요 (예: 3.2)";
+  if (p.birth && p.passed && p.passed < p.birth) return "천사를 만난 날이 태어난 날보다 앞설 수 없어요";
+  if (b.weight !== undefined && p.weight && !/^\d{1,3}(\.\d{1,2})?$/.test(p.weight)) return "무게는 숫자로 적어 주세요 (예: 3.2)";
   if (typeof b.showInPlaza === "boolean") p.showInPlaza = b.showInPlaza;
   if (Array.isArray(b.tags)) p.tags = b.tags.map((t: unknown) => clean(t, 16)).filter(Boolean).slice(0, 3);
   if (p.petStatus !== "먼저 떠났어요") p.passed = "";
@@ -252,7 +252,7 @@ function applyPetFields(target: Pet, b: any): string | null {
   if (p.dayLocked) {
     const day = HALLS.find((h) => h.id === p.hall)?.name || "";
     if (p.petStatus !== "먼저 떠났어요") return "천사를 만난 날이 정해진 아이예요. 잘못 들어갔다면 운영팀에 알려 주세요";
-    if (p.dayChange?.kept ? p.passed !== target.passed : dayOf(p.passed) !== p.hall) return `떠난 날은 이미 정해졌어요(${day}). 잘못 들어갔다면 운영팀에 알려 주세요`;
+    if (p.dayChange?.kept ? p.passed !== target.passed : dayOf(p.passed) !== p.hall) return `천사를 만난 날은 이미 정해졌어요(${day}). 잘못 들어갔다면 운영팀에 알려 주세요`;
   }
   Object.assign(target, p);
   return null;
@@ -476,7 +476,7 @@ async function api(req: Request, url: URL, path: string): Promise<Response> {
       const passed = clean(b.passed, 10);
       if (!passed || !isDate(passed)) return bad("천사를 만난 날을 골라 주세요");
       if (passed > kstDay()) return bad("천사를 만난 날은 오늘보다 앞이어야 해요");
-      if (pet.birth && passed < pet.birth) return bad("천사를 만난 날이 생일보다 앞설 수 없어요");
+      if (pet.birth && passed < pet.birth) return bad("천사를 만난 날이 태어난 날보다 앞설 수 없어요");
       const from = pet.hall, to = dayOf(passed);
       const target = HALLS.find((h) => h.id === to)!;
       const keep = b.keep === true || to === from;
